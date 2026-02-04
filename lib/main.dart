@@ -3,8 +3,47 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 
-void main() {
-  runApp(const ProviderScope(child: ShapeLogApp()));
+import 'package:hive_flutter/hive_flutter.dart';
+import 'features/workout/data/models/workout_hive_model.dart';
+import 'features/workout/data/models/exercise_model.dart';
+import 'features/workout/data/models/workout_enums_adapter.dart';
+
+import 'package:intl/date_symbol_data_local.dart';
+
+void main() async {
+  await Hive.initFlutter();
+  await initializeDateFormatting('pt_BR', null);
+
+  // Register Adapters
+  Hive.registerAdapter(WorkoutTypeHiveAdapter());
+  Hive.registerAdapter(WorkoutStatusHiveAdapter());
+  Hive.registerAdapter(ExerciseModelAdapter());
+  Hive.registerAdapter(WorkoutHiveModelAdapter());
+
+  // Open Box
+  try {
+    await Hive.openBox<WorkoutHiveModel>('routines');
+  } catch (e) {
+    // If opening fails (e.g. schema mismatch), delete the box and try again
+    try {
+      await Hive.deleteBoxFromDisk('routines');
+    } catch (_) {
+      // Ignore errors during deletion (e.g. files already missing)
+    }
+    await Hive.openBox<WorkoutHiveModel>('routines');
+  }
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        // We can override here or just use a global access in provider, but override is cleaner if we had the instance.
+        // For now, let's keep it simple and access the box via a Provider that reads the opened box,
+        // OR passing it to the root widget if we setup DI there.
+        // Actually, Riverpod provider can just call Hive.box('workouts') since it's open.
+      ],
+      child: const ShapeLogApp(),
+    ),
+  );
 }
 
 class ShapeLogApp extends ConsumerWidget {

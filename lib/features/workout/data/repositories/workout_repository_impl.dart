@@ -1,7 +1,7 @@
 import '../../domain/entities/workout.dart';
+import '../../domain/entities/workout_history.dart';
 import '../../domain/repositories/workout_repository.dart';
 import '../datasources/workout_local_data_source.dart';
-import '../models/workout_model.dart';
 
 class WorkoutRepositoryImpl implements WorkoutRepository {
   final WorkoutLocalDataSource localDataSource;
@@ -9,19 +9,27 @@ class WorkoutRepositoryImpl implements WorkoutRepository {
   WorkoutRepositoryImpl({required this.localDataSource});
 
   @override
-  Future<List<Workout>> getWorkouts() async {
-    final models = await localDataSource.getLastWorkouts();
-    return models;
+  Future<List<Workout>> getRoutines() async {
+    return localDataSource.getRoutines();
   }
 
   @override
-  Future<void> addWorkout(Workout workout) async {
-    final model = WorkoutModel(
-      id: workout.id,
-      name: workout.name,
-      date: workout.date,
-      durationMinutes: workout.durationMinutes,
-    );
-    return localDataSource.cacheWorkout(model);
+  Future<void> saveRoutine(Workout workout) async {
+    return localDataSource.saveRoutine(workout);
+  }
+
+  @override
+  Future<void> deleteRoutine(String id) async {
+    return localDataSource.deleteRoutine(id);
+  }
+
+  @override
+  Future<List<WorkoutHistory>> getHistory() async {
+    return localDataSource.getHistory();
+  }
+
+  @override
+  Future<void> saveHistory(WorkoutHistory history) async {
+    return localDataSource.saveHistory(history);
   }
 }

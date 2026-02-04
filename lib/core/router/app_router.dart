@@ -3,10 +3,16 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/dashboard/home_page.dart';
 import '../../features/workout/presentation/pages/workout_list_page.dart';
+import '../../features/workout/presentation/pages/workout_edit_page.dart';
+import '../../features/workout/presentation/pages/workout_details_page.dart';
+import '../../features/workout/presentation/pages/exercise_details_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
+
+final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
+    navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
     routes: [
       ShellRoute(
@@ -14,13 +20,45 @@ final routerProvider = Provider<GoRouter>((ref) {
           return ScaffoldWithBottomNavBar(child: child);
         },
         routes: [
-          GoRoute(
-            path: '/',
-            builder: (context, state) => const HomePage(),
-          ),
+          GoRoute(path: '/', builder: (context, state) => const HomePage()),
           GoRoute(
             path: '/workouts',
             builder: (context, state) => const WorkoutListPage(),
+            routes: [
+              GoRoute(
+                path: 'add',
+                parentNavigatorKey: _rootNavigatorKey,
+                builder: (context, state) => const WorkoutEditPage(),
+              ),
+              GoRoute(
+                path: ':id',
+                parentNavigatorKey: _rootNavigatorKey,
+                builder: (context, state) =>
+                    WorkoutDetailsPage(workoutId: state.pathParameters['id']!),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) =>
+                        WorkoutEditPage(workoutId: state.pathParameters['id']),
+                  ),
+                  GoRoute(
+                    path: 'exercises/:exerciseIndex',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) {
+                      final workoutId = state.pathParameters['id']!;
+                      final index = int.parse(
+                        state.pathParameters['exerciseIndex']!,
+                      );
+                      return ExerciseDetailsPage(
+                        workoutId: workoutId,
+                        exerciseIndex: index,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
           ),
           GoRoute(
             path: '/settings',
