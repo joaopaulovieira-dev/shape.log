@@ -2,9 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:io';
+import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/workout.dart';
+import '../../domain/entities/exercise.dart';
+import '../../domain/entities/workout_history.dart';
 import '../providers/workout_provider.dart';
+
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+
+import 'package:shape_log/core/constants/app_colors.dart';
 
 class WorkoutDetailsPage extends ConsumerStatefulWidget {
   final String workoutId;
@@ -16,8 +24,6 @@ class WorkoutDetailsPage extends ConsumerStatefulWidget {
 }
 
 class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
-  final Set<int> _completedExercises = {};
-
   @override
   Widget build(BuildContext context) {
     final routinesAsync = ref.watch(routineListProvider);
@@ -61,6 +67,10 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                     return days[d];
                   })
                   .join(', ');
+
+        final now = DateTime.now();
+        final isExpired =
+            workout.expiryDate != null && workout.expiryDate!.isBefore(now);
 
         return Scaffold(
           appBar: AppBar(
@@ -114,6 +124,66 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              if (isExpired)
+                Card(
+                  color: AppColors.error.withOpacity(0.1),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  shape: RoundedRectangleBorder(
+                    side: const BorderSide(color: AppColors.error),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.warning, color: AppColors.error),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Este treino venceu em ${DateFormat('dd/MM/yyyy').format(workout.expiryDate!)}!',
+                                style: const TextStyle(
+                                  color: AppColors.error,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Por favor, notifique o app para gerar uma nova versão.',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.error,
+                            ),
+                            icon: const Icon(Icons.copy, size: 18),
+                            label: const Text('Copiar Mensagem para o Agente'),
+                            onPressed: () {
+                              final dateStr = DateFormat(
+                                'dd/MM/yyyy',
+                              ).format(workout.expiryDate!);
+                              final message =
+                                  "Olá! Meu treino '${workout.name}' venceu em $dateStr. Por favor, me ajude a criar uma nova versão dele baseada no meu progresso recente.";
+                              Clipboard.setData(ClipboardData(text: message));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Mensagem copiada!'),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -127,6 +197,14 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                         'Duração:',
                         '${workout.targetDurationMinutes} min',
                       ),
+                      if (workout.expiryDate != null) ...[
+                        const SizedBox(height: 8),
+                        _buildInfoRow(
+                          Icons.event,
+                          'Vencimento:',
+                          DateFormat('dd/MM/yyyy').format(workout.expiryDate!),
+                        ),
+                      ],
                       if (workout.notes.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         _buildInfoRow(Icons.notes, 'Notas:', workout.notes),
@@ -135,6 +213,63 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 8),
+              if (workout.activeStartTime == null)
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () => _startWorkout(workout),
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('Iniciar Treino'),
+                  ),
+                )
+              else
+                Column(
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.black,
+                        ),
+                        onPressed: () => _finalizeWorkout(workout),
+                        icon: const Icon(Icons.check_circle),
+                        label: const Text('Finalizar Treino'),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Builder(
+                      builder: (context) {
+                        final completedCount = workout.exercises
+                            .where((e) => e.isCompleted)
+                            .length;
+                        final totalCount = workout.exercises.length;
+                        final percent = totalCount == 0
+                            ? 0.0
+                            : (completedCount / totalCount);
+                        return Column(
+                          children: [
+                            LinearProgressIndicator(
+                              value: percent,
+                              backgroundColor: AppColors.surface,
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                AppColors.primary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Conclusão: ${(percent * 100).toInt()}% ($completedCount/$totalCount)',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
               const SizedBox(height: 16),
               const Text(
                 'Exercícios',
@@ -146,7 +281,6 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
               ...workout.exercises.asMap().entries.map((entry) {
                 final index = entry.key;
                 final ex = entry.value;
-                final isCompleted = _completedExercises.contains(index);
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
@@ -159,16 +293,40 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Checkbox(
-                          value: isCompleted,
-                          onChanged: (val) {
-                            setState(() {
-                              if (val == true) {
-                                _completedExercises.add(index);
-                              } else {
-                                _completedExercises.remove(index);
-                              }
-                            });
-                          },
+                          value: ex.isCompleted,
+                          onChanged: workout.activeStartTime == null
+                              ? null
+                              : (val) async {
+                                  final updatedExercises = List<Exercise>.from(
+                                    workout.exercises,
+                                  );
+                                  updatedExercises[index] = Exercise(
+                                    name: ex.name,
+                                    sets: ex.sets,
+                                    reps: ex.reps,
+                                    weight: ex.weight,
+                                    youtubeUrl: ex.youtubeUrl,
+                                    imagePaths: ex.imagePaths,
+                                    equipmentNumber: ex.equipmentNumber,
+                                    isCompleted: val ?? false,
+                                  );
+
+                                  final updatedWorkout = Workout(
+                                    id: workout.id,
+                                    name: workout.name,
+                                    scheduledDays: workout.scheduledDays,
+                                    targetDurationMinutes:
+                                        workout.targetDurationMinutes,
+                                    notes: workout.notes,
+                                    exercises: updatedExercises,
+                                    activeStartTime: workout.activeStartTime,
+                                  );
+
+                                  await ref
+                                      .read(workoutRepositoryProvider)
+                                      .saveRoutine(updatedWorkout);
+                                  ref.invalidate(routineListProvider);
+                                },
                         ),
                         Container(
                           width: 50,
@@ -194,39 +352,45 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                     title: Text.rich(
                       TextSpan(
                         children: [
+                          if (ex.equipmentNumber != null &&
+                              ex.equipmentNumber!.isNotEmpty)
+                            TextSpan(
+                              text: '#${ex.equipmentNumber} ',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
                           TextSpan(
                             text: ex.name,
                             style: TextStyle(
-                              decoration: isCompleted
+                              decoration: ex.isCompleted
                                   ? TextDecoration.lineThrough
                                   : null,
-                              color: isCompleted ? Colors.grey : null,
+                              color: ex.isCompleted ? Colors.grey : null,
                             ),
                           ),
-                          if (ex.equipmentNumber != null)
-                            TextSpan(
-                              text: ' #${ex.equipmentNumber}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
-                                decoration: isCompleted
-                                    ? TextDecoration.lineThrough
-                                    : null,
-                              ),
-                            ),
                         ],
                       ),
                     ),
-                    subtitle: Text(
-                      '${ex.sets} séries x ${ex.reps} reps - ${ex.weight}kg',
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.info_outline),
-                      onPressed: () {
-                        context.push(
-                          '/workouts/${workout.id}/exercises/$index',
-                        );
-                      },
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${ex.sets} séries x ${ex.reps} reps - ${ex.weight}kg',
+                        ),
+                        if (ex.technique != null && ex.technique!.isNotEmpty)
+                          Text(
+                            'Técnica: ${ex.technique}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                      ],
                     ),
                     onTap: () {
                       context.push('/workouts/${workout.id}/exercises/$index');
@@ -242,6 +406,81 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (err, stack) => Scaffold(body: Center(child: Text('Erro: $err'))),
     );
+  }
+
+  Future<void> _startWorkout(Workout workout) async {
+    final updatedWorkout = Workout(
+      id: workout.id,
+      name: workout.name,
+      scheduledDays: workout.scheduledDays,
+      targetDurationMinutes: workout.targetDurationMinutes,
+      notes: workout.notes,
+      exercises: workout.exercises,
+      activeStartTime: DateTime.now(),
+    );
+
+    await ref.read(workoutRepositoryProvider).saveRoutine(updatedWorkout);
+    ref.invalidate(routineListProvider);
+  }
+
+  Future<void> _finalizeWorkout(Workout workout) async {
+    final now = DateTime.now();
+    final startTime = workout.activeStartTime ?? now;
+    final duration = now.difference(startTime).inMinutes;
+
+    final completedCount = workout.exercises.where((e) => e.isCompleted).length;
+    final totalCount = workout.exercises.length;
+    final percentage = totalCount == 0 ? 0.0 : (completedCount / totalCount);
+
+    final history = WorkoutHistory(
+      id: const Uuid().v4(),
+      workoutId: workout.id,
+      workoutName: workout.name,
+      completedDate: now,
+      durationMinutes: duration,
+      exercises: List.from(workout.exercises),
+      notes: workout.notes,
+      startTime: startTime,
+      completionPercentage: percentage,
+    );
+
+    // Save to history
+    await ref.read(workoutRepositoryProvider).saveHistory(history);
+
+    // Reset exercises in routine and clear activeStartTime
+    final resetExercises = workout.exercises
+        .map(
+          (ex) => Exercise(
+            name: ex.name,
+            sets: ex.sets,
+            reps: ex.reps,
+            weight: ex.weight,
+            youtubeUrl: ex.youtubeUrl,
+            imagePaths: ex.imagePaths,
+            equipmentNumber: ex.equipmentNumber,
+            isCompleted: false,
+          ),
+        )
+        .toList();
+
+    final updatedWorkout = Workout(
+      id: workout.id,
+      name: workout.name,
+      scheduledDays: workout.scheduledDays,
+      targetDurationMinutes: workout.targetDurationMinutes,
+      notes: workout.notes,
+      exercises: resetExercises,
+      activeStartTime: null,
+    );
+
+    await ref.read(workoutRepositoryProvider).saveRoutine(updatedWorkout);
+    ref.invalidate(routineListProvider);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Treino finalizado e salvo!')),
+      );
+    }
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value) {

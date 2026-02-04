@@ -8,7 +8,13 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Shape.log'),
+        title: Row(
+          children: [
+            Image.asset('assets/icon/logo.png', height: 32),
+            const SizedBox(width: 12),
+            const Text('Shape.log'),
+          ],
+        ),
       ),
       body: Center(
         child: Column(

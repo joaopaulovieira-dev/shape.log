@@ -1,13 +1,13 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../domain/entities/workout.dart';
 import '../../domain/entities/exercise.dart';
 import '../providers/workout_provider.dart';
+import 'package:shape_log/core/constants/app_colors.dart';
+import 'exercise_form_page.dart';
 
 class WorkoutEditPage extends ConsumerStatefulWidget {
   final String? workoutId;
@@ -27,6 +27,7 @@ class _WorkoutEditPageState extends ConsumerState<WorkoutEditPage> {
   late TextEditingController _durationController;
   List<Exercise> _exercises = [];
   List<int> _scheduledDays = []; // 1=Mon, 7=Sun
+  DateTime? _expiryDate;
 
   bool _isLoading = true;
 
@@ -62,6 +63,7 @@ class _WorkoutEditPageState extends ConsumerState<WorkoutEditPage> {
       _durationController.text = workout.targetDurationMinutes.toString();
       _exercises = List.from(workout.exercises);
       _notesController.text = workout.notes;
+      _expiryDate = workout.expiryDate;
     } else {
       // Create Mode
       _id = const Uuid().v4();
@@ -70,6 +72,9 @@ class _WorkoutEditPageState extends ConsumerState<WorkoutEditPage> {
       _durationController.text = '60';
       _notesController.text = '';
       _exercises = [];
+      _expiryDate = DateTime.now().add(
+        const Duration(days: 90),
+      ); // Default 3 months
     }
 
     setState(() {
@@ -89,6 +94,7 @@ class _WorkoutEditPageState extends ConsumerState<WorkoutEditPage> {
       targetDurationMinutes: int.tryParse(_durationController.text) ?? 60,
       notes: _notesController.text,
       exercises: _exercises,
+      expiryDate: _expiryDate,
     );
 
     await ref.read(workoutRepositoryProvider).saveRoutine(workout);
@@ -124,201 +130,31 @@ class _WorkoutEditPageState extends ConsumerState<WorkoutEditPage> {
     }
   }
 
-  void _addExercise() {
-    setState(() {
-      _exercises.add(
-        const Exercise(name: 'Novo Exercício', sets: 3, reps: 10, weight: 0),
-      );
-    });
-    _editExercise(_exercises.length - 1);
+  Future<void> _addExercise() async {
+    final result = await Navigator.push<Exercise>(
+      context,
+      MaterialPageRoute(builder: (context) => const ExerciseFormPage()),
+    );
+    if (result != null) {
+      setState(() {
+        _exercises.add(result);
+      });
+    }
   }
 
-  void _editExercise(int index) {
-    final ex = _exercises[index];
-    final nameCtrl = TextEditingController(text: ex.name);
-    final setsCtrl = TextEditingController(text: ex.sets.toString());
-    final repsCtrl = TextEditingController(text: ex.reps.toString());
-    final weightCtrl = TextEditingController(text: ex.weight.toString());
-    final urlCtrl = TextEditingController(text: ex.youtubeUrl ?? '');
-    final equipCtrl = TextEditingController(text: ex.equipmentNumber ?? '');
-    List<String> tempImagePaths = List.from(ex.imagePaths);
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Editar Exercício'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'Nome'),
-              ),
-              TextField(
-                controller: equipCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Nº Equipamento (Opcional)',
-                  hintText: 'ex: 12 ou A-1',
-                ),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: setsCtrl,
-                      decoration: const InputDecoration(labelText: 'Séries'),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: repsCtrl,
-                      decoration: const InputDecoration(labelText: 'Reps'),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                ],
-              ),
-              TextField(
-                controller: weightCtrl,
-                decoration: const InputDecoration(labelText: 'Carga (kg)'),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: urlCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Link YouTube (Opcional)',
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Imagens',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              // Image Picker Area
-              StatefulBuilder(
-                builder: (context, setStateDialog) {
-                  return Column(
-                    children: [
-                      if (tempImagePaths.isNotEmpty)
-                        SizedBox(
-                          height: 100,
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: tempImagePaths.asMap().entries.map((
-                                entry,
-                              ) {
-                                final i = entry.key;
-                                final path = entry.value;
-                                return Stack(
-                                  alignment: Alignment.topRight,
-                                  children: [
-                                    Container(
-                                      margin: const EdgeInsets.only(right: 8),
-                                      width: 100,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(8),
-                                        image: DecorationImage(
-                                          image: FileImage(File(path)),
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.remove_circle,
-                                        color: Colors.red,
-                                        size: 20,
-                                      ),
-                                      onPressed: () {
-                                        setStateDialog(() {
-                                          tempImagePaths.removeAt(i);
-                                        });
-                                      },
-                                    ),
-                                  ],
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          TextButton.icon(
-                            onPressed: () async {
-                              final picker = ImagePicker();
-                              final List<XFile> images = await picker
-                                  .pickMultiImage();
-                              if (images.isNotEmpty) {
-                                setStateDialog(() {
-                                  tempImagePaths.addAll(
-                                    images.map((e) => e.path),
-                                  );
-                                });
-                              }
-                            },
-                            icon: const Icon(Icons.photo_library),
-                            label: const Text('Galeria'),
-                          ),
-                          TextButton.icon(
-                            onPressed: () async {
-                              final picker = ImagePicker();
-                              final XFile? image = await picker.pickImage(
-                                source: ImageSource.camera,
-                              );
-                              if (image != null) {
-                                setStateDialog(() {
-                                  tempImagePaths.add(image.path);
-                                });
-                              }
-                            },
-                            icon: const Icon(Icons.camera_alt),
-                            label: const Text('Câmera'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _exercises[index] = Exercise(
-                  name: nameCtrl.text,
-                  sets: int.tryParse(setsCtrl.text) ?? 0,
-                  reps: int.tryParse(repsCtrl.text) ?? 0,
-                  weight: double.tryParse(weightCtrl.text) ?? 0,
-                  youtubeUrl: urlCtrl.text.isEmpty ? null : urlCtrl.text,
-                  imagePaths: tempImagePaths,
-                  equipmentNumber: equipCtrl.text.isEmpty
-                      ? null
-                      : equipCtrl.text,
-                );
-              });
-              Navigator.pop(ctx);
-            },
-            child: const Text('Salvar'),
-          ),
-        ],
+  Future<void> _editExercise(int index) async {
+    final result = await Navigator.push<Exercise>(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            ExerciseFormPage(initialExercise: _exercises[index]),
       ),
     );
+    if (result != null) {
+      setState(() {
+        _exercises[index] = result;
+      });
+    }
   }
 
   @override
@@ -398,6 +234,31 @@ class _WorkoutEditPageState extends ConsumerState<WorkoutEditPage> {
                         );
                       }),
                     ),
+                    const Divider(),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.event_available),
+                      title: const Text('Data de Validade'),
+                      subtitle: Text(
+                        _expiryDate == null
+                            ? 'Não definida'
+                            : DateFormat('dd/MM/yyyy').format(_expiryDate!),
+                      ),
+                      trailing: const Icon(Icons.calendar_today, size: 20),
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: _expiryDate ?? DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _expiryDate = picked;
+                          });
+                        }
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -419,16 +280,26 @@ class _WorkoutEditPageState extends ConsumerState<WorkoutEditPage> {
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
-                  title: Text(ex.name),
+                  title: Text.rich(
+                    TextSpan(
+                      children: [
+                        if (ex.equipmentNumber != null &&
+                            ex.equipmentNumber!.isNotEmpty)
+                          TextSpan(
+                            text: '#${ex.equipmentNumber} ',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        TextSpan(text: ex.name),
+                      ],
+                    ),
+                  ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('${ex.sets} x ${ex.reps} - ${ex.weight}kg'),
-                      if (ex.equipmentNumber != null)
-                        Text(
-                          'Equipamento: ${ex.equipmentNumber}',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
                       if (ex.youtubeUrl != null)
                         Text(
                           'YouTube: Sim',
@@ -441,6 +312,17 @@ class _WorkoutEditPageState extends ConsumerState<WorkoutEditPage> {
                         Text(
                           'Imagens: ${ex.imagePaths.length}',
                           style: const TextStyle(fontSize: 12),
+                        ),
+                      if (ex.technique != null && ex.technique!.isNotEmpty)
+                        Text(
+                          'Técnica: ${ex.technique}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontStyle: FontStyle.italic,
+                            color: AppColors.primary,
+                          ),
                         ),
                     ],
                   ),

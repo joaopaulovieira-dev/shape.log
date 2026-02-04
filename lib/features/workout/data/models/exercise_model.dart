@@ -26,6 +26,12 @@ class ExerciseModel extends HiveObject {
   @HiveField(6)
   final String? equipmentNumber;
 
+  @HiveField(9)
+  final String? technique;
+
+  @HiveField(8)
+  final bool isCompleted;
+
   ExerciseModel({
     required this.name,
     required this.sets,
@@ -34,6 +40,8 @@ class ExerciseModel extends HiveObject {
     this.youtubeUrl,
     this.imagePaths = const [],
     this.equipmentNumber,
+    this.technique,
+    this.isCompleted = false,
   });
 
   factory ExerciseModel.fromEntity(Exercise exercise) {
@@ -45,6 +53,8 @@ class ExerciseModel extends HiveObject {
       youtubeUrl: exercise.youtubeUrl,
       imagePaths: exercise.imagePaths,
       equipmentNumber: exercise.equipmentNumber,
+      technique: exercise.technique,
+      isCompleted: exercise.isCompleted,
     );
   }
 
@@ -57,6 +67,8 @@ class ExerciseModel extends HiveObject {
       youtubeUrl: youtubeUrl,
       imagePaths: imagePaths,
       equipmentNumber: equipmentNumber,
+      technique: technique,
+      isCompleted: isCompleted,
     );
   }
 }

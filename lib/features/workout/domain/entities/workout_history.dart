@@ -8,6 +8,8 @@ class WorkoutHistory {
   final int durationMinutes;
   final List<Exercise> exercises; // Snapshot of what was actually done
   final String notes;
+  final DateTime? startTime;
+  final double completionPercentage;
 
   const WorkoutHistory({
     required this.id,
@@ -17,5 +19,7 @@ class WorkoutHistory {
     required this.durationMinutes,
     required this.exercises,
     required this.notes,
+    this.startTime,
+    this.completionPercentage = 0,
   });
 }

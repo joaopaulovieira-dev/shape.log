@@ -6,15 +6,18 @@ import '../../features/workout/presentation/pages/workout_list_page.dart';
 import '../../features/workout/presentation/pages/workout_edit_page.dart';
 import '../../features/workout/presentation/pages/workout_details_page.dart';
 import '../../features/workout/presentation/pages/exercise_details_page.dart';
+import '../../features/workout/presentation/pages/exercise_edit_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
+import '../../features/splash/presentation/pages/splash_page.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/',
+    initialLocation: '/splash',
     routes: [
+      GoRoute(path: '/splash', builder: (context, state) => const SplashPage()),
       ShellRoute(
         builder: (context, state, child) {
           return ScaffoldWithBottomNavBar(child: child);
@@ -55,6 +58,22 @@ final routerProvider = Provider<GoRouter>((ref) {
                         exerciseIndex: index,
                       );
                     },
+                    routes: [
+                      GoRoute(
+                        path: 'edit',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) {
+                          final workoutId = state.pathParameters['id']!;
+                          final index = int.parse(
+                            state.pathParameters['exerciseIndex']!,
+                          );
+                          return ExerciseEditPage(
+                            workoutId: workoutId,
+                            exerciseIndex: index,
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/workout_provider.dart';
+import 'package:shape_log/core/constants/app_colors.dart';
 
 class ExerciseDetailsPage extends ConsumerWidget {
   final String workoutId;
@@ -39,12 +40,29 @@ class ExerciseDetailsPage extends ConsumerWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(exercise.name),
+            title: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(text: exercise.name),
+                  if (exercise.equipmentNumber != null &&
+                      exercise.equipmentNumber!.isNotEmpty)
+                    TextSpan(
+                      text: ' #${exercise.equipmentNumber}',
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                ],
+              ),
+            ),
             actions: [
               IconButton(
                 icon: const Icon(Icons.edit),
                 onPressed: () {
-                  context.push('/workouts/$workoutId/edit');
+                  context.push(
+                    '/workouts/$workoutId/exercises/$exerciseIndex/edit',
+                  );
                 },
               ),
             ],
@@ -107,18 +125,29 @@ class ExerciseDetailsPage extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (exercise.equipmentNumber != null) ...[
-                        _buildInfoRow(
-                          'Equipamento',
-                          '#${exercise.equipmentNumber}',
-                        ),
-                        const Divider(),
-                      ],
                       _buildInfoRow('Séries', '${exercise.sets}'),
                       const Divider(),
                       _buildInfoRow('Repetições', '${exercise.reps}'),
                       const Divider(),
                       _buildInfoRow('Carga', '${exercise.weight} kg'),
+                      if (exercise.technique != null &&
+                          exercise.technique!.isNotEmpty) ...[
+                        const Divider(),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Técnica / Observações:',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          exercise.technique!,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ],
                       const Divider(),
                       if (exercise.youtubeUrl != null &&
                           exercise.youtubeUrl!.isNotEmpty) ...[

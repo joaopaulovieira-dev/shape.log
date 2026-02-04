@@ -25,6 +25,12 @@ class WorkoutHiveModel extends HiveObject {
   @HiveField(5)
   final List<ExerciseModel> exercises;
 
+  @HiveField(6)
+  final DateTime? activeStartTime;
+
+  @HiveField(7)
+  final DateTime? expiryDate;
+
   WorkoutHiveModel({
     required this.id,
     required this.name,
@@ -32,6 +38,8 @@ class WorkoutHiveModel extends HiveObject {
     required this.targetDurationMinutes,
     required this.notes,
     required this.exercises,
+    this.activeStartTime,
+    this.expiryDate,
   });
 
   factory WorkoutHiveModel.fromEntity(Workout workout) {
@@ -44,6 +52,8 @@ class WorkoutHiveModel extends HiveObject {
       exercises: workout.exercises
           .map((e) => ExerciseModel.fromEntity(e))
           .toList(),
+      activeStartTime: workout.activeStartTime,
+      expiryDate: workout.expiryDate,
     );
   }
 
@@ -55,6 +65,8 @@ class WorkoutHiveModel extends HiveObject {
       targetDurationMinutes: targetDurationMinutes,
       notes: notes,
       exercises: exercises.map((e) => e.toEntity()).toList(),
+      activeStartTime: activeStartTime,
+      expiryDate: expiryDate,
     );
   }
 }

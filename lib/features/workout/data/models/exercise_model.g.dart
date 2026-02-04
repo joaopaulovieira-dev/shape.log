@@ -24,13 +24,15 @@ class ExerciseModelAdapter extends TypeAdapter<ExerciseModel> {
       youtubeUrl: fields[4] as String?,
       imagePaths: (fields[7] as List).cast<String>(),
       equipmentNumber: fields[6] as String?,
+      technique: fields[9] as String?,
+      isCompleted: fields[8] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, ExerciseModel obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -44,7 +46,11 @@ class ExerciseModelAdapter extends TypeAdapter<ExerciseModel> {
       ..writeByte(7)
       ..write(obj.imagePaths)
       ..writeByte(6)
-      ..write(obj.equipmentNumber);
+      ..write(obj.equipmentNumber)
+      ..writeByte(9)
+      ..write(obj.technique)
+      ..writeByte(8)
+      ..write(obj.isCompleted);
   }
 
   @override

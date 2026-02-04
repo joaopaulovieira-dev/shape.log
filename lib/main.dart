@@ -5,6 +5,7 @@ import 'core/theme/app_theme.dart';
 
 import 'package:hive_flutter/hive_flutter.dart';
 import 'features/workout/data/models/workout_hive_model.dart';
+import 'features/workout/data/models/workout_history_hive_model.dart';
 import 'features/workout/data/models/exercise_model.dart';
 import 'features/workout/data/models/workout_enums_adapter.dart';
 
@@ -19,18 +20,20 @@ void main() async {
   Hive.registerAdapter(WorkoutStatusHiveAdapter());
   Hive.registerAdapter(ExerciseModelAdapter());
   Hive.registerAdapter(WorkoutHiveModelAdapter());
+  Hive.registerAdapter(WorkoutHistoryHiveModelAdapter());
 
   // Open Box
   try {
     await Hive.openBox<WorkoutHiveModel>('routines');
+    await Hive.openBox<WorkoutHistoryHiveModel>('history_log');
   } catch (e) {
-    // If opening fails (e.g. schema mismatch), delete the box and try again
+    // If opening fails (e.g. schema mismatch), delete boxes and try again
     try {
       await Hive.deleteBoxFromDisk('routines');
-    } catch (_) {
-      // Ignore errors during deletion (e.g. files already missing)
-    }
+      await Hive.deleteBoxFromDisk('history_log');
+    } catch (_) {}
     await Hive.openBox<WorkoutHiveModel>('routines');
+    await Hive.openBox<WorkoutHistoryHiveModel>('history_log');
   }
 
   runApp(

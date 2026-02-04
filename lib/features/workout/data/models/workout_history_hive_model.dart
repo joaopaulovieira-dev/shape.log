@@ -27,6 +27,12 @@ class WorkoutHistoryHiveModel extends HiveObject {
   @HiveField(6)
   final String notes;
 
+  @HiveField(7)
+  final DateTime? startTime;
+
+  @HiveField(8)
+  final double completionPercentage;
+
   WorkoutHistoryHiveModel({
     required this.id,
     required this.workoutId,
@@ -35,6 +41,8 @@ class WorkoutHistoryHiveModel extends HiveObject {
     required this.durationMinutes,
     required this.exercises,
     required this.notes,
+    this.startTime,
+    this.completionPercentage = 0,
   });
 
   factory WorkoutHistoryHiveModel.fromEntity(WorkoutHistory history) {
@@ -48,6 +56,8 @@ class WorkoutHistoryHiveModel extends HiveObject {
           .map((e) => ExerciseModel.fromEntity(e))
           .toList(),
       notes: history.notes,
+      startTime: history.startTime,
+      completionPercentage: history.completionPercentage,
     );
   }
 
@@ -60,6 +70,8 @@ class WorkoutHistoryHiveModel extends HiveObject {
       durationMinutes: durationMinutes,
       exercises: exercises.map((e) => e.toEntity()).toList(),
       notes: notes,
+      startTime: startTime,
+      completionPercentage: completionPercentage,
     );
   }
 }

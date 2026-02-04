@@ -25,13 +25,15 @@ class WorkoutHistoryHiveModelAdapter
       durationMinutes: fields[4] as int,
       exercises: (fields[5] as List).cast<ExerciseModel>(),
       notes: fields[6] as String,
+      startTime: fields[7] as DateTime?,
+      completionPercentage: fields[8] as double,
     );
   }
 
   @override
   void write(BinaryWriter writer, WorkoutHistoryHiveModel obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -45,7 +47,11 @@ class WorkoutHistoryHiveModelAdapter
       ..writeByte(5)
       ..write(obj.exercises)
       ..writeByte(6)
-      ..write(obj.notes);
+      ..write(obj.notes)
+      ..writeByte(7)
+      ..write(obj.startTime)
+      ..writeByte(8)
+      ..write(obj.completionPercentage);
   }
 
   @override

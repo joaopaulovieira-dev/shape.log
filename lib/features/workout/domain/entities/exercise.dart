@@ -6,6 +6,8 @@ class Exercise {
   final String? youtubeUrl;
   final List<String> imagePaths;
   final String? equipmentNumber;
+  final String? technique;
+  final bool isCompleted;
 
   const Exercise({
     required this.name,
@@ -15,5 +17,7 @@ class Exercise {
     this.youtubeUrl,
     this.imagePaths = const [],
     this.equipmentNumber,
+    this.technique,
+    this.isCompleted = false,
   });
 }

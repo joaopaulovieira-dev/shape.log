@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/workout_provider.dart';
+import 'package:shape_log/core/constants/app_colors.dart';
 
 class WorkoutListPage extends ConsumerWidget {
   const WorkoutListPage({super.key});
@@ -13,13 +14,7 @@ class WorkoutListPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Image.asset('assets/icon/logo.png', height: 32),
-            const SizedBox(width: 12),
-            const Text('Shape.log'),
-          ],
-        ),
+        title: const Text('Treinos'),
         // Report logic temporarily disabled until History UI is ready
       ),
       body: routinesAsyncVal.when(
@@ -56,6 +51,12 @@ class WorkoutListPage extends ConsumerWidget {
                             })
                             .join(', ');
 
+                  final now = DateTime.now();
+                  final isToday = routine.scheduledDays.contains(now.weekday);
+                  final isExpired =
+                      routine.expiryDate != null &&
+                      routine.expiryDate!.isBefore(now);
+
                   return Dismissible(
                     key: ValueKey(routine.id),
                     direction: DismissDirection.endToStart,
@@ -76,20 +77,81 @@ class WorkoutListPage extends ConsumerWidget {
                         );
                       }
                     },
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        child: Text(
-                          routine.name.isNotEmpty
-                              ? routine.name[0].toUpperCase()
-                              : '?',
-                        ),
+                    child: Card(
+                      color: isToday
+                          ? AppColors.primary.withOpacity(0.1)
+                          : AppColors.surface,
+                      shape: isToday
+                          ? RoundedRectangleBorder(
+                              side: const BorderSide(
+                                color: AppColors.primary,
+                                width: 1,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            )
+                          : RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                      elevation: isToday ? 4 : 0,
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
                       ),
-                      title: Text(routine.name),
-                      subtitle: Text(daysStr),
-                      trailing: Text('${routine.targetDurationMinutes} min'),
-                      onTap: () {
-                        context.go('/workouts/${routine.id}');
-                      },
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: isToday
+                              ? AppColors.primary
+                              : Colors.white12,
+                          foregroundColor: isToday
+                              ? Colors.black
+                              : AppColors.textPrimary,
+                          child: Text(
+                            routine.name.isNotEmpty
+                                ? routine.name[0].toUpperCase()
+                                : '?',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        title: Row(
+                          children: [
+                            Text(
+                              routine.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            if (isToday) ...[
+                              const SizedBox(width: 8),
+                              _buildBadge(
+                                'HOJE',
+                                AppColors.primary,
+                                Colors.black,
+                              ),
+                            ],
+                            if (isExpired) ...[
+                              const SizedBox(width: 8),
+                              _buildBadge(
+                                'VENCIDO',
+                                AppColors.error,
+                                Colors.white,
+                              ),
+                            ],
+                          ],
+                        ),
+                        subtitle: Text(
+                          daysStr,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        trailing: Text(
+                          '${routine.targetDurationMinutes} min',
+                          style: const TextStyle(color: AppColors.primary),
+                        ),
+                        onTap: () {
+                          context.go('/workouts/${routine.id}');
+                        },
+                      ),
                     ),
                   );
                 },
@@ -102,6 +164,24 @@ class WorkoutListPage extends ConsumerWidget {
           context.go('/workouts/add');
         },
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildBadge(String label, Color bgColor, Color textColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
