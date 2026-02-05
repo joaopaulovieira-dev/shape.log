@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:body_part_selector/body_part_selector.dart';
+import '../../../image_library/presentation/image_source_sheet.dart';
 import '../../domain/entities/body_measurement.dart';
 import '../providers/body_tracker_provider.dart';
 import '../widgets/bmi_gauge.dart';
@@ -81,25 +81,6 @@ class _BodyMeasurementEntryPageState
     _shouldersController.addListener(_updateFilledParts);
     _forearmRightController.addListener(_updateFilledParts);
     _forearmLeftController.addListener(_updateFilledParts);
-    _retrieveLostData();
-  }
-
-  Future<void> _retrieveLostData() async {
-    final ImagePicker picker = ImagePicker();
-    final LostDataResponse response = await picker.retrieveLostData();
-    if (response.isEmpty) {
-      return;
-    }
-    if (response.file != null) {
-      if (mounted) {
-        setState(() {
-          _imagePaths.add(response.file!.path);
-        });
-      }
-    } else {
-      // Handle error if needed
-      debugPrint(response.exception?.code);
-    }
   }
 
   void _loadExistingMeasurement(BodyMeasurement measurement) {
@@ -723,6 +704,7 @@ class _BodyMeasurementEntryPageState
                 ),
               ),
               const SizedBox(height: 8),
+              const SizedBox(height: 8),
               if (_imagePaths.isNotEmpty)
                 SizedBox(
                   height: 120,
@@ -762,38 +744,30 @@ class _BodyMeasurementEntryPageState
                   ),
                 ),
               const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  TextButton.icon(
-                    onPressed: () async {
-                      final picker = ImagePicker();
-                      final List<XFile> images = await picker.pickMultiImage();
-                      if (images.isNotEmpty) {
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    await showModalBottomSheet(
+                      context: context,
+                      builder: (context) =>
+                          const ImageSourceSheet(showLibrary: false),
+                    ).then((files) {
+                      if (files != null && files is List<File>) {
                         setState(() {
-                          _imagePaths.addAll(images.map((e) => e.path));
+                          _imagePaths.addAll(files.map((e) => e.path));
                         });
                       }
-                    },
-                    icon: const Icon(Icons.photo_library),
-                    label: const Text('Galeria'),
+                    });
+                  },
+                  icon: const Icon(Icons.add_a_photo),
+                  label: const Text('Adicionar Foto'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 32,
+                    ),
                   ),
-                  TextButton.icon(
-                    onPressed: () async {
-                      final picker = ImagePicker();
-                      final XFile? image = await picker.pickImage(
-                        source: ImageSource.camera,
-                      );
-                      if (image != null) {
-                        setState(() {
-                          _imagePaths.add(image.path);
-                        });
-                      }
-                    },
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text('Câmera'),
-                  ),
-                ],
+                ),
               ),
 
               const SizedBox(height: 40),

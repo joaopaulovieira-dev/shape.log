@@ -30,7 +30,11 @@ class ExerciseModel extends HiveObject {
   final String? technique;
 
   @HiveField(8)
+  @HiveField(8)
   final bool isCompleted;
+
+  @HiveField(10)
+  final int restTimeSeconds;
 
   ExerciseModel({
     required this.name,
@@ -42,6 +46,7 @@ class ExerciseModel extends HiveObject {
     this.equipmentNumber,
     this.technique,
     this.isCompleted = false,
+    this.restTimeSeconds = 60,
   });
 
   factory ExerciseModel.fromEntity(Exercise exercise) {
@@ -55,6 +60,7 @@ class ExerciseModel extends HiveObject {
       equipmentNumber: exercise.equipmentNumber,
       technique: exercise.technique,
       isCompleted: exercise.isCompleted,
+      restTimeSeconds: exercise.restTimeSeconds,
     );
   }
 
@@ -69,6 +75,7 @@ class ExerciseModel extends HiveObject {
       equipmentNumber: equipmentNumber,
       technique: technique,
       isCompleted: isCompleted,
+      restTimeSeconds: restTimeSeconds,
     );
   }
 
@@ -83,6 +90,7 @@ class ExerciseModel extends HiveObject {
       'equipmentNumber': equipmentNumber,
       'technique': technique,
       'isCompleted': isCompleted,
+      'restTimeSeconds': restTimeSeconds,
     };
   }
 
@@ -97,6 +105,7 @@ class ExerciseModel extends HiveObject {
       equipmentNumber: map['equipmentNumber'],
       technique: map['technique'],
       isCompleted: map['isCompleted'] ?? false,
+      restTimeSeconds: map['restTimeSeconds'] ?? 60,
     );
   }
 }

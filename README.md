@@ -8,15 +8,17 @@
 - **Criação de Rotinas**: Crie treinos personalizados (ex: "Treino A - Peito e Tríceps").
 - **Importação Flexível (AI-Pipeline)**: Importe treinos gerados por IA (ChatGPT/Gemini) via arquivos `.json` ou colando o texto diretamente.
 - **Sanitização Inteligente**: O app gera novos IDs automaticamente, limpa caminhos de imagem externos e reseta datas para evitar conflitos.
-- **Registro de Exercícios**: Adicione exercícios com detalhes de Séries, Repetições, Carga e Descanso.
+- **Registro de Exercícios**: Adicione exercícios com detalhes de Séries, Repetições, Carga, **Tempo de Descanso** e Técnica.
+- **Timer de Descanso**: Configure o tempo de descanso individual por exercício (padrão 60s), com slider e chips de seleção rápida.
 - **Histórico de Execução**: Marque treinos como concluídos e acompanhe logs passados.
 - **Interface Polida**: Títulos de treinos longos utilizam efeito *Marquee* (texto deslizante) para visibilidade completa.
 
 ### 2. Monitoramento de Medidas (Body Tracker)
 - **Cyber-Bio Scanner (Mapa Corporal Interativo)**: Interface visual 3D-like onde você toca na parte do corpo (ex: Bíceps, Coxa) para registrar a medida.
-- **Registro de Fotos de Progresso**: Adicione múltiplas fotos via galeria ou câmera para cada medição, permitindo o acompanhamento visual da evolução.
+- **Seleção Multi-imagem**: Adicione múltiplas fotos de progresso simultaneamente via Galeria.
+- **Interface Unificada**: Fluxo de adição de fotos padronizado entre Treinos e Medidas.
 - **Animações Fluidas**: Feedback visual com animações de "scanning" ao selecionar áreas.
-- **Histórico Visul**: Visualize as fotos diretamente no histórico de medidas ao expandir os registros.
+- **Histórico Visual**: Visualize as fotos diretamente no histórico de medidas ao expandir os registros.
 - **Filtros Inteligentes**: Visualize a evolução nos últimos 7, 30 ou 90 dias.
 
 ### 3. Perfil Biológico (Bio-Data Source of Truth)
@@ -29,9 +31,24 @@
 - **Navegação Intuitiva**: Barra de navegação inferior persistente e rotas fluidas.
 - **Inputs Otimizados**: Uso de Sliders, Chips e Segmented Buttons para facilitar a entrada de dados.
 
+### 5. Biblioteca de Ativos (Assets Library)
+- **Importação de Pacotes**: Importe arquivos `.zip` contendo centenas de imagens de equipamentos ou execução.
+- **Super Picker**: Ao adicionar fotos aos exercícios, escolha entre **Câmera**, **Galeria** ou a **Biblioteca Interna**.
+- **Busca Rápida**: Filtre equipamentos pelo nome diretamente no seletor, agilizando a montagem de treinos visuais.
+
+### 6. Sistema de Backup & Restore Completo
+- **Backup Unificado**: Gera um arquivo `.zip` contendo todo o banco de dados (treinos, histórico, perfil) E todas as custom images (Asset Library + Fotos do Body Tracker).
+- **Portabilidade**: Salve seus backups em qualquer lugar (Google Drive, WhatsApp, Local).
+- **Restauração Simples**: Importe o arquivo zip para restaurar o estado exato do app.
+
+### 7. Detalhes de Exercício Premium
+- **Informação Rica**: Visualização clara de Séries, Repetições, Carga e **Descanso**.
+- **Ajuda Interativa**: Ícones de informação com Tooltips explicativos para cada campo.
+- **Integração YouTube**: Card premium com gradiente para "Assistir Tutorial", incentivando a execução correta.
+
 ---
 
-## � Padrão de Importação JSON (AI-Ready)
+## 🤖 Padrão de Importação JSON (AI-Ready)
 
 Para que o sistema de importação funcione corretamente (via arquivo ou texto), o JSON deve seguir a estrutura abaixo. O app é flexível e aceita tanto uma lista direta `[]` quanto um objeto contendo a chave `"workouts"`.
 
@@ -40,18 +57,19 @@ Para que o sistema de importação funcione corretamente (via arquivo ou texto),
 {
   "workouts": [
     {
-      "name": "Nome do Treino",
+      "name": "Nome do Treino (ex: Treino A - Peitoral)",
       "scheduledDays": [1, 3, 5],
       "targetDurationMinutes": 60,
-      "notes": "Observações gerais",
+      "notes": "Foco em progressão de carga",
       "exercises": [
         {
-          "name": "Nome do Exercício",
+          "name": "Supino Reto",
           "sets": 4,
-          "reps": "12",
+          "reps": "8-10",
           "weight": 30.0,
-          "technique": "Opcional: Instrução técnica",
-          "equipmentNumber": "Opcional: ID da máquina"
+          "restTime": 90,
+          "technique": "Cadência 3-0-1",
+          "equipmentNumber": "12"
         }
       ]
     }
@@ -63,6 +81,7 @@ Para que o sistema de importação funcione corretamente (via arquivo ou texto),
 - **`scheduledDays`**: Lista de números de 1 (Segunda) a 7 (Domingo).
 - **`reps`**: Aceita números (`12`) ou strings para intervalos (`"10-12"`).
 - **`weight`**: Valor numérico (double/float) representando o peso em kg.
+- **`restTime`** (ou `restSeconds`): Tempo de descanso em segundos (ex: `60`, `90`). Padrão: 60s.
 - **Sanitização Automática**: Os campos `id`, `imagePaths` e `activeStartTime` são gerados ou resetados pelo app, portanto, não precisam ser enviados no JSON.
 
 ---

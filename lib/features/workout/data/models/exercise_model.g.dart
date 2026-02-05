@@ -26,13 +26,14 @@ class ExerciseModelAdapter extends TypeAdapter<ExerciseModel> {
       equipmentNumber: fields[6] as String?,
       technique: fields[9] as String?,
       isCompleted: fields[8] as bool,
+      restTimeSeconds: fields[10] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, ExerciseModel obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -50,7 +51,9 @@ class ExerciseModelAdapter extends TypeAdapter<ExerciseModel> {
       ..writeByte(9)
       ..write(obj.technique)
       ..writeByte(8)
-      ..write(obj.isCompleted);
+      ..write(obj.isCompleted)
+      ..writeByte(10)
+      ..write(obj.restTimeSeconds);
   }
 
   @override

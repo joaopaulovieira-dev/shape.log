@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:io';
 import 'package:uuid/uuid.dart';
+import 'package:marquee/marquee.dart';
 
 import '../../domain/entities/workout.dart';
 import '../../domain/entities/exercise.dart';
@@ -74,7 +75,26 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(workout.name),
+            title: SizedBox(
+              height: 50,
+              child: Marquee(
+                text: workout.name,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                scrollAxis: Axis.horizontal,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                blankSpace: 20.0,
+                velocity: 30.0,
+                pauseAfterRound: const Duration(seconds: 1),
+                startPadding: 10.0,
+                accelerationDuration: const Duration(seconds: 1),
+                accelerationCurve: Curves.linear,
+                decelerationDuration: const Duration(milliseconds: 500),
+                decelerationCurve: Curves.easeOut,
+              ),
+            ),
             actions: [
               IconButton(
                 icon: const Icon(Icons.edit),

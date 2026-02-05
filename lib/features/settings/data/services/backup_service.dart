@@ -86,7 +86,19 @@ class BackupService {
       }
       processImages(backupData['measurements']);
 
-      // 3. Add JSON data
+      // 3. Process Asset Library
+      final libraryDir = Directory('${directory.path}/image_library');
+      if (await libraryDir.exists()) {
+        final libraryFiles = libraryDir.listSync();
+        for (var entity in libraryFiles) {
+          if (entity is File) {
+            final name = p.basename(entity.path);
+            encoder.addFile(entity, 'library/$name');
+          }
+        }
+      }
+
+      // 4. Add JSON data
       final jsonString = jsonEncode(backupData);
       final tempJsonFile = File('${directory.path}/backup_data.json');
       await tempJsonFile.writeAsString(jsonString);
@@ -95,7 +107,7 @@ class BackupService {
       encoder.close();
       await tempJsonFile.delete();
 
-      // 4. Share
+      // 5. Share
       final result = await Share.shareXFiles([
         XFile(zipFilePath, mimeType: 'application/zip', name: fileName),
       ], subject: 'Shape.log Full Backup - $dateStr $timeStr');
@@ -146,20 +158,37 @@ class BackupService {
         await imageDir.create(recursive: true);
       }
 
-      // 4. Extract Images
+      // 5. Extract Images & Library
+      final libraryDir = Directory('${appDir.path}/image_library');
+      if (!await libraryDir.exists()) {
+        await libraryDir.create(recursive: true);
+      }
+
       final imageMapping = <String, String>{};
       for (final file in archive) {
-        if (file.isFile && file.name.startsWith('images/')) {
-          final fileName = p.basename(file.name);
-          final destinationFile = File('${imageDir.path}/$fileName');
-          final content = file.content;
-          if (content is List<int>) {
-            await destinationFile.writeAsBytes(content);
-          } else if (content is InputStreamBase) {
-            final bytes = content.toUint8List();
-            await destinationFile.writeAsBytes(bytes);
+        if (file.isFile) {
+          if (file.name.startsWith('images/')) {
+            final fileName = p.basename(file.name);
+            final destinationFile = File('${imageDir.path}/$fileName');
+            final content = file.content;
+            if (content is List<int>) {
+              await destinationFile.writeAsBytes(content);
+            } else if (content is InputStreamBase) {
+              final bytes = content.toUint8List();
+              await destinationFile.writeAsBytes(bytes);
+            }
+            imageMapping[file.name] = destinationFile.path;
+          } else if (file.name.startsWith('library/')) {
+            final fileName = p.basename(file.name);
+            final destinationFile = File('${libraryDir.path}/$fileName');
+            final content = file.content;
+            if (content is List<int>) {
+              await destinationFile.writeAsBytes(content);
+            } else if (content is InputStreamBase) {
+              final bytes = content.toUint8List();
+              await destinationFile.writeAsBytes(bytes);
+            }
           }
-          imageMapping[file.name] = destinationFile.path;
         }
       }
       inputStream.close();

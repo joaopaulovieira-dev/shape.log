@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import '../../../image_library/presentation/image_source_sheet.dart';
 import '../../domain/entities/exercise.dart';
 
 class ExerciseFormPage extends StatefulWidget {
@@ -22,6 +22,7 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
   late TextEditingController _urlController;
   late TextEditingController _equipController;
   late TextEditingController _techniqueController;
+  int _restTime = 60;
   List<String> _imagePaths = [];
 
   @override
@@ -37,6 +38,7 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
     _urlController = TextEditingController(text: ex?.youtubeUrl ?? '');
     _equipController = TextEditingController(text: ex?.equipmentNumber ?? '');
     _techniqueController = TextEditingController(text: ex?.technique ?? '');
+    _restTime = ex?.restTimeSeconds ?? 60;
     _imagePaths = ex != null ? List.from(ex.imagePaths) : [];
   }
 
@@ -69,6 +71,7 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
           ? null
           : _techniqueController.text,
       isCompleted: widget.initialExercise?.isCompleted ?? false,
+      restTimeSeconds: _restTime,
     );
 
     Navigator.pop(context, exercise);
@@ -161,6 +164,60 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
               maxLines: 3,
             ),
             const SizedBox(height: 24),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Tempo de Descanso',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  '${(_restTime ~/ 60).toString().padLeft(2, '0')}:${(_restTime % 60).toString().padLeft(2, '0')} min',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [30, 45, 60, 90, 120, 180].map((time) {
+                  final isSelected = _restTime == time;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(time >= 60 ? '${time ~/ 60}m' : '${time}s'),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        if (selected) {
+                          setState(() {
+                            _restTime = time;
+                          });
+                        }
+                      },
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            Slider(
+              value: _restTime.toDouble(),
+              min: 0,
+              max: 300,
+              divisions: 20,
+              label: '${_restTime}s',
+              onChanged: (value) {
+                setState(() {
+                  _restTime = value.toInt();
+                });
+              },
+            ),
+            const SizedBox(height: 24),
             const Text(
               'Imagens',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -204,38 +261,29 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
                 ),
               ),
             const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                TextButton.icon(
-                  onPressed: () async {
-                    final picker = ImagePicker();
-                    final List<XFile> images = await picker.pickMultiImage();
-                    if (images.isNotEmpty) {
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  await showModalBottomSheet(
+                    context: context,
+                    builder: (context) => const ImageSourceSheet(),
+                  ).then((files) {
+                    if (files != null && files is List<File>) {
                       setState(() {
-                        _imagePaths.addAll(images.map((e) => e.path));
+                        _imagePaths.addAll(files.map((e) => e.path));
                       });
                     }
-                  },
-                  icon: const Icon(Icons.photo_library),
-                  label: const Text('Galeria'),
+                  });
+                },
+                icon: const Icon(Icons.add_a_photo),
+                label: const Text('Adicionar Foto'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 32,
+                  ),
                 ),
-                TextButton.icon(
-                  onPressed: () async {
-                    final picker = ImagePicker();
-                    final XFile? image = await picker.pickImage(
-                      source: ImageSource.camera,
-                    );
-                    if (image != null) {
-                      setState(() {
-                        _imagePaths.add(image.path);
-                      });
-                    }
-                  },
-                  icon: const Icon(Icons.camera_alt),
-                  label: const Text('Câmera'),
-                ),
-              ],
+              ),
             ),
           ],
         ),

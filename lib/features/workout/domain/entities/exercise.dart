@@ -8,6 +8,7 @@ class Exercise {
   final String? equipmentNumber;
   final String? technique;
   final bool isCompleted;
+  final int restTimeSeconds;
 
   const Exercise({
     required this.name,
@@ -19,5 +20,6 @@ class Exercise {
     this.equipmentNumber,
     this.technique,
     this.isCompleted = false,
+    this.restTimeSeconds = 60,
   });
 }

@@ -7,6 +7,7 @@ import '../../body_tracker/presentation/providers/body_tracker_provider.dart';
 import '../../workout/presentation/providers/workout_provider.dart';
 import '../data/services/backup_service.dart';
 import '../data/repositories/settings_repository.dart';
+import '../../image_library/presentation/image_library_settings_page.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -54,6 +55,21 @@ class SettingsPage extends ConsumerWidget {
             clipBehavior: Clip.antiAlias,
             child: Column(
               children: [
+                ListTile(
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('Biblioteca de Ativos'),
+                  subtitle: const Text('Gerenciar imagens de equipamentos'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ImageLibrarySettingsPage(),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.info_outline),
                   title: const Text('Sobre'),

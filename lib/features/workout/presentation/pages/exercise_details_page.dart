@@ -135,14 +135,34 @@ class ExerciseDetailsPage extends ConsumerWidget {
                         _buildInfoRow(
                           'Equipamento',
                           '#${exercise.equipmentNumber}',
+                          helpText: 'Número da máquina/equipamento na academia',
                         ),
                         const Divider(),
                       ],
-                      _buildInfoRow('Séries', '${exercise.sets}'),
+                      _buildInfoRow(
+                        'Séries',
+                        '${exercise.sets}',
+                        helpText:
+                            'Número de vezes que o exercício será realizado',
+                      ),
                       const Divider(),
-                      _buildInfoRow('Repetições', '${exercise.reps}'),
+                      _buildInfoRow(
+                        'Repetições',
+                        '${exercise.reps}',
+                        helpText: 'Quantidade de movimentos por série',
+                      ),
                       const Divider(),
-                      _buildInfoRow('Carga', '${exercise.weight} kg'),
+                      _buildInfoRow(
+                        'Carga',
+                        '${exercise.weight} kg',
+                        helpText: 'Peso utilizado no exercício (kg)',
+                      ),
+                      const Divider(),
+                      _buildInfoRow(
+                        'Descanso',
+                        '${exercise.restTimeSeconds}s',
+                        helpText: 'Tempo de intervalo entre as séries',
+                      ),
                       if (exercise.technique != null &&
                           exercise.technique!.isNotEmpty) ...[
                         const Divider(),
@@ -165,33 +185,82 @@ class ExerciseDetailsPage extends ConsumerWidget {
                       if (exercise.youtubeUrl != null &&
                           exercise.youtubeUrl!.isNotEmpty) ...[
                         const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: () async {
-                            final url = Uri.parse(exercise.youtubeUrl!);
-                            if (await canLaunchUrl(url)) {
-                              await launchUrl(
-                                url,
-                                mode: LaunchMode.externalApplication,
-                              );
-                            } else {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Não foi possível abrir o link.',
-                                    ),
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                          icon: const Icon(
-                            Icons.play_circle_fill,
-                            color: Colors.red,
+                        const SizedBox(height: 24),
+                        Container(
+                          width: double.infinity,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFD32F2F), Color(0xFFB71C1C)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.red.withOpacity(0.4),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          label: const Text('Ver no YouTube'),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: () async {
+                                final url = Uri.parse(exercise.youtubeUrl!);
+                                if (await canLaunchUrl(url)) {
+                                  await launchUrl(
+                                    url,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                } else {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Não foi possível abrir o link.',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.play_circle_filled_rounded,
+                                    color: Colors.white,
+                                    size: 32,
+                                  ),
+                                  SizedBox(width: 12),
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Assistir Tutorial',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Toque para abrir no YouTube',
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -209,15 +278,35 @@ class ExerciseDetailsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(String label, String value, {String? helpText}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+          Row(
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              if (helpText != null) ...[
+                const SizedBox(width: 8),
+                Tooltip(
+                  message: helpText,
+                  triggerMode: TooltipTriggerMode.tap,
+                  showDuration: const Duration(seconds: 3),
+                  child: const Icon(
+                    Icons.info_outline,
+                    size: 20,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ],
           ),
           Text(
             value,
