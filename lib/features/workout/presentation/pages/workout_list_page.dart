@@ -79,7 +79,7 @@ class WorkoutListPage extends ConsumerWidget {
                     },
                     child: Card(
                       color: isToday
-                          ? AppColors.primary.withOpacity(0.1)
+                          ? AppColors.primary.withValues(alpha: 0.1)
                           : AppColors.surface,
                       shape: isToday
                           ? RoundedRectangleBorder(
@@ -87,17 +87,21 @@ class WorkoutListPage extends ConsumerWidget {
                                 color: AppColors.primary,
                                 width: 1,
                               ),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(16),
                             )
                           : RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(16),
                             ),
                       elevation: isToday ? 4 : 0,
                       margin: const EdgeInsets.symmetric(
                         horizontal: 8,
-                        vertical: 4,
+                        vertical: 8,
                       ),
                       child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 24,
+                          horizontal: 16,
+                        ),
                         leading: CircleAvatar(
                           backgroundColor: isToday
                               ? AppColors.primary

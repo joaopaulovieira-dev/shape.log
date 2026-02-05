@@ -126,7 +126,7 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
             children: [
               if (isExpired)
                 Card(
-                  color: AppColors.error.withOpacity(0.1),
+                  color: AppColors.error.withValues(alpha: 0.1),
                   margin: const EdgeInsets.only(bottom: 16),
                   shape: RoundedRectangleBorder(
                     side: const BorderSide(color: AppColors.error),
