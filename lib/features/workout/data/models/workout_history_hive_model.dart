@@ -74,4 +74,38 @@ class WorkoutHistoryHiveModel extends HiveObject {
       completionPercentage: completionPercentage,
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'workoutId': workoutId,
+      'workoutName': workoutName,
+      'completedDate': completedDate.toIso8601String(),
+      'durationMinutes': durationMinutes,
+      'exercises': exercises.map((e) => e.toMap()).toList(),
+      'notes': notes,
+      'startTime': startTime?.toIso8601String(),
+      'completionPercentage': completionPercentage,
+    };
+  }
+
+  factory WorkoutHistoryHiveModel.fromMap(Map<String, dynamic> map) {
+    return WorkoutHistoryHiveModel(
+      id: map['id'] ?? '',
+      workoutId: map['workoutId'] ?? '',
+      workoutName: map['workoutName'] ?? '',
+      completedDate: map['completedDate'] != null
+          ? DateTime.parse(map['completedDate'])
+          : DateTime.now(),
+      durationMinutes: map['durationMinutes'] ?? 0,
+      exercises: (map['exercises'] as List? ?? [])
+          .map((e) => ExerciseModel.fromMap(Map<String, dynamic>.from(e)))
+          .toList(),
+      notes: map['notes'] ?? '',
+      startTime: map['startTime'] != null
+          ? DateTime.parse(map['startTime'])
+          : null,
+      completionPercentage: (map['completionPercentage'] ?? 0.0).toDouble(),
+    );
+  }
 }

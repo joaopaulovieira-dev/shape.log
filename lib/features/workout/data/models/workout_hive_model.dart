@@ -69,4 +69,36 @@ class WorkoutHiveModel extends HiveObject {
       expiryDate: expiryDate,
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'scheduledDays': scheduledDays,
+      'targetDurationMinutes': targetDurationMinutes,
+      'notes': notes,
+      'exercises': exercises.map((e) => e.toMap()).toList(),
+      'activeStartTime': activeStartTime?.toIso8601String(),
+      'expiryDate': expiryDate?.toIso8601String(),
+    };
+  }
+
+  factory WorkoutHiveModel.fromMap(Map<String, dynamic> map) {
+    return WorkoutHiveModel(
+      id: map['id'] ?? '',
+      name: map['name'] ?? '',
+      scheduledDays: List<int>.from(map['scheduledDays'] ?? []),
+      targetDurationMinutes: map['targetDurationMinutes'] ?? 0,
+      notes: map['notes'] ?? '',
+      exercises: (map['exercises'] as List? ?? [])
+          .map((e) => ExerciseModel.fromMap(Map<String, dynamic>.from(e)))
+          .toList(),
+      activeStartTime: map['activeStartTime'] != null
+          ? DateTime.parse(map['activeStartTime'])
+          : null,
+      expiryDate: map['expiryDate'] != null
+          ? DateTime.parse(map['expiryDate'])
+          : null,
+    );
+  }
 }

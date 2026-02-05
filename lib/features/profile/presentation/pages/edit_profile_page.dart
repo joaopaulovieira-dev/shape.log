@@ -40,22 +40,25 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   @override
   void initState() {
     super.initState();
-    // Load existing data if available
+    // Initial load for when we enter the page normally
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final state = ref.read(userProfileProvider);
-      state.whenData((profile) {
-        if (profile != null) {
-          _nameController.text = profile.name;
-          _ageController.text = profile.age.toString();
-          _weightController.text = profile.targetWeight.toString();
-          setState(() {
-            _height = profile.height;
-            _activityLevel = profile.activityLevel;
-            _dietType = profile.dietType;
-            _limitations.addAll(profile.limitations);
-          });
-        }
-      });
+      state.whenData((profile) => _populateFields(profile));
+    });
+  }
+
+  void _populateFields(UserProfile? profile) {
+    if (profile == null) return;
+
+    _nameController.text = profile.name;
+    _ageController.text = profile.age.toString();
+    _weightController.text = profile.targetWeight.toString();
+    setState(() {
+      _height = profile.height;
+      _activityLevel = profile.activityLevel;
+      _dietType = profile.dietType;
+      _limitations.clear();
+      _limitations.addAll(profile.limitations);
     });
   }
 
@@ -91,12 +94,32 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final profileState = ref.watch(userProfileProvider);
+
+    // Listen for data changes (like after a restore) to re-populate fields
+    ref.listen<AsyncValue<UserProfile?>>(userProfileProvider, (previous, next) {
+      next.whenData((profile) {
+        if (profile != null) {
+          _populateFields(profile);
+        }
+      });
+    });
+
+    return profileState.when(
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, _) => Scaffold(
+        body: Center(child: Text("Erro ao carregar perfil: $error")),
+      ),
+      data: (profile) => _buildForm(context),
+    );
+  }
+
+  Widget _buildForm(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Perfil Bio-Data"),
-        leading: widget.isFirstRun
-            ? null
-            : const BackButton(), // No back on first run
+        leading: widget.isFirstRun ? null : const BackButton(),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

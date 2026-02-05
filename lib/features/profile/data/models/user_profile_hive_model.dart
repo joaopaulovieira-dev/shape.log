@@ -69,4 +69,28 @@ class UserProfileHiveModel extends HiveObject {
       ),
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'age': age,
+      'height': height,
+      'targetWeight': targetWeight,
+      'activityLevel': activityLevel,
+      'limitations': limitations,
+      'dietType': dietType,
+    };
+  }
+
+  factory UserProfileHiveModel.fromMap(Map<String, dynamic> map) {
+    return UserProfileHiveModel(
+      name: map['name'] ?? '',
+      age: map['age'] ?? 0,
+      height: (map['height'] ?? 0.0).toDouble(),
+      targetWeight: (map['targetWeight'] ?? 0.0).toDouble(),
+      activityLevel: map['activityLevel'] ?? 'moderate',
+      limitations: List<String>.from(map['limitations'] ?? []),
+      dietType: map['dietType'] ?? 'maintenance',
+    );
+  }
 }
