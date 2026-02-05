@@ -7,6 +7,9 @@ import '../../features/workout/presentation/pages/workout_edit_page.dart';
 import '../../features/workout/presentation/pages/workout_details_page.dart';
 import '../../features/workout/presentation/pages/exercise_details_page.dart';
 import '../../features/workout/presentation/pages/exercise_edit_page.dart';
+import '../../features/body_tracker/domain/entities/body_measurement.dart';
+import '../../features/body_tracker/presentation/pages/body_tracker_page.dart';
+import '../../features/body_tracker/presentation/pages/body_measurement_entry_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 
@@ -80,6 +83,23 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
           GoRoute(
+            path: '/body-tracker',
+            builder: (context, state) => const BodyTrackerPage(),
+            routes: [
+              GoRoute(
+                path: 'add',
+                parentNavigatorKey: _rootNavigatorKey,
+                builder: (context, state) {
+                  // Check if an object was passed for editing
+                  final measurement = state.extra as BodyMeasurement?;
+                  return BodyMeasurementEntryPage(
+                    measurementToEdit: measurement,
+                  );
+                },
+              ),
+            ],
+          ),
+          GoRoute(
             path: '/settings',
             builder: (context, state) => const SettingsPage(),
           ),
@@ -101,6 +121,8 @@ class ScaffoldWithBottomNavBar extends StatelessWidget {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _calculateSelectedIndex(context),
         onTap: (int idx) => _onItemTapped(idx, context),
+        type: BottomNavigationBarType
+            .fixed, // Ensure label visibility with 4 items
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.dashboard_outlined),
@@ -111,6 +133,11 @@ class ScaffoldWithBottomNavBar extends StatelessWidget {
             icon: Icon(Icons.fitness_center_outlined),
             activeIcon: Icon(Icons.fitness_center),
             label: 'Treinos',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.monitor_weight_outlined),
+            activeIcon: Icon(Icons.monitor_weight),
+            label: 'Medidas',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),
@@ -127,8 +154,11 @@ class ScaffoldWithBottomNavBar extends StatelessWidget {
     if (location.startsWith('/workouts')) {
       return 1;
     }
-    if (location.startsWith('/settings')) {
+    if (location.startsWith('/body-tracker')) {
       return 2;
+    }
+    if (location.startsWith('/settings')) {
+      return 3;
     }
     return 0;
   }
@@ -142,6 +172,9 @@ class ScaffoldWithBottomNavBar extends StatelessWidget {
         GoRouter.of(context).go('/workouts');
         break;
       case 2:
+        GoRouter.of(context).go('/body-tracker');
+        break;
+      case 3:
         GoRouter.of(context).go('/settings');
         break;
     }

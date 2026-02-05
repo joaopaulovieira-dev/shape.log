@@ -8,6 +8,7 @@ import 'features/workout/data/models/workout_hive_model.dart';
 import 'features/workout/data/models/workout_history_hive_model.dart';
 import 'features/workout/data/models/exercise_model.dart';
 import 'features/workout/data/models/workout_enums_adapter.dart';
+import 'features/body_tracker/data/models/body_measurement_hive_model.dart';
 
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -21,19 +22,23 @@ void main() async {
   Hive.registerAdapter(ExerciseModelAdapter());
   Hive.registerAdapter(WorkoutHiveModelAdapter());
   Hive.registerAdapter(WorkoutHistoryHiveModelAdapter());
+  Hive.registerAdapter(BodyMeasurementHiveModelAdapter());
 
   // Open Box
   try {
     await Hive.openBox<WorkoutHiveModel>('routines');
     await Hive.openBox<WorkoutHistoryHiveModel>('history_log');
+    await Hive.openBox<BodyMeasurementHiveModel>('body_measurements');
   } catch (e) {
     // If opening fails (e.g. schema mismatch), delete boxes and try again
     try {
       await Hive.deleteBoxFromDisk('routines');
       await Hive.deleteBoxFromDisk('history_log');
+      await Hive.deleteBoxFromDisk('body_measurements');
     } catch (_) {}
     await Hive.openBox<WorkoutHiveModel>('routines');
     await Hive.openBox<WorkoutHistoryHiveModel>('history_log');
+    await Hive.openBox<BodyMeasurementHiveModel>('body_measurements');
   }
 
   runApp(
