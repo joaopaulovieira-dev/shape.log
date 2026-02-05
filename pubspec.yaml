@@ -50,6 +50,7 @@ dependencies:
   path_provider: ^2.1.5
   url_launcher: ^6.3.2
   body_part_selector: ^0.2.0
+  marquee: ^2.3.0
 
 dev_dependencies:
   flutter_test:

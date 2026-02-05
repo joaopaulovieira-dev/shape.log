@@ -194,6 +194,15 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
                                       context,
                                     ).textTheme.titleMedium,
                                   ),
+                                  if (current.imagePaths.isNotEmpty) ...[
+                                    const SizedBox(width: 8),
+                                    const Icon(
+                                      Icons.camera_alt,
+                                      size: 16,
+                                      color: Colors.grey,
+                                    ),
+                                  ],
+                                  const Spacer(),
 
                                   // 3-Dots Menu
                                   PopupMenuButton<String>(
@@ -274,80 +283,9 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
                                       ),
                                     ],
                                   ),
-                                  if (current.imagePaths.isNotEmpty) ...[
-                                    const SizedBox(height: 16),
-                                    const Text(
-                                      "Fotos do Progresso",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    SizedBox(
-                                      height: 100,
-                                      child: ListView.builder(
-                                        scrollDirection: Axis.horizontal,
-                                        itemCount: current.imagePaths.length,
-                                        itemBuilder: (context, i) {
-                                          return GestureDetector(
-                                            onTap: () {
-                                              showDialog(
-                                                context: context,
-                                                builder: (_) => Dialog(
-                                                  backgroundColor: Colors.black,
-                                                  child: Stack(
-                                                    alignment:
-                                                        Alignment.topRight,
-                                                    children: [
-                                                      InteractiveViewer(
-                                                        child: Image.file(
-                                                          File(
-                                                            current
-                                                                .imagePaths[i],
-                                                          ),
-                                                          fit: BoxFit.contain,
-                                                        ),
-                                                      ),
-                                                      IconButton(
-                                                        icon: const Icon(
-                                                          Icons.close,
-                                                          color: Colors.white,
-                                                        ),
-                                                        onPressed: () =>
-                                                            Navigator.pop(
-                                                              context,
-                                                            ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                            child: Container(
-                                              margin: const EdgeInsets.only(
-                                                right: 8,
-                                              ),
-                                              width: 100,
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                                image: DecorationImage(
-                                                  image: FileImage(
-                                                    File(current.imagePaths[i]),
-                                                  ),
-                                                  fit: BoxFit.cover,
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ],
                                 ],
                               ),
+
                               // WEIGHT ROW
                               Row(
                                 children: [
@@ -514,6 +452,77 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
                                       ),
                                   ],
                                 ),
+
+                                if (current.imagePaths.isNotEmpty) ...[
+                                  const SizedBox(height: 16),
+                                  const Text(
+                                    "Fotos do Progresso",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  SizedBox(
+                                    height: 100,
+                                    child: ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: current.imagePaths.length,
+                                      itemBuilder: (context, i) {
+                                        return GestureDetector(
+                                          onTap: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (_) => Dialog(
+                                                backgroundColor: Colors.black,
+                                                child: Stack(
+                                                  alignment: Alignment.topRight,
+                                                  children: [
+                                                    InteractiveViewer(
+                                                      child: Image.file(
+                                                        File(
+                                                          current.imagePaths[i],
+                                                        ),
+                                                        fit: BoxFit.contain,
+                                                      ),
+                                                    ),
+                                                    IconButton(
+                                                      icon: const Icon(
+                                                        Icons.close,
+                                                        color: Colors.white,
+                                                      ),
+                                                      onPressed: () =>
+                                                          Navigator.pop(
+                                                            context,
+                                                          ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          child: Container(
+                                            margin: const EdgeInsets.only(
+                                              right: 8,
+                                            ),
+                                            width: 100,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              image: DecorationImage(
+                                                image: FileImage(
+                                                  File(current.imagePaths[i]),
+                                                ),
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ],
 
                               // Expand Button (Right Aligned)

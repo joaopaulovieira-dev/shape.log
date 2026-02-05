@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:marquee/marquee.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -40,20 +41,24 @@ class ExerciseDetailsPage extends ConsumerWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(text: exercise.name),
-                  if (exercise.equipmentNumber != null &&
-                      exercise.equipmentNumber!.isNotEmpty)
-                    TextSpan(
-                      text: ' #${exercise.equipmentNumber}',
-                      style: const TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                ],
+            title: SizedBox(
+              height: 50,
+              child: Marquee(
+                text: exercise.name,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                scrollAxis: Axis.horizontal,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                blankSpace: 20.0,
+                velocity: 30.0,
+                pauseAfterRound: const Duration(seconds: 1),
+                startPadding: 10.0,
+                accelerationDuration: const Duration(seconds: 1),
+                accelerationCurve: Curves.linear,
+                decelerationDuration: const Duration(milliseconds: 500),
+                decelerationCurve: Curves.easeOut,
               ),
             ),
             actions: [
@@ -125,6 +130,14 @@ class ExerciseDetailsPage extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (exercise.equipmentNumber != null &&
+                          exercise.equipmentNumber!.isNotEmpty) ...[
+                        _buildInfoRow(
+                          'Equipamento',
+                          '#${exercise.equipmentNumber}',
+                        ),
+                        const Divider(),
+                      ],
                       _buildInfoRow('Séries', '${exercise.sets}'),
                       const Divider(),
                       _buildInfoRow('Repetições', '${exercise.reps}'),

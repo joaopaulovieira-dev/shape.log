@@ -81,6 +81,25 @@ class _BodyMeasurementEntryPageState
     _shouldersController.addListener(_updateFilledParts);
     _forearmRightController.addListener(_updateFilledParts);
     _forearmLeftController.addListener(_updateFilledParts);
+    _retrieveLostData();
+  }
+
+  Future<void> _retrieveLostData() async {
+    final ImagePicker picker = ImagePicker();
+    final LostDataResponse response = await picker.retrieveLostData();
+    if (response.isEmpty) {
+      return;
+    }
+    if (response.file != null) {
+      if (mounted) {
+        setState(() {
+          _imagePaths.add(response.file!.path);
+        });
+      }
+    } else {
+      // Handle error if needed
+      debugPrint(response.exception?.code);
+    }
   }
 
   void _loadExistingMeasurement(BodyMeasurement measurement) {
@@ -688,22 +707,22 @@ class _BodyMeasurementEntryPageState
                 ),
               ),
 
-              const Divider(),
+              const SizedBox(height: 24),
               const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    "Imagens",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  children: [
+                    Text(
+                      'Imagens',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-
+              const SizedBox(height: 8),
               if (_imagePaths.isNotEmpty)
                 SizedBox(
                   height: 120,
@@ -742,43 +761,39 @@ class _BodyMeasurementEntryPageState
                     },
                   ),
                 ),
-
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    TextButton.icon(
-                      onPressed: () async {
-                        final picker = ImagePicker();
-                        final List<XFile> images = await picker
-                            .pickMultiImage();
-                        if (images.isNotEmpty) {
-                          setState(() {
-                            _imagePaths.addAll(images.map((e) => e.path));
-                          });
-                        }
-                      },
-                      icon: const Icon(Icons.photo_library),
-                      label: const Text('Galeria'),
-                    ),
-                    TextButton.icon(
-                      onPressed: () async {
-                        final picker = ImagePicker();
-                        final XFile? image = await picker.pickImage(
-                          source: ImageSource.camera,
-                        );
-                        if (image != null) {
-                          setState(() {
-                            _imagePaths.add(image.path);
-                          });
-                        }
-                      },
-                      icon: const Icon(Icons.camera_alt),
-                      label: const Text('Câmera'),
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton.icon(
+                    onPressed: () async {
+                      final picker = ImagePicker();
+                      final List<XFile> images = await picker.pickMultiImage();
+                      if (images.isNotEmpty) {
+                        setState(() {
+                          _imagePaths.addAll(images.map((e) => e.path));
+                        });
+                      }
+                    },
+                    icon: const Icon(Icons.photo_library),
+                    label: const Text('Galeria'),
+                  ),
+                  TextButton.icon(
+                    onPressed: () async {
+                      final picker = ImagePicker();
+                      final XFile? image = await picker.pickImage(
+                        source: ImageSource.camera,
+                      );
+                      if (image != null) {
+                        setState(() {
+                          _imagePaths.add(image.path);
+                        });
+                      }
+                    },
+                    icon: const Icon(Icons.camera_alt),
+                    label: const Text('Câmera'),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 40),
