@@ -1,8 +1,0 @@
-Running Gradle task 'assembleDebug'...                          
-WARNING: A restricted method in java.lang.System has been called
-WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/C:/Users/joao.vieira/.gradle/wrapper/dists/gradle-8.11.1-all/2qik7nd48slq1ooc2496ixf4i/gradle-8.11.1/lib/native-platform-0.22-milestone-26.jar)
-WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
-WARNING: Restricted methods will be blocked in a future release unless native access is enabled
-
-Running Gradle task 'assembleDebug'...                             12,7s
-√ Built build\app\outputs\flutter-apk\app-debug.apk
