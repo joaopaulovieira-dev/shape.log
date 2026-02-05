@@ -127,8 +127,9 @@ class BackupService {
 
       // 2. Find and Parse JSON
       final jsonFile = archive.findFile('backup_data.json');
-      if (jsonFile == null)
+      if (jsonFile == null) {
         throw Exception('Arquivo de dados não encontrado no ZIP');
+      }
 
       final jsonString = utf8.decode(jsonFile.content);
       final Map<String, dynamic> data = jsonDecode(jsonString);

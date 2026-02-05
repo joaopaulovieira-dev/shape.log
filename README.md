@@ -6,8 +6,11 @@
 
 ### 1. Gestão de Treinos (Workout Tracker)
 - **Criação de Rotinas**: Crie treinos personalizados (ex: "Treino A - Peito e Tríceps").
+- **Importação Flexível (AI-Pipeline)**: Importe treinos gerados por IA (ChatGPT/Gemini) via arquivos `.json` ou colando o texto diretamente.
+- **Sanitização Inteligente**: O app gera novos IDs automaticamente, limpa caminhos de imagem externos e reseta datas para evitar conflitos.
 - **Registro de Exercícios**: Adicione exercícios com detalhes de Séries, Repetições, Carga e Descanso.
 - **Histórico de Execução**: Marque treinos como concluídos e acompanhe logs passados.
+- **Interface Polida**: Títulos de treinos longos utilizam efeito *Marquee* (texto deslizante) para visibilidade completa.
 
 ### 2. Monitoramento de Medidas (Body Tracker)
 - **Cyber-Bio Scanner (Mapa Corporal Interativo)**: Interface visual 3D-like onde você toca na parte do corpo (ex: Bíceps, Coxa) para registrar a medida.
