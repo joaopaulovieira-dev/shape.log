@@ -71,4 +71,32 @@ class ExerciseModel extends HiveObject {
       isCompleted: isCompleted,
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'sets': sets,
+      'reps': reps,
+      'weight': weight,
+      'youtubeUrl': youtubeUrl,
+      'imagePaths': imagePaths,
+      'equipmentNumber': equipmentNumber,
+      'technique': technique,
+      'isCompleted': isCompleted,
+    };
+  }
+
+  factory ExerciseModel.fromMap(Map<String, dynamic> map) {
+    return ExerciseModel(
+      name: map['name'] ?? '',
+      sets: map['sets'] ?? 0,
+      reps: map['reps'] ?? 0,
+      weight: (map['weight'] ?? 0.0).toDouble(),
+      youtubeUrl: map['youtubeUrl'],
+      imagePaths: List<String>.from(map['imagePaths'] ?? []),
+      equipmentNumber: map['equipmentNumber'],
+      technique: map['technique'],
+      isCompleted: map['isCompleted'] ?? false,
+    );
+  }
 }

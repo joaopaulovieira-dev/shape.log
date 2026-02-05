@@ -134,4 +134,52 @@ class BodyMeasurementHiveModel extends HiveObject {
       shoulders: shoulders,
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'date': date.toIso8601String(),
+      'weight': weight,
+      'waistCircumference': waistCircumference,
+      'chestCircumference': chestCircumference,
+      'bicepsRight': bicepsRight,
+      'bicepsLeft': bicepsLeft,
+      'notes': notes,
+      'bmi': bmi,
+      'hipsCircumference': hipsCircumference,
+      'thighRight': thighRight,
+      'thighLeft': thighLeft,
+      'calves': calves,
+      'calvesRight': calvesRight,
+      'calvesLeft': calvesLeft,
+      'neck': neck,
+      'forearmRight': forearmRight,
+      'forearmLeft': forearmLeft,
+      'shoulders': shoulders,
+    };
+  }
+
+  factory BodyMeasurementHiveModel.fromMap(Map<String, dynamic> map) {
+    return BodyMeasurementHiveModel(
+      id: map['id'] ?? '',
+      date: map['date'] != null ? DateTime.parse(map['date']) : DateTime.now(),
+      weight: (map['weight'] ?? 0.0).toDouble(),
+      waistCircumference: (map['waistCircumference'] ?? 0.0).toDouble(),
+      chestCircumference: (map['chestCircumference'] ?? 0.0).toDouble(),
+      bicepsRight: (map['bicepsRight'] ?? 0.0).toDouble(),
+      bicepsLeft: (map['bicepsLeft'] ?? 0.0).toDouble(),
+      notes: map['notes'] ?? '',
+      bmi: (map['bmi'] as num?)?.toDouble(),
+      hipsCircumference: (map['hipsCircumference'] as num?)?.toDouble(),
+      thighRight: (map['thighRight'] as num?)?.toDouble(),
+      thighLeft: (map['thighLeft'] as num?)?.toDouble(),
+      calves: (map['calves'] as num?)?.toDouble(),
+      calvesRight: (map['calvesRight'] as num?)?.toDouble(),
+      calvesLeft: (map['calvesLeft'] as num?)?.toDouble(),
+      neck: (map['neck'] as num?)?.toDouble(),
+      forearmRight: (map['forearmRight'] as num?)?.toDouble(),
+      forearmLeft: (map['forearmLeft'] as num?)?.toDouble(),
+      shoulders: (map['shoulders'] as num?)?.toDouble(),
+    );
+  }
 }

@@ -10,11 +10,11 @@ final userProfileRepositoryProvider = Provider<UserProfileRepository>((ref) {
 
 // Notifier
 class UserProfileNotifier extends AsyncNotifier<UserProfile?> {
-  late final UserProfileRepository _repository;
+  UserProfileRepository get _repository =>
+      ref.read(userProfileRepositoryProvider);
 
   @override
   Future<UserProfile?> build() async {
-    _repository = ref.read(userProfileRepositoryProvider);
     return await _repository.getProfile();
   }
 

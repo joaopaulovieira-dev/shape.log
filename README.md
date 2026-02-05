@@ -6,8 +6,11 @@
 
 ### 1. Gestão de Treinos (Workout Tracker)
 - **Criação de Rotinas**: Crie treinos personalizados (ex: "Treino A - Peito e Tríceps").
+- **Importação Flexível (AI-Pipeline)**: Importe treinos gerados por IA (ChatGPT/Gemini) via arquivos `.json` ou colando o texto diretamente.
+- **Sanitização Inteligente**: O app gera novos IDs automaticamente, limpa caminhos de imagem externos e reseta datas para evitar conflitos.
 - **Registro de Exercícios**: Adicione exercícios com detalhes de Séries, Repetições, Carga e Descanso.
 - **Histórico de Execução**: Marque treinos como concluídos e acompanhe logs passados.
+- **Interface Polida**: Títulos de treinos longos utilizam efeito *Marquee* (texto deslizante) para visibilidade completa.
 
 ### 2. Monitoramento de Medidas (Body Tracker)
 - **Cyber-Bio Scanner (Mapa Corporal Interativo)**: Interface visual 3D-like onde você toca na parte do corpo (ex: Bíceps, Coxa) para registrar a medida.
@@ -27,7 +30,43 @@
 
 ---
 
-## 🛠 Tecnologias Utilizadas
+## � Padrão de Importação JSON (AI-Ready)
+
+Para que o sistema de importação funcione corretamente (via arquivo ou texto), o JSON deve seguir a estrutura abaixo. O app é flexível e aceita tanto uma lista direta `[]` quanto um objeto contendo a chave `"workouts"`.
+
+### Exemplo de Estrutura Completa
+```json
+{
+  "workouts": [
+    {
+      "name": "Nome do Treino",
+      "scheduledDays": [1, 3, 5],
+      "targetDurationMinutes": 60,
+      "notes": "Observações gerais",
+      "exercises": [
+        {
+          "name": "Nome do Exercício",
+          "sets": 4,
+          "reps": "12",
+          "weight": 30.0,
+          "technique": "Opcional: Instrução técnica",
+          "equipmentNumber": "Opcional: ID da máquina"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Especificações Técnicas:
+- **`scheduledDays`**: Lista de números de 1 (Segunda) a 7 (Domingo).
+- **`reps`**: Aceita números (`12`) ou strings para intervalos (`"10-12"`).
+- **`weight`**: Valor numérico (double/float) representando o peso em kg.
+- **Sanitização Automática**: Os campos `id`, `imagePaths` e `activeStartTime` são gerados ou resetados pelo app, portanto, não precisam ser enviados no JSON.
+
+---
+
+## �🛠 Tecnologias Utilizadas
 
 O projeto segue os princípios de **Clean Architecture** para garantir escalabilidade e testabilidade.
 

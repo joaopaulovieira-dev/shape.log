@@ -60,7 +60,6 @@ class _ScannerPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
     final paint = Paint();
 
     // Calculate the position of the scanner line

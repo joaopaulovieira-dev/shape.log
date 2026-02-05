@@ -32,6 +32,7 @@ void main() async {
     await Hive.openBox<WorkoutHistoryHiveModel>('history_log');
     await Hive.openBox<BodyMeasurementHiveModel>('body_measurements');
     await Hive.openBox<UserProfileHiveModel>('user_profile');
+    await Hive.openBox('settings');
   } catch (e) {
     // If opening fails (e.g. schema mismatch), delete boxes and try again
     try {
@@ -39,11 +40,13 @@ void main() async {
       await Hive.deleteBoxFromDisk('history_log');
       await Hive.deleteBoxFromDisk('body_measurements');
       await Hive.deleteBoxFromDisk('user_profile');
+      await Hive.deleteBoxFromDisk('settings');
     } catch (_) {}
     await Hive.openBox<WorkoutHiveModel>('routines');
     await Hive.openBox<WorkoutHistoryHiveModel>('history_log');
     await Hive.openBox<BodyMeasurementHiveModel>('body_measurements');
     await Hive.openBox<UserProfileHiveModel>('user_profile');
+    await Hive.openBox('settings');
   }
 
   runApp(

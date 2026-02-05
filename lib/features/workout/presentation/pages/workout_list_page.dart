@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/workout_provider.dart';
+import '../../data/services/workout_import_service.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
 
 class WorkoutListPage extends ConsumerWidget {
@@ -15,6 +16,13 @@ class WorkoutListPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Treinos'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.file_upload),
+            tooltip: 'Importar',
+            onPressed: () => _showImportOptions(context, ref),
+          ),
+        ],
         // Report logic temporarily disabled until History UI is ready
       ),
       body: routinesAsyncVal.when(
@@ -118,10 +126,14 @@ class WorkoutListPage extends ConsumerWidget {
                         ),
                         title: Row(
                           children: [
-                            Text(
-                              routine.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
+                            Expanded(
+                              child: MarqueeWidget(
+                                child: Text(
+                                  routine.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ),
                             if (isToday) ...[
@@ -172,6 +184,121 @@ class WorkoutListPage extends ConsumerWidget {
     );
   }
 
+  void _showImportOptions(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.insert_drive_file),
+              title: const Text('Abrir Arquivo .JSON'),
+              onTap: () {
+                Navigator.pop(context);
+                _handleFileImport(context, ref);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.content_paste),
+              title: const Text('Colar Texto / JSON'),
+              onTap: () {
+                Navigator.pop(context);
+                _showPasteJsonDialog(context, ref);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleFileImport(BuildContext context, WidgetRef ref) async {
+    try {
+      final count = await ref
+          .read(workoutImportServiceProvider)
+          .importFromFile(context);
+      if (count != null && context.mounted) {
+        _showSuccessSnackBar(context, count);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        _showErrorSnackBar(
+          context,
+          'Erro ao importar arquivo: Formato inválido',
+        );
+      }
+    }
+  }
+
+  void _showPasteJsonDialog(BuildContext context, WidgetRef ref) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Colar Treino (JSON)'),
+        content: TextField(
+          controller: controller,
+          maxLines: 10,
+          decoration: const InputDecoration(
+            hintText: 'Cole o JSON aqui...',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final text = controller.text.trim();
+              if (text.isEmpty) return;
+
+              Navigator.pop(context);
+              try {
+                final count = await ref
+                    .read(workoutImportServiceProvider)
+                    .importFromText(text);
+                if (count != null && context.mounted) {
+                  _showSuccessSnackBar(context, count);
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  _showErrorSnackBar(
+                    context,
+                    'JSON inválido. Verifique a formatação.',
+                  );
+                }
+              }
+            },
+            child: const Text('Processar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccessSnackBar(BuildContext context, int count) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '$count ${count == 1 ? 'treino importado' : 'treinos importados'} com sucesso!',
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: AppColors.error),
+    );
+  }
+
   Widget _buildBadge(String label, Color bgColor, Color textColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -187,6 +314,73 @@ class WorkoutListPage extends ConsumerWidget {
           fontWeight: FontWeight.bold,
         ),
       ),
+    );
+  }
+}
+
+class MarqueeWidget extends StatefulWidget {
+  final Widget child;
+  final Duration animationDuration, backDuration, pauseDuration;
+
+  const MarqueeWidget({
+    super.key,
+    required this.child,
+    this.animationDuration = const Duration(milliseconds: 6000),
+    this.backDuration = const Duration(milliseconds: 800),
+    this.pauseDuration = const Duration(milliseconds: 800),
+  });
+
+  @override
+  State<MarqueeWidget> createState() => _MarqueeWidgetState();
+}
+
+class _MarqueeWidgetState extends State<MarqueeWidget> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scroll());
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scroll() async {
+    while (_scrollController.hasClients) {
+      await Future.delayed(widget.pauseDuration);
+      if (_scrollController.hasClients &&
+          _scrollController.position.hasContentDimensions &&
+          _scrollController.position.maxScrollExtent > 0) {
+        await _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: widget.animationDuration,
+          curve: Curves.linear,
+        );
+      }
+      await Future.delayed(widget.pauseDuration);
+      if (_scrollController.hasClients &&
+          _scrollController.position.hasContentDimensions &&
+          _scrollController.offset > 0) {
+        await _scrollController.animateTo(
+          0.0,
+          duration: widget.backDuration,
+          curve: Curves.easeOut,
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      controller: _scrollController,
+      physics: const NeverScrollableScrollPhysics(), // Automatic scroll
+      child: widget.child,
     );
   }
 }
