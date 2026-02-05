@@ -56,10 +56,10 @@ class BackupService {
       // 2. Process Images and add to ZIP
       final processedFiles = <String>{};
 
-      void processExercises(List exercises) {
-        for (var exercise in exercises) {
+      void processImages(List entities) {
+        for (var entity in entities) {
           final List<String> imagePaths = List<String>.from(
-            exercise['imagePaths'] ?? [],
+            entity['imagePaths'] ?? [],
           );
           final List<String> relativePaths = [];
 
@@ -74,16 +74,17 @@ class BackupService {
               relativePaths.add('images/$name');
             }
           }
-          exercise['imagePaths'] = relativePaths;
+          entity['imagePaths'] = relativePaths;
         }
       }
 
       for (var workout in backupData['workouts']) {
-        processExercises(workout['exercises']);
+        processImages(workout['exercises']);
       }
       for (var historyEntry in backupData['history']) {
-        processExercises(historyEntry['exercises']);
+        processImages(historyEntry['exercises']);
       }
+      processImages(backupData['measurements']);
 
       // 3. Add JSON data
       final jsonString = jsonEncode(backupData);
@@ -163,13 +164,13 @@ class BackupService {
       }
       inputStream.close();
 
-      // 5. Reconstruct Absolute Paths in JSON
-      void fixPaths(List exercises) {
-        for (var exercise in exercises) {
+      // 6. Reconstruct Absolute Paths in JSON
+      void fixPaths(List entities) {
+        for (var entity in entities) {
           final List<String> currentPaths = List<String>.from(
-            exercise['imagePaths'] ?? [],
+            entity['imagePaths'] ?? [],
           );
-          exercise['imagePaths'] = currentPaths
+          entity['imagePaths'] = currentPaths
               .map((rel) => imageMapping[rel] ?? rel)
               .toList();
         }
@@ -181,6 +182,7 @@ class BackupService {
       for (var historyEntry in data['history']) {
         fixPaths(historyEntry['exercises']);
       }
+      fixPaths(data['measurements']);
 
       // 6. Persist to Hive
       final settingsRepo = _ref.read(settingsRepositoryProvider);

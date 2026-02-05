@@ -14,8 +14,9 @@
 
 ### 2. Monitoramento de Medidas (Body Tracker)
 - **Cyber-Bio Scanner (Mapa Corporal Interativo)**: Interface visual 3D-like onde você toca na parte do corpo (ex: Bíceps, Coxa) para registrar a medida.
+- **Registro de Fotos de Progresso**: Adicione múltiplas fotos via galeria ou câmera para cada medição, permitindo o acompanhamento visual da evolução.
 - **Animações Fluidas**: Feedback visual com animações de "scanning" ao selecionar áreas.
-- **Histórico e Tendências**: Lista detalhada de medições com indicadores visuais de progresso (setas de aumento/diminuição de medidas).
+- **Histórico Visul**: Visualize as fotos diretamente no histórico de medidas ao expandir os registros.
 - **Filtros Inteligentes**: Visualize a evolução nos últimos 7, 30 ou 90 dias.
 
 ### 3. Perfil Biológico (Bio-Data Source of Truth)

@@ -1,10 +1,10 @@
-// ignore_for_file: deprecated_member_use
-
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:body_part_selector/body_part_selector.dart';
 import '../../domain/entities/body_measurement.dart';
 import '../providers/body_tracker_provider.dart';
@@ -45,6 +45,8 @@ class _BodyMeasurementEntryPageState
   final _forearmLeftController = TextEditingController();
 
   final _notesController = TextEditingController();
+
+  List<String> _imagePaths = [];
 
   DateTime _selectedDate = DateTime.now();
   double _currentBMI = 0.0;
@@ -130,6 +132,7 @@ class _BodyMeasurementEntryPageState
         : '';
 
     _notesController.text = measurement.notes;
+    _imagePaths = List.from(measurement.imagePaths);
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _updateFilledParts());
   }
@@ -474,6 +477,7 @@ class _BodyMeasurementEntryPageState
           _forearmLeftController.text.replaceAll(',', '.'),
         ),
         notes: _notesController.text,
+        imagePaths: _imagePaths,
       );
 
       ref.read(bodyTrackerProvider.notifier).addMeasurement(measurement);
@@ -683,6 +687,100 @@ class _BodyMeasurementEntryPageState
                   maxLines: 2,
                 ),
               ),
+
+              const Divider(),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Imagens",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ),
+
+              if (_imagePaths.isNotEmpty)
+                SizedBox(
+                  height: 120,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _imagePaths.length,
+                    itemBuilder: (context, index) {
+                      return Stack(
+                        alignment: Alignment.topRight,
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.only(right: 8),
+                            width: 120,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              image: DecorationImage(
+                                image: FileImage(File(_imagePaths[index])),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.remove_circle,
+                              color: Colors.red,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _imagePaths.removeAt(index);
+                              });
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () async {
+                        final picker = ImagePicker();
+                        final List<XFile> images = await picker
+                            .pickMultiImage();
+                        if (images.isNotEmpty) {
+                          setState(() {
+                            _imagePaths.addAll(images.map((e) => e.path));
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.photo_library),
+                      label: const Text('Galeria'),
+                    ),
+                    TextButton.icon(
+                      onPressed: () async {
+                        final picker = ImagePicker();
+                        final XFile? image = await picker.pickImage(
+                          source: ImageSource.camera,
+                        );
+                        if (image != null) {
+                          setState(() {
+                            _imagePaths.add(image.path);
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.camera_alt),
+                      label: const Text('Câmera'),
+                    ),
+                  ],
+                ),
+              ),
+
               const SizedBox(height: 40),
             ],
           ),

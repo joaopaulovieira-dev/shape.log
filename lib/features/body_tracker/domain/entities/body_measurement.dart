@@ -17,6 +17,7 @@ class BodyMeasurement {
   final double? forearmLeft;
   final double? shoulders;
   final String notes;
+  final List<String> imagePaths;
 
   BodyMeasurement({
     required this.id,
@@ -37,5 +38,6 @@ class BodyMeasurement {
     this.forearmLeft,
     this.shoulders,
     this.notes = '',
+    this.imagePaths = const [],
   });
 }
