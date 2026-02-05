@@ -1,24 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class SplashPage extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../profile/presentation/providers/user_profile_provider.dart';
+
+class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
 
   @override
-  State<SplashPage> createState() => _SplashPageState();
+  ConsumerState<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> {
+class _SplashPageState extends ConsumerState<SplashPage> {
   @override
   void initState() {
     super.initState();
-    _navigateToHome();
+    _checkProfileAndNavigate();
   }
 
-  Future<void> _navigateToHome() async {
+  Future<void> _checkProfileAndNavigate() async {
     await Future.delayed(const Duration(seconds: 2));
     if (mounted) {
-      context.go('/');
+      final repo = ref.read(userProfileRepositoryProvider);
+      final profile = await repo.getProfile();
+
+      if (mounted) {
+        if (profile == null) {
+          context.go('/profile/create');
+        } else {
+          context.go('/');
+        }
+      }
     }
   }
 

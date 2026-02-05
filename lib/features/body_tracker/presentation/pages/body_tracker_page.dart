@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../providers/body_tracker_provider.dart';
+import '../../../profile/presentation/providers/user_profile_provider.dart';
 import '../../../../core/constants/app_colors.dart';
 
 class BodyTrackerPage extends ConsumerStatefulWidget {
@@ -39,8 +40,9 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
   @override
   Widget build(BuildContext context) {
     // Watch the provider to get the list of measurements
-    // Note: Variable name is 'measurementList' to match usage below
     final rawList = ref.watch(bodyTrackerProvider);
+    final userProfileState = ref.watch(userProfileProvider);
+    final userProfile = userProfileState.value;
 
     // Apply Filter
     final measurementList = rawList.where((m) {
@@ -160,6 +162,14 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
                           : null;
 
                       final isExpanded = _expandedIds.contains(current.id);
+
+                      // Calculate BMI dynamically if profile exists, otherwise fallback to stored
+                      double? displayBmi = current.bmi;
+                      if (userProfile != null && userProfile.height > 0) {
+                        displayBmi =
+                            current.weight /
+                            (userProfile.height * userProfile.height);
+                      }
 
                       return Card(
                         margin: const EdgeInsets.symmetric(
@@ -302,9 +312,10 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
                               const SizedBox(height: 8),
 
                               // BMI SECTION (Always Visible)
-                              if (current.bmi != null) ...[
+                              // Calculate BMI dynamically if profile exists, otherwise fallback to stored
+                              if (displayBmi != null) ...[
                                 const Divider(),
-                                _buildBMISection(context, current.bmi!),
+                                _buildBMISection(context, displayBmi),
                                 const SizedBox(height: 12),
                               ],
 
