@@ -37,13 +37,14 @@ class BodyMeasurementHiveModelAdapter
       forearmRight: fields[16] as double?,
       forearmLeft: fields[17] as double?,
       shoulders: fields[18] as double?,
+      imagePaths: (fields[19] as List).cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, BodyMeasurementHiveModel obj) {
     writer
-      ..writeByte(19)
+      ..writeByte(20)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -81,7 +82,9 @@ class BodyMeasurementHiveModelAdapter
       ..writeByte(17)
       ..write(obj.forearmLeft)
       ..writeByte(18)
-      ..write(obj.shoulders);
+      ..write(obj.shoulders)
+      ..writeByte(19)
+      ..write(obj.imagePaths);
   }
 
   @override

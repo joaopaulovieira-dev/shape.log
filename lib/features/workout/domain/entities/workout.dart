@@ -20,4 +20,27 @@ class Workout {
     this.activeStartTime,
     this.expiryDate,
   });
+
+  Workout copyWith({
+    String? id,
+    String? name,
+    List<int>? scheduledDays,
+    int? targetDurationMinutes,
+    String? notes,
+    List<Exercise>? exercises,
+    DateTime? activeStartTime,
+    DateTime? expiryDate,
+  }) {
+    return Workout(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      scheduledDays: scheduledDays ?? this.scheduledDays,
+      targetDurationMinutes:
+          targetDurationMinutes ?? this.targetDurationMinutes,
+      notes: notes ?? this.notes,
+      exercises: exercises ?? this.exercises,
+      activeStartTime: activeStartTime ?? this.activeStartTime,
+      expiryDate: expiryDate ?? this.expiryDate,
+    );
+  }
 }

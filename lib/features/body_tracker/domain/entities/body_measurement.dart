@@ -17,6 +17,7 @@ class BodyMeasurement {
   final double? forearmLeft;
   final double? shoulders;
   final String notes;
+  final List<String> imagePaths;
 
   BodyMeasurement({
     required this.id,
@@ -37,5 +38,50 @@ class BodyMeasurement {
     this.forearmLeft,
     this.shoulders,
     this.notes = '',
+    this.imagePaths = const [],
   });
+
+  BodyMeasurement copyWith({
+    String? id,
+    DateTime? date,
+    double? weight,
+    double? bmi,
+    double? waistCircumference,
+    double? chestCircumference,
+    double? hipsCircumference,
+    double? bicepsRight,
+    double? bicepsLeft,
+    double? thighRight,
+    double? thighLeft,
+    double? calvesRight,
+    double? calvesLeft,
+    double? neck,
+    double? forearmRight,
+    double? forearmLeft,
+    double? shoulders,
+    String? notes,
+    List<String>? imagePaths,
+  }) {
+    return BodyMeasurement(
+      id: id ?? this.id,
+      date: date ?? this.date,
+      weight: weight ?? this.weight,
+      bmi: bmi ?? this.bmi,
+      waistCircumference: waistCircumference ?? this.waistCircumference,
+      chestCircumference: chestCircumference ?? this.chestCircumference,
+      hipsCircumference: hipsCircumference ?? this.hipsCircumference,
+      bicepsRight: bicepsRight ?? this.bicepsRight,
+      bicepsLeft: bicepsLeft ?? this.bicepsLeft,
+      thighRight: thighRight ?? this.thighRight,
+      thighLeft: thighLeft ?? this.thighLeft,
+      calvesRight: calvesRight ?? this.calvesRight,
+      calvesLeft: calvesLeft ?? this.calvesLeft,
+      neck: neck ?? this.neck,
+      forearmRight: forearmRight ?? this.forearmRight,
+      forearmLeft: forearmLeft ?? this.forearmLeft,
+      shoulders: shoulders ?? this.shoulders,
+      notes: notes ?? this.notes,
+      imagePaths: imagePaths ?? this.imagePaths,
+    );
+  }
 }

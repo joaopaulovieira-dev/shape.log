@@ -27,13 +27,14 @@ class WorkoutHistoryHiveModelAdapter
       notes: fields[6] as String,
       startTime: fields[7] as DateTime?,
       completionPercentage: fields[8] as double,
+      rpe: fields[9] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, WorkoutHistoryHiveModel obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -51,7 +52,9 @@ class WorkoutHistoryHiveModelAdapter
       ..writeByte(7)
       ..write(obj.startTime)
       ..writeByte(8)
-      ..write(obj.completionPercentage);
+      ..write(obj.completionPercentage)
+      ..writeByte(9)
+      ..write(obj.rpe);
   }
 
   @override

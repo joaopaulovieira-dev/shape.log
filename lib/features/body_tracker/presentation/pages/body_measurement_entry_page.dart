@@ -1,11 +1,11 @@
-// ignore_for_file: deprecated_member_use
-
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
 import 'package:body_part_selector/body_part_selector.dart';
+import '../../../image_library/presentation/image_source_sheet.dart';
 import '../../domain/entities/body_measurement.dart';
 import '../providers/body_tracker_provider.dart';
 import '../widgets/bmi_gauge.dart';
@@ -45,6 +45,8 @@ class _BodyMeasurementEntryPageState
   final _forearmLeftController = TextEditingController();
 
   final _notesController = TextEditingController();
+
+  List<String> _imagePaths = [];
 
   DateTime _selectedDate = DateTime.now();
   double _currentBMI = 0.0;
@@ -130,6 +132,7 @@ class _BodyMeasurementEntryPageState
         : '';
 
     _notesController.text = measurement.notes;
+    _imagePaths = List.from(measurement.imagePaths);
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _updateFilledParts());
   }
@@ -474,6 +477,7 @@ class _BodyMeasurementEntryPageState
           _forearmLeftController.text.replaceAll(',', '.'),
         ),
         notes: _notesController.text,
+        imagePaths: _imagePaths,
       );
 
       ref.read(bodyTrackerProvider.notifier).addMeasurement(measurement);
@@ -683,6 +687,89 @@ class _BodyMeasurementEntryPageState
                   maxLines: 2,
                 ),
               ),
+
+              const SizedBox(height: 24),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  children: [
+                    Text(
+                      'Imagens',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              const SizedBox(height: 8),
+              if (_imagePaths.isNotEmpty)
+                SizedBox(
+                  height: 120,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _imagePaths.length,
+                    itemBuilder: (context, index) {
+                      return Stack(
+                        alignment: Alignment.topRight,
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.only(right: 8),
+                            width: 120,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              image: DecorationImage(
+                                image: FileImage(File(_imagePaths[index])),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.remove_circle,
+                              color: Colors.red,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _imagePaths.removeAt(index);
+                              });
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              const SizedBox(height: 8),
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    await showModalBottomSheet(
+                      context: context,
+                      builder: (context) =>
+                          const ImageSourceSheet(showLibrary: false),
+                    ).then((files) {
+                      if (files != null && files is List<File>) {
+                        setState(() {
+                          _imagePaths.addAll(files.map((e) => e.path));
+                        });
+                      }
+                    });
+                  },
+                  icon: const Icon(Icons.add_a_photo),
+                  label: const Text('Adicionar Foto'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 32,
+                    ),
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 40),
             ],
           ),

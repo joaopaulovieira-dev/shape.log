@@ -85,6 +85,9 @@ class WorkoutImportService {
             equipmentNumber: exData['equipmentNumber'],
             technique: exData['technique'],
             isCompleted: false,
+            restTimeSeconds: _toInt(
+              exData['restTime'] ?? exData['restSeconds'] ?? 60,
+            ),
           ),
         );
       }

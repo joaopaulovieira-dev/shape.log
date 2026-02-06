@@ -12,22 +12,28 @@ class WorkoutListPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final routinesAsyncVal = ref.watch(routineListProvider);
+    final historyListAsync = ref.watch(historyListProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Treinos'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.file_upload),
-            tooltip: 'Importar',
-            onPressed: () => _showImportOptions(context, ref),
-          ),
-        ],
         // Report logic temporarily disabled until History UI is ready
       ),
       body: routinesAsyncVal.when(
         data: (routines) => routines.isEmpty
-            ? const Center(child: Text('Nenhum treino cadastrado.'))
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('Nenhum treino cadastrado.'),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () => _showCreateOptions(context, ref),
+                      child: const Text('Criar ou Importar Treino'),
+                    ),
+                  ],
+                ),
+              )
             : ListView.builder(
                 itemCount: routines.length,
                 itemBuilder: (context, index) {
@@ -37,7 +43,6 @@ class WorkoutListPage extends ConsumerWidget {
                       ? 'Sem agendamento'
                       : routine.scheduledDays
                             .map((d) {
-                              // Simple mapping or use DateFormat if needed, but 'd' is int 1-7
                               const days = [
                                 'Dom',
                                 'Seg',
@@ -47,15 +52,8 @@ class WorkoutListPage extends ConsumerWidget {
                                 'Sex',
                                 'Sáb',
                               ];
-                              // Note: ISO 8601: 1=Mon, 7=Sun. List index: 0=Dom(Sun)?
-                              // Let's assume user input 1=Mon.
-                              // Dart DateTime.weekday: 1=Mon, 7=Sun.
-                              // My days array: 0=Dom.
-                              // Let's settle on: 1=Mon (Seg), 7=Sun (Dom).
-                              // Index for days array:
-                              // 1 (Seg) -> Index 1. 7 (Dom) -> Index 0.
                               if (d == 7) return 'Dom';
-                              return days[d]; // 1=Seg, 2=Ter...
+                              return days[d];
                             })
                             .join(', ');
 
@@ -64,6 +62,16 @@ class WorkoutListPage extends ConsumerWidget {
                   final isExpired =
                       routine.expiryDate != null &&
                       routine.expiryDate!.isBefore(now);
+
+                  final isDoneToday =
+                      historyListAsync.asData?.value.any(
+                        (h) =>
+                            h.workoutId == routine.id &&
+                            h.completedDate.year == now.year &&
+                            h.completedDate.month == now.month &&
+                            h.completedDate.day == now.day,
+                      ) ??
+                      false;
 
                   return Dismissible(
                     key: ValueKey(routine.id),
@@ -74,6 +82,45 @@ class WorkoutListPage extends ConsumerWidget {
                       padding: const EdgeInsets.only(right: 20),
                       child: const Icon(Icons.delete, color: Colors.white),
                     ),
+                    confirmDismiss: (_) async {
+                      return await showDialog<bool>(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            backgroundColor: AppColors.surface,
+                            title: const Text(
+                              'Excluir Treino?',
+                              style: TextStyle(color: AppColors.textPrimary),
+                            ),
+                            content: Text(
+                              'Tem certeza que deseja excluir "${routine.name}"? Esta ação não pode ser desfeita.',
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child: const Text(
+                                  'Cancelar',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white,
+                                ),
+                                onPressed: () =>
+                                    Navigator.of(context).pop(true),
+                                child: const Text('Excluir'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
                     onDismissed: (_) async {
                       await ref
                           .read(workoutRepositoryProvider)
@@ -154,11 +201,27 @@ class WorkoutListPage extends ConsumerWidget {
                             ],
                           ],
                         ),
-                        subtitle: Text(
-                          daysStr,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                          ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              daysStr,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            if (isDoneToday)
+                              const Padding(
+                                padding: EdgeInsets.only(top: 4.0),
+                                child: Text(
+                                  'Treino Finalizado',
+                                  style: TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                         trailing: Text(
                           '${routine.targetDurationMinutes} min',
@@ -176,15 +239,13 @@ class WorkoutListPage extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.go('/workouts/add');
-        },
+        onPressed: () => _showCreateOptions(context, ref),
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  void _showImportOptions(BuildContext context, WidgetRef ref) {
+  void _showCreateOptions(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -194,22 +255,41 @@ class WorkoutListPage extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[600],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 12),
             ListTile(
-              leading: const Icon(Icons.insert_drive_file),
-              title: const Text('Abrir Arquivo .JSON'),
+              leading: const Icon(Icons.note_add_outlined),
+              title: const Text('Importar Arquivo (.json)'),
               onTap: () {
                 Navigator.pop(context);
                 _handleFileImport(context, ref);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.content_paste),
-              title: const Text('Colar Texto / JSON'),
+              leading: const Icon(Icons.content_paste_go),
+              title: const Text('Colar Treino'),
               onTap: () {
                 Navigator.pop(context);
                 _showPasteJsonDialog(context, ref);
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.add_circle_outline),
+              title: const Text('Criar Novo Treino'),
+              onTap: () {
+                Navigator.pop(context);
+                context.go('/workouts/add');
+              },
+            ),
+            const SizedBox(height: 16),
           ],
         ),
       ),

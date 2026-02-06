@@ -13,6 +13,8 @@ import '../../features/body_tracker/presentation/pages/body_measurement_entry_pa
 import '../../features/settings/presentation/settings_page.dart';
 import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
+import '../../features/workout/presentation/pages/workout_session_page.dart';
+import '../../features/workout/domain/entities/workout.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -115,6 +117,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/profile/create',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const EditProfilePage(isFirstRun: true),
+      ),
+      GoRoute(
+        path: '/session',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final workout = state.extra as Workout;
+          return WorkoutSessionPage(workout: workout);
+        },
       ),
     ],
   );

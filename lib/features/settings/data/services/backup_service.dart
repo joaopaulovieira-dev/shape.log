@@ -56,10 +56,10 @@ class BackupService {
       // 2. Process Images and add to ZIP
       final processedFiles = <String>{};
 
-      void processExercises(List exercises) {
-        for (var exercise in exercises) {
+      void processImages(List entities) {
+        for (var entity in entities) {
           final List<String> imagePaths = List<String>.from(
-            exercise['imagePaths'] ?? [],
+            entity['imagePaths'] ?? [],
           );
           final List<String> relativePaths = [];
 
@@ -74,18 +74,31 @@ class BackupService {
               relativePaths.add('images/$name');
             }
           }
-          exercise['imagePaths'] = relativePaths;
+          entity['imagePaths'] = relativePaths;
         }
       }
 
       for (var workout in backupData['workouts']) {
-        processExercises(workout['exercises']);
+        processImages(workout['exercises']);
       }
       for (var historyEntry in backupData['history']) {
-        processExercises(historyEntry['exercises']);
+        processImages(historyEntry['exercises']);
+      }
+      processImages(backupData['measurements']);
+
+      // 3. Process Asset Library
+      final libraryDir = Directory('${directory.path}/image_library');
+      if (await libraryDir.exists()) {
+        final libraryFiles = libraryDir.listSync();
+        for (var entity in libraryFiles) {
+          if (entity is File) {
+            final name = p.basename(entity.path);
+            encoder.addFile(entity, 'library/$name');
+          }
+        }
       }
 
-      // 3. Add JSON data
+      // 4. Add JSON data
       final jsonString = jsonEncode(backupData);
       final tempJsonFile = File('${directory.path}/backup_data.json');
       await tempJsonFile.writeAsString(jsonString);
@@ -94,7 +107,7 @@ class BackupService {
       encoder.close();
       await tempJsonFile.delete();
 
-      // 4. Share
+      // 5. Share
       final result = await Share.shareXFiles([
         XFile(zipFilePath, mimeType: 'application/zip', name: fileName),
       ], subject: 'Shape.log Full Backup - $dateStr $timeStr');
@@ -145,31 +158,48 @@ class BackupService {
         await imageDir.create(recursive: true);
       }
 
-      // 4. Extract Images
+      // 5. Extract Images & Library
+      final libraryDir = Directory('${appDir.path}/image_library');
+      if (!await libraryDir.exists()) {
+        await libraryDir.create(recursive: true);
+      }
+
       final imageMapping = <String, String>{};
       for (final file in archive) {
-        if (file.isFile && file.name.startsWith('images/')) {
-          final fileName = p.basename(file.name);
-          final destinationFile = File('${imageDir.path}/$fileName');
-          final content = file.content;
-          if (content is List<int>) {
-            await destinationFile.writeAsBytes(content);
-          } else if (content is InputStreamBase) {
-            final bytes = content.toUint8List();
-            await destinationFile.writeAsBytes(bytes);
+        if (file.isFile) {
+          if (file.name.startsWith('images/')) {
+            final fileName = p.basename(file.name);
+            final destinationFile = File('${imageDir.path}/$fileName');
+            final content = file.content;
+            if (content is List<int>) {
+              await destinationFile.writeAsBytes(content);
+            } else if (content is InputStreamBase) {
+              final bytes = content.toUint8List();
+              await destinationFile.writeAsBytes(bytes);
+            }
+            imageMapping[file.name] = destinationFile.path;
+          } else if (file.name.startsWith('library/')) {
+            final fileName = p.basename(file.name);
+            final destinationFile = File('${libraryDir.path}/$fileName');
+            final content = file.content;
+            if (content is List<int>) {
+              await destinationFile.writeAsBytes(content);
+            } else if (content is InputStreamBase) {
+              final bytes = content.toUint8List();
+              await destinationFile.writeAsBytes(bytes);
+            }
           }
-          imageMapping[file.name] = destinationFile.path;
         }
       }
       inputStream.close();
 
-      // 5. Reconstruct Absolute Paths in JSON
-      void fixPaths(List exercises) {
-        for (var exercise in exercises) {
+      // 6. Reconstruct Absolute Paths in JSON
+      void fixPaths(List entities) {
+        for (var entity in entities) {
           final List<String> currentPaths = List<String>.from(
-            exercise['imagePaths'] ?? [],
+            entity['imagePaths'] ?? [],
           );
-          exercise['imagePaths'] = currentPaths
+          entity['imagePaths'] = currentPaths
               .map((rel) => imageMapping[rel] ?? rel)
               .toList();
         }
@@ -181,6 +211,7 @@ class BackupService {
       for (var historyEntry in data['history']) {
         fixPaths(historyEntry['exercises']);
       }
+      fixPaths(data['measurements']);
 
       // 6. Persist to Hive
       final settingsRepo = _ref.read(settingsRepositoryProvider);

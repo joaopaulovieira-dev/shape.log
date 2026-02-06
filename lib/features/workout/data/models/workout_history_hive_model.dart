@@ -43,7 +43,11 @@ class WorkoutHistoryHiveModel extends HiveObject {
     required this.notes,
     this.startTime,
     this.completionPercentage = 0,
+    this.rpe,
   });
+
+  @HiveField(9)
+  final int? rpe;
 
   factory WorkoutHistoryHiveModel.fromEntity(WorkoutHistory history) {
     return WorkoutHistoryHiveModel(
@@ -58,6 +62,7 @@ class WorkoutHistoryHiveModel extends HiveObject {
       notes: history.notes,
       startTime: history.startTime,
       completionPercentage: history.completionPercentage,
+      rpe: history.rpe,
     );
   }
 
@@ -72,6 +77,7 @@ class WorkoutHistoryHiveModel extends HiveObject {
       notes: notes,
       startTime: startTime,
       completionPercentage: completionPercentage,
+      rpe: rpe,
     );
   }
 
@@ -86,6 +92,7 @@ class WorkoutHistoryHiveModel extends HiveObject {
       'notes': notes,
       'startTime': startTime?.toIso8601String(),
       'completionPercentage': completionPercentage,
+      'rpe': rpe,
     };
   }
 
@@ -106,6 +113,7 @@ class WorkoutHistoryHiveModel extends HiveObject {
           ? DateTime.parse(map['startTime'])
           : null,
       completionPercentage: (map['completionPercentage'] ?? 0.0).toDouble(),
+      rpe: map['rpe'],
     );
   }
 }

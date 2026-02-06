@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:io';
 import 'package:uuid/uuid.dart';
+import 'package:marquee/marquee.dart';
 
 import '../../domain/entities/workout.dart';
 import '../../domain/entities/exercise.dart';
@@ -74,50 +75,85 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(workout.name),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () {
-                  context.push('/workouts/${workout.id}/edit');
-                },
+            title: SizedBox(
+              height: 50,
+              child: Marquee(
+                text: workout.name,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                scrollAxis: Axis.horizontal,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                blankSpace: 20.0,
+                velocity: 30.0,
+                pauseAfterRound: const Duration(seconds: 1),
+                startPadding: 10.0,
+                accelerationDuration: const Duration(seconds: 1),
+                accelerationCurve: Curves.linear,
+                decelerationDuration: const Duration(milliseconds: 500),
+                decelerationCurve: Curves.easeOut,
               ),
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () async {
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text('Excluir Treino'),
-                      content: const Text(
-                        'Tem certeza que deseja excluir esta treino?',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx, false),
-                          child: const Text('Cancelar'),
+            ),
+            actions: [
+              PopupMenuButton<String>(
+                onSelected: (value) async {
+                  if (value == 'edit') {
+                    context.push('/workouts/${workout.id}/edit');
+                  } else if (value == 'delete') {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Excluir Treino'),
+                        content: const Text(
+                          'Tem certeza que deseja excluir esta treino?',
                         ),
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.red,
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Cancelar'),
                           ),
-                          onPressed: () => Navigator.pop(ctx, true),
-                          child: const Text('Excluir'),
-                        ),
-                      ],
-                    ),
-                  );
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.red,
+                            ),
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Excluir'),
+                          ),
+                        ],
+                      ),
+                    );
 
-                  if (confirmed == true) {
-                    await ref
-                        .read(workoutRepositoryProvider)
-                        .deleteRoutine(workout.id);
-                    ref.invalidate(routineListProvider);
-                    if (context.mounted) {
-                      context.pop();
+                    if (confirmed == true) {
+                      await ref
+                          .read(workoutRepositoryProvider)
+                          .deleteRoutine(workout.id);
+                      ref.invalidate(routineListProvider);
+                      if (context.mounted) {
+                        context.pop();
+                      }
                     }
                   }
                 },
+                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'edit',
+                    child: ListTile(
+                      leading: Icon(Icons.edit),
+                      title: Text('Editar'),
+                    ),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'delete',
+                    child: ListTile(
+                      leading: Icon(Icons.delete, color: Colors.red),
+                      title: Text(
+                        'Excluir',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -127,7 +163,7 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
               if (isExpired)
                 Card(
                   color: AppColors.error.withValues(alpha: 0.1),
-                  margin: const EdgeInsets.only(bottom: 16),
+                  margin: const EdgeInsets.fromLTRB(4, 4, 4, 12),
                   shape: RoundedRectangleBorder(
                     side: const BorderSide(color: AppColors.error),
                     borderRadius: BorderRadius.circular(8),
@@ -142,7 +178,7 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Este treino venceu em ${DateFormat('dd/MM/yyyy').format(workout.expiryDate!)}!',
+                                'Este treino venceu em ${DateFormat('dd/MM/yyyy').format(workout.expiryDate!)}.',
                                 style: const TextStyle(
                                   color: AppColors.error,
                                   fontWeight: FontWeight.bold,
@@ -153,18 +189,29 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          'Por favor, notifique o app para gerar uma nova versão.',
+                          'Por favor, notifique o agente de IA para gerar um novo treino.',
                           style: TextStyle(fontSize: 13),
                         ),
                         const SizedBox(height: 12),
                         SizedBox(
                           width: double.infinity,
+                          height: 56,
                           child: FilledButton.icon(
                             style: FilledButton.styleFrom(
                               backgroundColor: AppColors.error,
+                              foregroundColor: Colors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
-                            icon: const Icon(Icons.copy, size: 18),
-                            label: const Text('Copiar Mensagem para o Agente'),
+                            icon: const Icon(Icons.copy),
+                            label: const Text(
+                              'Copiar Mensagem',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             onPressed: () {
                               final dateStr = DateFormat(
                                 'dd/MM/yyyy',
@@ -185,6 +232,7 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                   ),
                 ),
               Card(
+                margin: const EdgeInsets.fromLTRB(4, 4, 4, 12),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -217,10 +265,26 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
               if (workout.activeStartTime == null)
                 SizedBox(
                   width: double.infinity,
+                  height: 56,
                   child: FilledButton.icon(
-                    onPressed: () => _startWorkout(workout),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      context.push('/session', extra: workout);
+                    },
                     icon: const Icon(Icons.play_arrow),
-                    label: const Text('Iniciar Treino'),
+                    label: const Text(
+                      'Iniciar Treino',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 )
               else
@@ -283,71 +347,30 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                 final ex = entry.value;
 
                 return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
+                  margin: const EdgeInsets.fromLTRB(4, 4, 4, 12),
                   child: ListTile(
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 4,
                     ),
-                    leading: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Checkbox(
-                          value: ex.isCompleted,
-                          onChanged: workout.activeStartTime == null
-                              ? null
-                              : (val) async {
-                                  final updatedExercises = List<Exercise>.from(
-                                    workout.exercises,
-                                  );
-                                  updatedExercises[index] = Exercise(
-                                    name: ex.name,
-                                    sets: ex.sets,
-                                    reps: ex.reps,
-                                    weight: ex.weight,
-                                    youtubeUrl: ex.youtubeUrl,
-                                    imagePaths: ex.imagePaths,
-                                    equipmentNumber: ex.equipmentNumber,
-                                    isCompleted: val ?? false,
-                                  );
-
-                                  final updatedWorkout = Workout(
-                                    id: workout.id,
-                                    name: workout.name,
-                                    scheduledDays: workout.scheduledDays,
-                                    targetDurationMinutes:
-                                        workout.targetDurationMinutes,
-                                    notes: workout.notes,
-                                    exercises: updatedExercises,
-                                    activeStartTime: workout.activeStartTime,
-                                  );
-
-                                  await ref
-                                      .read(workoutRepositoryProvider)
-                                      .saveRoutine(updatedWorkout);
-                                  ref.invalidate(routineListProvider);
-                                },
-                        ),
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: ex.imagePaths.isNotEmpty
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.file(
-                                    File(ex.imagePaths.first),
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (ctx, err, stack) =>
-                                        const Icon(Icons.broken_image),
-                                  ),
-                                )
-                              : const Icon(Icons.fitness_center),
-                        ),
-                      ],
+                    leading: Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: ex.imagePaths.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(
+                                File(ex.imagePaths.first),
+                                fit: BoxFit.cover,
+                                errorBuilder: (ctx, err, stack) =>
+                                    const Icon(Icons.broken_image),
+                              ),
+                            )
+                          : const Icon(Icons.fitness_center),
                     ),
                     title: Text.rich(
                       TextSpan(
@@ -373,24 +396,8 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                         ],
                       ),
                     ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${ex.sets} séries x ${ex.reps} reps - ${ex.weight}kg',
-                        ),
-                        if (ex.technique != null && ex.technique!.isNotEmpty)
-                          Text(
-                            'Técnica: ${ex.technique}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontStyle: FontStyle.italic,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                      ],
+                    subtitle: Text(
+                      '${ex.sets} séries x ${ex.reps} reps - ${ex.weight}kg',
                     ),
                     onTap: () {
                       context.push('/workouts/${workout.id}/exercises/$index');
@@ -406,21 +413,6 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (err, stack) => Scaffold(body: Center(child: Text('Erro: $err'))),
     );
-  }
-
-  Future<void> _startWorkout(Workout workout) async {
-    final updatedWorkout = Workout(
-      id: workout.id,
-      name: workout.name,
-      scheduledDays: workout.scheduledDays,
-      targetDurationMinutes: workout.targetDurationMinutes,
-      notes: workout.notes,
-      exercises: workout.exercises,
-      activeStartTime: DateTime.now(),
-    );
-
-    await ref.read(workoutRepositoryProvider).saveRoutine(updatedWorkout);
-    ref.invalidate(routineListProvider);
   }
 
   Future<void> _finalizeWorkout(Workout workout) async {
@@ -485,6 +477,7 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 20, color: Colors.grey[600]),
         const SizedBox(width: 8),
