@@ -21,5 +21,8 @@ class WorkoutHistory {
     required this.notes,
     this.startTime,
     this.completionPercentage = 0,
+    this.rpe, // Rating of Perceived Exertion (1-5)
   });
+
+  final int? rpe;
 }

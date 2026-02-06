@@ -52,6 +52,8 @@ dependencies:
   body_part_selector: ^0.2.0
   marquee: ^2.3.0
   riverpod: ^3.2.1
+  confetti: ^0.8.0
+  shared_preferences: ^2.5.4
 
 dev_dependencies:
   flutter_test:

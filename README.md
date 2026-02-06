@@ -12,6 +12,8 @@
 - **Timer de Descanso**: Configure o tempo de descanso individual por exercício (padrão 60s), com slider e chips de seleção rápida.
 - **Histórico de Execução**: Marque treinos como concluídos e acompanhe logs passados.
 - **Interface Polida**: Títulos de treinos longos utilizam efeito *Marquee* (texto deslizante) para visibilidade completa.
+- **Genius Focus Mode**: Interface de execução imersiva com grade compacta, histórico de carga (`📈`) acessível e persistência em tempo real.
+- **Smart Timer**: Lógica inteligente que avança exercícios automaticamente e detecta o fim do treino.
 
 ### 2. Monitoramento de Medidas (Body Tracker)
 - **Cyber-Bio Scanner (Mapa Corporal Interativo)**: Interface visual 3D-like onde você toca na parte do corpo (ex: Bíceps, Coxa) para registrar a medida.

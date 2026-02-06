@@ -12,6 +12,7 @@ class WorkoutListPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final routinesAsyncVal = ref.watch(routineListProvider);
+    final historyListAsync = ref.watch(historyListProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -61,6 +62,16 @@ class WorkoutListPage extends ConsumerWidget {
                   final isExpired =
                       routine.expiryDate != null &&
                       routine.expiryDate!.isBefore(now);
+
+                  final isDoneToday =
+                      historyListAsync.asData?.value.any(
+                        (h) =>
+                            h.workoutId == routine.id &&
+                            h.completedDate.year == now.year &&
+                            h.completedDate.month == now.month &&
+                            h.completedDate.day == now.day,
+                      ) ??
+                      false;
 
                   return Dismissible(
                     key: ValueKey(routine.id),
@@ -151,11 +162,27 @@ class WorkoutListPage extends ConsumerWidget {
                             ],
                           ],
                         ),
-                        subtitle: Text(
-                          daysStr,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                          ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              daysStr,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            if (isDoneToday)
+                              const Padding(
+                                padding: EdgeInsets.only(top: 4.0),
+                                child: Text(
+                                  'Treino Finalizado',
+                                  style: TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                         trailing: Text(
                           '${routine.targetDurationMinutes} min',
