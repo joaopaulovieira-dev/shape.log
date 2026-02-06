@@ -82,6 +82,45 @@ class WorkoutListPage extends ConsumerWidget {
                       padding: const EdgeInsets.only(right: 20),
                       child: const Icon(Icons.delete, color: Colors.white),
                     ),
+                    confirmDismiss: (_) async {
+                      return await showDialog<bool>(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            backgroundColor: AppColors.surface,
+                            title: const Text(
+                              'Excluir Treino?',
+                              style: TextStyle(color: AppColors.textPrimary),
+                            ),
+                            content: Text(
+                              'Tem certeza que deseja excluir "${routine.name}"? Esta ação não pode ser desfeita.',
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child: const Text(
+                                  'Cancelar',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white,
+                                ),
+                                onPressed: () =>
+                                    Navigator.of(context).pop(true),
+                                child: const Text('Excluir'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
                     onDismissed: (_) async {
                       await ref
                           .read(workoutRepositoryProvider)

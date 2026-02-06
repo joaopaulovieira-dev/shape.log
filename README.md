@@ -62,6 +62,7 @@ Para que o sistema de importação funcione corretamente (via arquivo ou texto),
       "name": "Nome do Treino (ex: Treino A - Peitoral)",
       "scheduledDays": [1, 3, 5],
       "targetDurationMinutes": 60,
+      "expiryDate": "2024-12-31",
       "notes": "Foco em progressão de carga",
       "exercises": [
         {
@@ -81,6 +82,7 @@ Para que o sistema de importação funcione corretamente (via arquivo ou texto),
 
 ### Especificações Técnicas:
 - **`scheduledDays`**: Lista de números de 1 (Segunda) a 7 (Domingo).
+- **`expiryDate`**: Data de validade do treino no formato `YYYY-MM-DD` (Opcional).
 - **`reps`**: Aceita números (`12`) ou strings para intervalos (`"10-12"`).
 - **`weight`**: Valor numérico (double/float) representando o peso em kg.
 - **`restTime`** (ou `restSeconds`): Tempo de descanso em segundos (ex: `60`, `90`). Padrão: 60s.
