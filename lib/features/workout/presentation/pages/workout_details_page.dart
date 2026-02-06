@@ -96,48 +96,64 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
               ),
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () {
-                  context.push('/workouts/${workout.id}/edit');
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () async {
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text('Excluir Treino'),
-                      content: const Text(
-                        'Tem certeza que deseja excluir esta treino?',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx, false),
-                          child: const Text('Cancelar'),
+              PopupMenuButton<String>(
+                onSelected: (value) async {
+                  if (value == 'edit') {
+                    context.push('/workouts/${workout.id}/edit');
+                  } else if (value == 'delete') {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Excluir Treino'),
+                        content: const Text(
+                          'Tem certeza que deseja excluir esta treino?',
                         ),
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.red,
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Cancelar'),
                           ),
-                          onPressed: () => Navigator.pop(ctx, true),
-                          child: const Text('Excluir'),
-                        ),
-                      ],
-                    ),
-                  );
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.red,
+                            ),
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Excluir'),
+                          ),
+                        ],
+                      ),
+                    );
 
-                  if (confirmed == true) {
-                    await ref
-                        .read(workoutRepositoryProvider)
-                        .deleteRoutine(workout.id);
-                    ref.invalidate(routineListProvider);
-                    if (context.mounted) {
-                      context.pop();
+                    if (confirmed == true) {
+                      await ref
+                          .read(workoutRepositoryProvider)
+                          .deleteRoutine(workout.id);
+                      ref.invalidate(routineListProvider);
+                      if (context.mounted) {
+                        context.pop();
+                      }
                     }
                   }
                 },
+                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'edit',
+                    child: ListTile(
+                      leading: Icon(Icons.edit),
+                      title: Text('Editar'),
+                    ),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'delete',
+                    child: ListTile(
+                      leading: Icon(Icons.delete, color: Colors.red),
+                      title: Text(
+                        'Excluir',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -162,7 +178,7 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Este treino venceu em ${DateFormat('dd/MM/yyyy').format(workout.expiryDate!)}!',
+                                'Este treino venceu em ${DateFormat('dd/MM/yyyy').format(workout.expiryDate!)}.',
                                 style: const TextStyle(
                                   color: AppColors.error,
                                   fontWeight: FontWeight.bold,
@@ -173,18 +189,29 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          'Por favor, notifique o app para gerar uma nova versão.',
+                          'Por favor, notifique o agente de IA para gerar um novo treino.',
                           style: TextStyle(fontSize: 13),
                         ),
                         const SizedBox(height: 12),
                         SizedBox(
                           width: double.infinity,
+                          height: 56,
                           child: FilledButton.icon(
                             style: FilledButton.styleFrom(
                               backgroundColor: AppColors.error,
+                              foregroundColor: Colors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
-                            icon: const Icon(Icons.copy, size: 18),
-                            label: const Text('Copiar Mensagem para o Agente'),
+                            icon: const Icon(Icons.copy),
+                            label: const Text(
+                              'Copiar Mensagem',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             onPressed: () {
                               final dateStr = DateFormat(
                                 'dd/MM/yyyy',
@@ -237,10 +264,26 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
               if (workout.activeStartTime == null)
                 SizedBox(
                   width: double.infinity,
+                  height: 56,
                   child: FilledButton.icon(
-                    onPressed: () => _startWorkout(workout),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      context.push('/session', extra: workout);
+                    },
                     icon: const Icon(Icons.play_arrow),
-                    label: const Text('Iniciar Treino'),
+                    label: const Text(
+                      'Iniciar Treino (Modo Foco)',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 )
               else
@@ -428,21 +471,6 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
     );
   }
 
-  Future<void> _startWorkout(Workout workout) async {
-    final updatedWorkout = Workout(
-      id: workout.id,
-      name: workout.name,
-      scheduledDays: workout.scheduledDays,
-      targetDurationMinutes: workout.targetDurationMinutes,
-      notes: workout.notes,
-      exercises: workout.exercises,
-      activeStartTime: DateTime.now(),
-    );
-
-    await ref.read(workoutRepositoryProvider).saveRoutine(updatedWorkout);
-    ref.invalidate(routineListProvider);
-  }
-
   Future<void> _finalizeWorkout(Workout workout) async {
     final now = DateTime.now();
     final startTime = workout.activeStartTime ?? now;
@@ -505,6 +533,7 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 20, color: Colors.grey[600]),
         const SizedBox(width: 8),
