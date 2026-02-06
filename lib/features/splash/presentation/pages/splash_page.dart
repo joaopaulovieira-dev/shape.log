@@ -26,7 +26,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
       if (mounted) {
         if (profile == null) {
-          context.go('/profile/create');
+          context.go('/welcome');
         } else {
           context.go('/');
         }

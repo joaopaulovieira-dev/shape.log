@@ -390,7 +390,7 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                         ? Image.file(
                                             File(exercise.imagePaths.first),
                                             fit: BoxFit.contain,
-                                            errorBuilder: (_, __, ___) =>
+                                            errorBuilder: (_, _, _) =>
                                                 const Icon(
                                                   Icons.broken_image,
                                                   color: Colors.white,

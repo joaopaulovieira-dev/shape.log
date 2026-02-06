@@ -13,6 +13,7 @@ import '../../features/body_tracker/presentation/pages/body_measurement_entry_pa
 import '../../features/settings/presentation/settings_page.dart';
 import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
+import '../../features/splash/presentation/pages/welcome_page.dart';
 import '../../features/workout/presentation/pages/workout_session_page.dart';
 import '../../features/workout/domain/entities/workout.dart';
 
@@ -24,6 +25,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/splash',
     routes: [
       GoRoute(path: '/splash', builder: (context, state) => const SplashPage()),
+      GoRoute(
+        path: '/welcome',
+        builder: (context, state) => const WelcomePage(),
+      ),
       ShellRoute(
         builder: (context, state, child) {
           return ScaffoldWithBottomNavBar(child: child);
