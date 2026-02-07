@@ -7,6 +7,8 @@ import '../../domain/entities/workout_history.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../domain/entities/exercise_set_history.dart';
+
 // State for the active session
 class WorkoutSessionState {
   final Workout? activeWorkout;
@@ -19,6 +21,7 @@ class WorkoutSessionState {
   final Map<String, String> lastHistoryMap;
   final Set<String> completedExerciseNames; // For validation
   final bool showCompletionFeedback;
+  final Map<String, List<ExerciseSetHistory>> setsRecords; // Track sets
 
   const WorkoutSessionState({
     this.activeWorkout,
@@ -31,6 +34,7 @@ class WorkoutSessionState {
     this.lastHistoryMap = const {},
     this.completedExerciseNames = const {},
     this.showCompletionFeedback = false,
+    this.setsRecords = const {},
   });
 
   WorkoutSessionState copyWith({
@@ -44,6 +48,7 @@ class WorkoutSessionState {
     Map<String, String>? lastHistoryMap,
     Set<String>? completedExerciseNames,
     bool? showCompletionFeedback,
+    Map<String, List<ExerciseSetHistory>>? setsRecords,
   }) {
     return WorkoutSessionState(
       activeWorkout: activeWorkout ?? this.activeWorkout,
@@ -58,6 +63,7 @@ class WorkoutSessionState {
           completedExerciseNames ?? this.completedExerciseNames,
       showCompletionFeedback:
           showCompletionFeedback ?? this.showCompletionFeedback,
+      setsRecords: setsRecords ?? this.setsRecords,
     );
   }
 
@@ -188,12 +194,30 @@ class SessionController extends Notifier<WorkoutSessionState> {
     nextExercise();
   }
 
-  void startRestTimer(int durationSeconds) {
+  void startRestTimer(int durationSeconds, {bool isWarmup = false}) {
     _timer?.cancel();
 
-    // Mark current exercise as complete since they are resting (finishing set)
+    // Capture set history BEFORE resting
     if (state.currentExercise != null) {
-      markExerciseAsCompleted(state.currentExercise!.name);
+      final currentEx = state.currentExercise!;
+      final currentSets = state.setsRecords[currentEx.name] ?? [];
+      final newSetNumber = currentSets.length + 1;
+
+      final newSet = ExerciseSetHistory(
+        setNumber: newSetNumber,
+        weight: currentEx.weight,
+        reps: currentEx.reps,
+        isWarmup: isWarmup,
+      );
+
+      final newMap = Map<String, List<ExerciseSetHistory>>.from(
+        state.setsRecords,
+      );
+      newMap[currentEx.name] = [...currentSets, newSet];
+
+      markExerciseAsCompleted(currentEx.name);
+
+      state = state.copyWith(setsRecords: newMap);
     }
 
     // Check if ALL exercises are now completed
@@ -225,14 +249,23 @@ class SessionController extends Notifier<WorkoutSessionState> {
     });
   }
 
+  void addTime(int seconds) {
+    if (state.isRestTimerRunning) {
+      state = state.copyWith(
+        restTimerRemaining: state.restTimerRemaining + seconds,
+        restTimerDuration: state.restTimerDuration + seconds,
+      );
+    }
+  }
+
   void stopRestTimer() {
     _timer?.cancel();
     state = state.copyWith(isRestTimerRunning: false);
   }
 
-  Future<void> finishSessionWithRpe(int rpe) async {
+  Future<WorkoutHistory?> finishSessionWithRpe(int rpe) async {
     stopRestTimer();
-    if (state.activeWorkout == null) return;
+    if (state.activeWorkout == null) return null;
 
     final workout = state.activeWorkout!;
     final now = DateTime.now();
@@ -245,14 +278,24 @@ class SessionController extends Notifier<WorkoutSessionState> {
     final completed = state.completedExerciseNames.length;
     final percentage = total > 0 ? (completed / total) : 0.0;
 
+    // Create new list of exercises with set history populated
+    final historyExercises = workout.exercises.map((ex) {
+      final sets = state.setsRecords[ex.name];
+      if (sets != null && sets.isNotEmpty) {
+        return ex.copyWith(setsHistory: sets);
+      }
+      return ex;
+    }).toList();
+
     final history = WorkoutHistory(
       id: const Uuid().v4(),
       workoutId: workout.id,
       workoutName: workout.name,
       completedDate: now,
       startTime: state.sessionStartTime,
+      endTime: now,
       durationMinutes: duration,
-      exercises: workout.exercises, // Saving snapshot of exercises
+      exercises: historyExercises, // Use populated exercises
       notes: workout.notes,
       rpe: rpe,
       completionPercentage: percentage,
@@ -265,6 +308,7 @@ class SessionController extends Notifier<WorkoutSessionState> {
     await prefs.remove('current_session_start');
 
     state = state.copyWith(isSessionComplete: true);
+    return history;
   }
 
   void exitSession() {

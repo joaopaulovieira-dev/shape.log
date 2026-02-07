@@ -33,6 +33,9 @@ class WorkoutHistoryHiveModel extends HiveObject {
   @HiveField(8)
   final double completionPercentage;
 
+  @HiveField(10)
+  final DateTime? endTime;
+
   WorkoutHistoryHiveModel({
     required this.id,
     required this.workoutId,
@@ -42,6 +45,7 @@ class WorkoutHistoryHiveModel extends HiveObject {
     required this.exercises,
     required this.notes,
     this.startTime,
+    this.endTime,
     this.completionPercentage = 0,
     this.rpe,
   });
@@ -61,6 +65,7 @@ class WorkoutHistoryHiveModel extends HiveObject {
           .toList(),
       notes: history.notes,
       startTime: history.startTime,
+      endTime: history.endTime,
       completionPercentage: history.completionPercentage,
       rpe: history.rpe,
     );
@@ -76,6 +81,7 @@ class WorkoutHistoryHiveModel extends HiveObject {
       exercises: exercises.map((e) => e.toEntity()).toList(),
       notes: notes,
       startTime: startTime,
+      endTime: endTime,
       completionPercentage: completionPercentage,
       rpe: rpe,
     );
@@ -91,6 +97,7 @@ class WorkoutHistoryHiveModel extends HiveObject {
       'exercises': exercises.map((e) => e.toMap()).toList(),
       'notes': notes,
       'startTime': startTime?.toIso8601String(),
+      'endTime': endTime?.toIso8601String(),
       'completionPercentage': completionPercentage,
       'rpe': rpe,
     };
@@ -112,6 +119,7 @@ class WorkoutHistoryHiveModel extends HiveObject {
       startTime: map['startTime'] != null
           ? DateTime.parse(map['startTime'])
           : null,
+      endTime: map['endTime'] != null ? DateTime.parse(map['endTime']) : null,
       completionPercentage: (map['completionPercentage'] ?? 0.0).toDouble(),
       rpe: map['rpe'],
     );

@@ -13,6 +13,9 @@ import '../providers/workout_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import '../../domain/services/workout_report_service.dart';
+import '../../../profile/presentation/providers/user_profile_provider.dart';
+
 import 'package:shape_log/core/constants/app_colors.dart';
 
 class WorkoutDetailsPage extends ConsumerStatefulWidget {
@@ -96,6 +99,11 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
               ),
             ),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.history),
+                tooltip: 'Histórico de Execuções',
+                onPressed: () => _showWorkoutHistory(context, workout.id),
+              ),
               PopupMenuButton<String>(
                 onSelected: (value) async {
                   if (value == 'edit') {
@@ -324,9 +332,8 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                             const SizedBox(height: 4),
                             Text(
                               'Conclusão: ${(percent * 100).toInt()}% ($completedCount/$totalCount)',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                           ],
                         );
@@ -357,7 +364,7 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                       width: 50,
                       height: 50,
                       decoration: BoxDecoration(
-                        color: Colors.grey[300],
+                        color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: ex.imagePaths.isNotEmpty
@@ -390,7 +397,11 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                               decoration: ex.isCompleted
                                   ? TextDecoration.lineThrough
                                   : null,
-                              color: ex.isCompleted ? Colors.grey : null,
+                              color: ex.isCompleted
+                                  ? Colors.grey
+                                  : Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.color,
                             ),
                           ),
                         ],
@@ -475,11 +486,156 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
     }
   }
 
+  void _showWorkoutHistory(BuildContext context, String workoutId) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) {
+          return Consumer(
+            builder: (context, ref, child) {
+              final historyAsync = ref.watch(historyListProvider);
+
+              return historyAsync.when(
+                data: (allHistory) {
+                  final history = allHistory
+                      .where((h) => h.workoutId == workoutId)
+                      .toList();
+
+                  // Sort by date descending
+                  history.sort(
+                    (a, b) => b.completedDate.compareTo(a.completedDate),
+                  );
+
+                  if (history.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'Nenhum histórico encontrado para este treino.',
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(
+                          'Histórico de Execuções',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ),
+                      Expanded(
+                        child: ListView.separated(
+                          controller: scrollController,
+                          itemCount: history.length,
+                          separatorBuilder: (ctx, index) => const Divider(),
+                          itemBuilder: (ctx, index) {
+                            final h = history[index];
+                            final dateStr = DateFormat(
+                              'dd/MM/yyyy HH:mm',
+                            ).format(h.completedDate);
+
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: AppColors.primary.withOpacity(
+                                  0.2,
+                                ),
+                                child: Text(
+                                  _getRpeEmoji(h.rpe),
+                                  style: const TextStyle(fontSize: 20),
+                                ),
+                              ),
+                              title: Text(
+                                dateStr,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(
+                                'Duração: ${h.durationMinutes} min • RPE: ${h.rpe ?? "?"}',
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(
+                                  Icons.copy_all,
+                                  color: AppColors.primary,
+                                ),
+                                tooltip: 'Copiar Relatório para IA',
+                                onPressed: () async {
+                                  final user = await ref.read(
+                                    userProfileProvider.future,
+                                  );
+                                  final report = WorkoutReportService()
+                                      .generateClipboardReport(h, user);
+                                  await Clipboard.setData(
+                                    ClipboardData(text: report),
+                                  );
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Relatório copiado! Cole no ChatGPT.',
+                                        ),
+                                        backgroundColor:
+                                            AppColors.surface, // Dark Grey
+                                        action: SnackBarAction(
+                                          label: 'OK',
+                                          textColor: AppColors.primary,
+                                          onPressed: () {},
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                              onTap: () {
+                                // Could show detailed view here if needed
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (err, stack) => Center(child: Text('Erro: $err')),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  String _getRpeEmoji(int? rpe) {
+    switch (rpe) {
+      case 1:
+        return '😁';
+      case 2:
+        return '🙂';
+      case 3:
+        return '😐';
+      case 4:
+        return '😫';
+      case 5:
+        return '🥵';
+      default:
+        return '🏋️';
+    }
+  }
+
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: Colors.grey[600]),
+        Icon(icon, size: 20, color: AppColors.primary),
         const SizedBox(width: 8),
         Text('$label ', style: const TextStyle(fontWeight: FontWeight.bold)),
         Expanded(child: Text(value)),

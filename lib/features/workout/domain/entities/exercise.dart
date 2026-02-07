@@ -1,3 +1,5 @@
+import 'exercise_set_history.dart';
+
 class Exercise {
   final String name;
   final int sets;
@@ -10,6 +12,8 @@ class Exercise {
   final bool isCompleted;
   final int restTimeSeconds;
 
+  final List<ExerciseSetHistory>? setsHistory;
+
   const Exercise({
     required this.name,
     required this.sets,
@@ -21,6 +25,7 @@ class Exercise {
     this.technique,
     this.isCompleted = false,
     this.restTimeSeconds = 60,
+    this.setsHistory,
   });
 
   Exercise copyWith({
@@ -34,6 +39,7 @@ class Exercise {
     String? technique,
     bool? isCompleted,
     int? restTimeSeconds,
+    List<ExerciseSetHistory>? setsHistory,
   }) {
     return Exercise(
       name: name ?? this.name,
@@ -46,6 +52,7 @@ class Exercise {
       technique: technique ?? this.technique,
       isCompleted: isCompleted ?? this.isCompleted,
       restTimeSeconds: restTimeSeconds ?? this.restTimeSeconds,
+      setsHistory: setsHistory ?? this.setsHistory,
     );
   }
 }

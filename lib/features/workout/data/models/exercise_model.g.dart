@@ -27,13 +27,14 @@ class ExerciseModelAdapter extends TypeAdapter<ExerciseModel> {
       technique: fields[9] as String?,
       isCompleted: fields[8] as bool,
       restTimeSeconds: fields[10] as int,
+      setsHistory: (fields[11] as List).cast<ExerciseSetHistoryHiveModel>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, ExerciseModel obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -53,7 +54,9 @@ class ExerciseModelAdapter extends TypeAdapter<ExerciseModel> {
       ..writeByte(8)
       ..write(obj.isCompleted)
       ..writeByte(10)
-      ..write(obj.restTimeSeconds);
+      ..write(obj.restTimeSeconds)
+      ..writeByte(11)
+      ..write(obj.setsHistory);
   }
 
   @override

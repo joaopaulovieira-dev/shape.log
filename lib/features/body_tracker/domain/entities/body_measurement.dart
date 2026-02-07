@@ -2,6 +2,7 @@ class BodyMeasurement {
   final String id;
   final DateTime date;
   final double weight;
+  final double? bodyFatPercentage;
   final double? bmi;
   final double waistCircumference;
   final double chestCircumference;
@@ -23,6 +24,7 @@ class BodyMeasurement {
     required this.id,
     required this.date,
     required this.weight,
+    this.bodyFatPercentage,
     this.bmi,
     required this.waistCircumference,
     required this.chestCircumference,
@@ -45,6 +47,7 @@ class BodyMeasurement {
     String? id,
     DateTime? date,
     double? weight,
+    double? bodyFatPercentage,
     double? bmi,
     double? waistCircumference,
     double? chestCircumference,
@@ -66,6 +69,7 @@ class BodyMeasurement {
       id: id ?? this.id,
       date: date ?? this.date,
       weight: weight ?? this.weight,
+      bodyFatPercentage: bodyFatPercentage ?? this.bodyFatPercentage,
       bmi: bmi ?? this.bmi,
       waistCircumference: waistCircumference ?? this.waistCircumference,
       chestCircumference: chestCircumference ?? this.chestCircumference,

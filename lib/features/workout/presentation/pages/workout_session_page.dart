@@ -8,6 +8,9 @@ import '../providers/session_provider.dart';
 import '../../domain/entities/workout.dart';
 import 'package:marquee/marquee.dart';
 import 'package:confetti/confetti.dart';
+import '../../domain/services/workout_report_service.dart';
+import '../../../profile/presentation/providers/user_profile_provider.dart';
+import 'package:flutter/services.dart';
 
 class WorkoutSessionPage extends ConsumerStatefulWidget {
   final Workout workout;
@@ -20,6 +23,7 @@ class WorkoutSessionPage extends ConsumerStatefulWidget {
 
 class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
   late PageController _pageController;
+  bool _isWarmup = false;
   late TextEditingController _setsController;
   late TextEditingController _repsController;
   late TextEditingController _weightController;
@@ -539,6 +543,44 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                   ),
                                 ],
                               ),
+                              // Row 3: Warmup
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  ChoiceChip(
+                                    avatar: Icon(
+                                      Icons.local_fire_department,
+                                      size: 18,
+                                      color: _isWarmup
+                                          ? Colors.deepOrange
+                                          : null,
+                                    ),
+                                    label: Text(
+                                      _isWarmup
+                                          ? "Aquecimento"
+                                          : "Série Normal",
+                                      style: TextStyle(
+                                        color: _isWarmup
+                                            ? Colors.deepOrange
+                                            : null,
+                                        fontWeight: _isWarmup
+                                            ? FontWeight.bold
+                                            : null,
+                                      ),
+                                    ),
+                                    selected: _isWarmup,
+                                    onSelected: (selected) {
+                                      setState(() => _isWarmup = selected);
+                                    },
+                                    selectedColor: Colors.deepOrange
+                                        .withOpacity(0.2),
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).colorScheme.surface,
+                                    showCheckmark: false,
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
                         ),
@@ -596,7 +638,7 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                 height: 56,
                 child: FilledButton.icon(
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: AppColors.primary, // Neon Green
                     foregroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -604,7 +646,10 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                   ),
                   onPressed: () {
                     final rest = int.tryParse(_restController.text) ?? 60;
-                    ref.read(sessionProvider.notifier).startRestTimer(rest);
+                    ref
+                        .read(sessionProvider.notifier)
+                        .startRestTimer(rest, isWarmup: _isWarmup);
+                    if (mounted) setState(() => _isWarmup = false);
                   },
                   icon: const Icon(Icons.check_circle_outline),
                   label: const Text(
@@ -628,7 +673,6 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
     VoidCallback? onHistoryTap,
     ValueChanged<String>? onChanged,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -639,7 +683,7 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
               label,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: colorScheme.onSurfaceVariant,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 12,
               ),
             ),
@@ -664,18 +708,22 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
           keyboardType: TextInputType.number,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 18, // Slightly smaller font
+            fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: colorScheme.onSurface,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
           decoration: InputDecoration(
             contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            filled: true,
+            fillColor: Theme.of(context).cardColor,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
-            filled: true,
-            fillColor: colorScheme.surfaceContainerHighest,
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+            ),
           ),
         ),
       ],
@@ -772,18 +820,19 @@ class _GlobalTimerWidgetState extends State<_GlobalTimerWidget> {
   }
 }
 
-class _FeedbackDialog extends StatefulWidget {
+class _FeedbackDialog extends ConsumerStatefulWidget {
   final Function(int) onSave;
 
   const _FeedbackDialog({required this.onSave});
 
   @override
-  State<_FeedbackDialog> createState() => _FeedbackDialogState();
+  ConsumerState<_FeedbackDialog> createState() => _FeedbackDialogState();
 }
 
-class _FeedbackDialogState extends State<_FeedbackDialog> {
+class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
   late ConfettiController _confettiController;
   int? _selectedRpe;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -798,6 +847,71 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
   void dispose() {
     _confettiController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleSave() async {
+    if (_selectedRpe == null) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      final history = await ref
+          .read(sessionProvider.notifier)
+          .finishSessionWithRpe(_selectedRpe!);
+
+      if (history != null && mounted) {
+        // Generate report
+        final user = await ref.read(userProfileProvider.future);
+        final reportStr = WorkoutReportService().generateClipboardReport(
+          history,
+          user,
+        );
+
+        // Copy to clipboard
+        await Clipboard.setData(ClipboardData(text: reportStr));
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: const [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Relatório copiado para a área de transferência!',
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 4),
+              action: SnackBarAction(
+                label: 'OK',
+                textColor: Colors.white,
+                onPressed: () {},
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e, stack) {
+      debugPrint("Error saving session: $e\n$stack");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao salvar: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        context.pop(); // Dialog
+        context.pop(); // Page
+      }
+    }
   }
 
   @override
@@ -841,10 +955,19 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
                   width: double.infinity,
                   height: 50,
                   child: FilledButton(
-                    onPressed: _selectedRpe == null
+                    onPressed: _selectedRpe == null || _isSaving
                         ? null
-                        : () => widget.onSave(_selectedRpe!),
-                    child: const Text('Salvar Treino'),
+                        : _handleSave,
+                    child: _isSaving
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text('Salvar e Copiar Relatório'),
                   ),
                 ),
               ],
@@ -913,11 +1036,9 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
 
 class _RestTimerDialog extends ConsumerWidget {
   const _RestTimerDialog();
-  // ... (Keep existing implementation)
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // ... Copy existing render logic to avoid breaking ...
-    // Since I'm replacing the whole file, I need to include this class fully.
     final state = ref.watch(sessionProvider);
     final remaining = state.restTimerRemaining;
     final progress = state.restTimerDuration > 0
@@ -972,7 +1093,7 @@ class _RestTimerDialog extends ConsumerWidget {
               children: [
                 TextButton(
                   onPressed: () {
-                    // +30s logic could be added here later
+                    ref.read(sessionProvider.notifier).addTime(30);
                   },
                   child: const Text('+30s'),
                 ),

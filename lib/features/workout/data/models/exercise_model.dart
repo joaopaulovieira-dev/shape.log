@@ -1,5 +1,6 @@
 import 'package:hive/hive.dart';
 import '../../domain/entities/exercise.dart';
+import 'exercise_set_history_hive_model.dart';
 
 part 'exercise_model.g.dart';
 
@@ -30,11 +31,13 @@ class ExerciseModel extends HiveObject {
   final String? technique;
 
   @HiveField(8)
-  @HiveField(8)
   final bool isCompleted;
 
   @HiveField(10)
   final int restTimeSeconds;
+
+  @HiveField(11)
+  final List<ExerciseSetHistoryHiveModel> setsHistory;
 
   ExerciseModel({
     required this.name,
@@ -47,6 +50,7 @@ class ExerciseModel extends HiveObject {
     this.technique,
     this.isCompleted = false,
     this.restTimeSeconds = 60,
+    this.setsHistory = const [],
   });
 
   factory ExerciseModel.fromEntity(Exercise exercise) {
@@ -61,6 +65,11 @@ class ExerciseModel extends HiveObject {
       technique: exercise.technique,
       isCompleted: exercise.isCompleted,
       restTimeSeconds: exercise.restTimeSeconds,
+      setsHistory:
+          exercise.setsHistory
+              ?.map((e) => ExerciseSetHistoryHiveModel.fromEntity(e))
+              .toList() ??
+          [],
     );
   }
 
@@ -76,6 +85,7 @@ class ExerciseModel extends HiveObject {
       technique: technique,
       isCompleted: isCompleted,
       restTimeSeconds: restTimeSeconds,
+      setsHistory: setsHistory.map((e) => e.toEntity()).toList(),
     );
   }
 
@@ -91,6 +101,7 @@ class ExerciseModel extends HiveObject {
       'technique': technique,
       'isCompleted': isCompleted,
       'restTimeSeconds': restTimeSeconds,
+      'setsHistory': setsHistory.map((e) => e.toMap()).toList(),
     };
   }
 
@@ -106,6 +117,13 @@ class ExerciseModel extends HiveObject {
       technique: map['technique'],
       isCompleted: map['isCompleted'] ?? false,
       restTimeSeconds: map['restTimeSeconds'] ?? 60,
+      setsHistory: (map['setsHistory'] as List? ?? [])
+          .map(
+            (e) => ExerciseSetHistoryHiveModel.fromMap(
+              Map<String, dynamic>.from(e),
+            ),
+          )
+          .toList(),
     );
   }
 }
