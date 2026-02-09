@@ -8,6 +8,7 @@ import '../../workout/presentation/providers/workout_provider.dart';
 import '../data/services/backup_service.dart';
 import '../data/repositories/settings_repository.dart';
 import '../../image_library/presentation/image_library_settings_page.dart';
+import '../../../../core/utils/snackbar_utils.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -156,8 +157,6 @@ class SettingsPage extends ConsumerWidget {
   }
 
   Future<void> _handleBackup(BuildContext context, WidgetRef ref) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-
     // Show loading using root navigator to avoid GoRouter conflicts
     showDialog(
       context: context,
@@ -174,12 +173,7 @@ class SettingsPage extends ConsumerWidget {
       }
 
       if (success) {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text('Backup enviado!'),
-            duration: Duration(seconds: 5),
-          ),
-        );
+        SnackbarUtils.showSuccess(context, 'Backup enviado!');
       }
     } catch (e) {
       if (context.mounted) {
@@ -187,9 +181,7 @@ class SettingsPage extends ConsumerWidget {
           context,
           rootNavigator: true,
         ).pop(); // Hide loading on error
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('Erro ao realizar backup: $e')),
-        );
+        SnackbarUtils.showError(context, 'Erro ao realizar backup: $e');
       }
     }
   }
@@ -223,7 +215,6 @@ class SettingsPage extends ConsumerWidget {
   }
 
   Future<void> _handleRestore(BuildContext context, WidgetRef ref) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
     final rootNavigator = Navigator.of(context, rootNavigator: true);
 
     // Show loading
@@ -253,19 +244,12 @@ class SettingsPage extends ConsumerWidget {
         ref.invalidate(routineListProvider);
         ref.invalidate(historyListProvider);
 
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Backup completo restaurado! Dados e fotos foram atualizados.',
-            ),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 4),
-          ),
+        SnackbarUtils.showSuccess(
+          context,
+          'Backup completo restaurado! Dados e fotos foram atualizados.',
         );
       } else {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(content: Text('Restauração cancelada ou falhou.')),
-        );
+        SnackbarUtils.showInfo(context, 'Restauração cancelada ou falhou.');
       }
     } catch (e) {
       print('Restore process error: $e');
@@ -274,9 +258,7 @@ class SettingsPage extends ConsumerWidget {
         rootNavigator.pop();
       }
 
-      scaffoldMessenger.showSnackBar(
-        SnackBar(content: Text('Erro ao restaurar backup: $e')),
-      );
+      SnackbarUtils.showError(context, 'Erro ao restaurar backup: $e');
     }
   }
 
