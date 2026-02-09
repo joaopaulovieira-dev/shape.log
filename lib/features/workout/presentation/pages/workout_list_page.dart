@@ -305,11 +305,9 @@ class WorkoutListPage extends ConsumerWidget {
         _showSuccessSnackBar(context, count);
       }
     } catch (e) {
+      debugPrint('Erro importação arquivo: $e');
       if (context.mounted) {
-        _showErrorSnackBar(
-          context,
-          'Erro ao importar arquivo: Formato inválido',
-        );
+        _showErrorSnackBar(context, 'Erro ao importar arquivo: $e');
       }
     }
   }
@@ -347,11 +345,9 @@ class WorkoutListPage extends ConsumerWidget {
                   _showSuccessSnackBar(context, count);
                 }
               } catch (e) {
+                debugPrint('Erro ao colar JSON: $e');
                 if (context.mounted) {
-                  _showErrorSnackBar(
-                    context,
-                    'JSON inválido. Verifique a formatação.',
-                  );
+                  _showErrorSnackBar(context, 'Erro: $e');
                 }
               }
             },

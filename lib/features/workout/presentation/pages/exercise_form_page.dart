@@ -25,16 +25,32 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
   int _restTime = 60;
   List<String> _imagePaths = [];
 
+  ExerciseTypeEntity _selectedType = ExerciseTypeEntity.weight;
+  late TextEditingController _cardioDurationController;
+  late TextEditingController _cardioIntensityController;
+
   @override
   void initState() {
     super.initState();
     final ex = widget.initialExercise;
+    _selectedType = ex?.type ?? ExerciseTypeEntity.weight;
     _nameController = TextEditingController(text: ex?.name ?? '');
+
+    // Weight specific
     _setsController = TextEditingController(text: ex?.sets.toString() ?? '3');
     _repsController = TextEditingController(text: ex?.reps.toString() ?? '10');
     _weightController = TextEditingController(
       text: ex?.weight.toString() ?? '0',
     );
+
+    // Cardio specific
+    _cardioDurationController = TextEditingController(
+      text: ex?.cardioDurationMinutes?.toString() ?? '30',
+    );
+    _cardioIntensityController = TextEditingController(
+      text: ex?.cardioIntensity ?? '',
+    );
+
     _urlController = TextEditingController(text: ex?.youtubeUrl ?? '');
     _equipController = TextEditingController(text: ex?.equipmentNumber ?? '');
     _techniqueController = TextEditingController(text: ex?.technique ?? '');
@@ -48,6 +64,8 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
     _setsController.dispose();
     _repsController.dispose();
     _weightController.dispose();
+    _cardioDurationController.dispose();
+    _cardioIntensityController.dispose();
     _urlController.dispose();
     _equipController.dispose();
     _techniqueController.dispose();
@@ -59,9 +77,8 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
 
     final exercise = Exercise(
       name: _nameController.text,
-      sets: int.tryParse(_setsController.text) ?? 0,
-      reps: int.tryParse(_repsController.text) ?? 0,
-      weight: double.tryParse(_weightController.text) ?? 0,
+      type: _selectedType,
+      // Common fields
       youtubeUrl: _urlController.text.isEmpty ? null : _urlController.text,
       imagePaths: _imagePaths,
       equipmentNumber: _equipController.text.isEmpty
@@ -72,6 +89,25 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
           : _techniqueController.text,
       isCompleted: widget.initialExercise?.isCompleted ?? false,
       restTimeSeconds: _restTime,
+
+      // Weight fields
+      sets: int.tryParse(_setsController.text) ?? 0,
+      reps: _selectedType == ExerciseTypeEntity.weight
+          ? (int.tryParse(_repsController.text) ?? 0)
+          : 0,
+      weight: _selectedType == ExerciseTypeEntity.weight
+          ? (double.tryParse(_weightController.text) ?? 0)
+          : 0,
+
+      // Cardio fields
+      cardioDurationMinutes: _selectedType == ExerciseTypeEntity.cardio
+          ? (double.tryParse(_cardioDurationController.text) ?? 0)
+          : null,
+      cardioIntensity: _selectedType == ExerciseTypeEntity.cardio
+          ? (_cardioIntensityController.text.isEmpty
+                ? null
+                : _cardioIntensityController.text)
+          : null,
     );
 
     Navigator.pop(context, exercise);
@@ -93,6 +129,29 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // Type Selector
+            SegmentedButton<ExerciseTypeEntity>(
+              segments: const [
+                ButtonSegment(
+                  value: ExerciseTypeEntity.weight,
+                  label: Text('Musculação'),
+                  icon: Icon(Icons.fitness_center),
+                ),
+                ButtonSegment(
+                  value: ExerciseTypeEntity.cardio,
+                  label: Text('Cardio'),
+                  icon: Icon(Icons.directions_run),
+                ),
+              ],
+              selected: {_selectedType},
+              onSelectionChanged: (Set<ExerciseTypeEntity> newSelection) {
+                setState(() {
+                  _selectedType = newSelection.first;
+                });
+              },
+            ),
+            const SizedBox(height: 24),
+
             TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(
@@ -102,6 +161,84 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
               validator: (v) => v!.isEmpty ? 'Informe um nome' : null,
             ),
             const SizedBox(height: 16),
+
+            if (_selectedType == ExerciseTypeEntity.weight) ...[
+              // WEIGHT INPUTS
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _setsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Séries',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _repsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Repetições',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _weightController,
+                decoration: const InputDecoration(
+                  labelText: 'Carga (kg)',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+              ),
+            ] else ...[
+              // CARDIO INPUTS
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller:
+                          _setsController, // Reuse sets for Cardio? Or maybe hide it? User req: "sets: 1"
+                      decoration: const InputDecoration(
+                        labelText: 'Séries (Tiros?)',
+                        border: OutlineInputBorder(),
+                        helperText: 'Geralmente 1',
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _cardioDurationController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tempo (min)',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _cardioIntensityController,
+                decoration: const InputDecoration(
+                  labelText: 'Intensidade / Velocidade',
+                  border: OutlineInputBorder(),
+                  hintText: 'Ex: 8-10km/h ou Moderado',
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 16),
             TextFormField(
               controller: _equipController,
               decoration: const InputDecoration(
@@ -110,41 +247,7 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
                 hintText: 'ex: 12 ou A-1',
               ),
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _setsController,
-                    decoration: const InputDecoration(
-                      labelText: 'Séries',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextFormField(
-                    controller: _repsController,
-                    decoration: const InputDecoration(
-                      labelText: 'Repetições',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _weightController,
-              decoration: const InputDecoration(
-                labelText: 'Carga (kg)',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-            ),
+
             const SizedBox(height: 16),
             TextFormField(
               controller: _urlController,
@@ -159,11 +262,10 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
               decoration: const InputDecoration(
                 labelText: 'Técnica / Observações',
                 border: OutlineInputBorder(),
-                hintText: 'ex: Drop-set na última série...',
+                hintText: 'ex: Postura ereta...',
               ),
               maxLines: 3,
             ),
-            const SizedBox(height: 24),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

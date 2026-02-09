@@ -4,10 +4,11 @@ import '../../domain/entities/exercise.dart';
 import 'dart:async';
 import '../providers/workout_provider.dart';
 import '../../domain/entities/workout_history.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/exercise_set_history.dart';
+import '../../data/services/active_session_service.dart';
 
 // State for the active session
 class WorkoutSessionState {
@@ -86,10 +87,11 @@ class SessionController extends Notifier<WorkoutSessionState> {
   }
 
   Future<void> startSession(Workout workout) async {
-    final prefs = await SharedPreferences.getInstance();
     final now = DateTime.now();
     DateTime startTime = now;
-    await prefs.setString('current_session_start', now.toIso8601String());
+
+    // Check if we are restoring? Handled by UI call usually, but let's assume new start unless specified
+    // Ideally we should have a separate method for restore
 
     state = WorkoutSessionState(
       activeWorkout: workout,
@@ -97,6 +99,35 @@ class SessionController extends Notifier<WorkoutSessionState> {
       sessionStartTime: startTime,
       lastHistoryMap: {},
       completedExerciseNames: {},
+    );
+
+    await _loadHistoryForWorkout(workout);
+    _saveSessionState();
+  }
+
+  Future<void> restoreSessionState(Map<String, dynamic> sessionData) async {
+    final workoutId = sessionData['workoutId'] as String;
+    final exerciseIndex = sessionData['exerciseIndex'] as int;
+    final startTime = sessionData['startTime'] as DateTime;
+    final setsRecords =
+        sessionData['setsRecords'] as Map<String, List<ExerciseSetHistory>>;
+    final completedExercises =
+        sessionData['completedExerciseNames'] as Set<String>;
+
+    final repository = ref.read(workoutRepositoryProvider);
+    final routines = await repository.getRoutines();
+    final workout = routines.firstWhere(
+      (w) => w.id == workoutId,
+      orElse: () => throw Exception('Treino não encontrado'),
+    );
+
+    state = WorkoutSessionState(
+      activeWorkout: workout,
+      currentExerciseIndex: exerciseIndex,
+      sessionStartTime: startTime,
+      setsRecords: setsRecords,
+      completedExerciseNames: completedExercises,
+      lastHistoryMap: {}, // Will be loaded below
     );
 
     await _loadHistoryForWorkout(workout);
@@ -140,6 +171,7 @@ class SessionController extends Notifier<WorkoutSessionState> {
     final newSet = Set<String>.from(state.completedExerciseNames);
     newSet.add(exerciseName);
     state = state.copyWith(completedExerciseNames: newSet);
+    _saveSessionState();
   }
 
   void nextExercise() {
@@ -153,6 +185,7 @@ class SessionController extends Notifier<WorkoutSessionState> {
         currentExerciseIndex: state.currentExerciseIndex + 1,
         isRestTimerRunning: false,
       );
+      _saveSessionState();
     } else {
       // Logic: If on the LAST exercise and next is called, trigger completion feedback
       state = state.copyWith(showCompletionFeedback: true);
@@ -165,6 +198,7 @@ class SessionController extends Notifier<WorkoutSessionState> {
         currentExerciseIndex: state.currentExerciseIndex - 1,
         isRestTimerRunning: false,
       );
+      _saveSessionState();
     }
   }
 
@@ -175,6 +209,7 @@ class SessionController extends Notifier<WorkoutSessionState> {
         currentExerciseIndex: index,
         isRestTimerRunning: false,
       );
+      _saveSessionState();
     }
   }
 
@@ -187,15 +222,36 @@ class SessionController extends Notifier<WorkoutSessionState> {
         exercises: exercises,
       );
       state = state.copyWith(activeWorkout: updatedWorkout);
+      _saveSessionState(); // Persist immediately on update
     }
   }
 
   void skipRest() {
+    // FIX: Only advance to next exercise if sets are done
+    if (state.currentExercise != null) {
+      final currentEx = state.currentExercise!;
+      final currentSets = state.setsRecords[currentEx.name] ?? [];
+
+      // If we haven't finished all sets yet, just stop timer and let user do next set
+      if (currentSets.length < currentEx.sets) {
+        stopRestTimer();
+        return;
+      }
+    }
+
+    // Otherwise go to next exercise
     nextExercise();
   }
 
-  void startRestTimer(int durationSeconds, {bool isWarmup = false}) {
+  void startRestTimer(
+    int durationSeconds, {
+    bool isWarmup = false,
+    double? currentWeight,
+    int? currentReps,
+  }) {
     _timer?.cancel();
+
+    bool isLastSet = false;
 
     // Capture set history BEFORE resting
     if (state.currentExercise != null) {
@@ -203,21 +259,33 @@ class SessionController extends Notifier<WorkoutSessionState> {
       final currentSets = state.setsRecords[currentEx.name] ?? [];
       final newSetNumber = currentSets.length + 1;
 
+      // Use provided values or fallback to exercise defaults
+      // Critical Fix: Use values passed from UI if available
+      final recordedWeight = currentWeight ?? currentEx.weight;
+      final recordedReps = currentReps ?? currentEx.reps;
+
       final newSet = ExerciseSetHistory(
         setNumber: newSetNumber,
-        weight: currentEx.weight,
-        reps: currentEx.reps,
+        weight: recordedWeight,
+        reps: recordedReps,
         isWarmup: isWarmup,
       );
 
       final newMap = Map<String, List<ExerciseSetHistory>>.from(
         state.setsRecords,
       );
-      newMap[currentEx.name] = [...currentSets, newSet];
+      // Ensure list is modifiable
+      final existingList = newMap[currentEx.name] ?? [];
+      newMap[currentEx.name] = [...existingList, newSet];
 
-      markExerciseAsCompleted(currentEx.name);
+      // Only mark as completed if we reached the target sets
+      if (newSetNumber >= currentEx.sets) {
+        markExerciseAsCompleted(currentEx.name);
+        isLastSet = true;
+      }
 
       state = state.copyWith(setsRecords: newMap);
+      _saveSessionState();
     }
 
     // Check if ALL exercises are now completed
@@ -243,8 +311,14 @@ class SessionController extends Notifier<WorkoutSessionState> {
           restTimerRemaining: state.restTimerRemaining - 1,
         );
       } else {
-        // Timer finished -> auto-advance to next exercise
-        nextExercise();
+        // Timer finished
+        if (isLastSet) {
+          // If it was the last set, auto-advance to next exercise
+          nextExercise();
+        } else {
+          // If not the last set, just stop the timer (stay on current exercise for next set)
+          stopRestTimer();
+        }
       }
     });
   }
@@ -281,8 +355,12 @@ class SessionController extends Notifier<WorkoutSessionState> {
     // Create new list of exercises with set history populated
     final historyExercises = workout.exercises.map((ex) {
       final sets = state.setsRecords[ex.name];
+      // Critical Fix: Check if sets exists, if so attach them
       if (sets != null && sets.isNotEmpty) {
-        return ex.copyWith(setsHistory: sets);
+        // We must create a copy of the exercise with the set history attached
+        // The default copyWith is shallow for lists? No, but we need to ensure the entity has this field
+        // Exercise entity has setsHistory field now? Yes.
+        return ex.copyWith(setsHistory: List.from(sets));
       }
       return ex;
     }).toList();
@@ -304,8 +382,7 @@ class SessionController extends Notifier<WorkoutSessionState> {
     await ref.read(workoutRepositoryProvider).saveHistory(history);
 
     // Clear Session Prefs
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('current_session_start');
+    await ref.read(activeSessionServiceProvider).clearSession();
 
     state = state.copyWith(isSessionComplete: true);
     return history;
@@ -313,11 +390,22 @@ class SessionController extends Notifier<WorkoutSessionState> {
 
   void exitSession() {
     stopRestTimer();
-    SharedPreferences.getInstance().then((prefs) {
-      prefs.remove('current_session_start');
-    });
-
+    ref.read(activeSessionServiceProvider).clearSession();
     state = const WorkoutSessionState();
+  }
+
+  void _saveSessionState() {
+    if (state.activeWorkout == null || state.sessionStartTime == null) return;
+
+    ref
+        .read(activeSessionServiceProvider)
+        .saveSession(
+          workoutId: state.activeWorkout!.id,
+          exerciseIndex: state.currentExerciseIndex,
+          startTime: state.sessionStartTime!,
+          setsRecords: state.setsRecords,
+          completedExerciseNames: state.completedExerciseNames,
+        );
   }
 
   Future<List<WorkoutHistory>> getExerciseHistory(String exerciseName) async {

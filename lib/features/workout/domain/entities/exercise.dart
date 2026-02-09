@@ -1,5 +1,7 @@
 import 'exercise_set_history.dart';
 
+enum ExerciseTypeEntity { weight, cardio }
+
 class Exercise {
   final String name;
   final int sets;
@@ -14,6 +16,10 @@ class Exercise {
 
   final List<ExerciseSetHistory>? setsHistory;
 
+  final ExerciseTypeEntity type;
+  final double? cardioDurationMinutes;
+  final String? cardioIntensity;
+
   const Exercise({
     required this.name,
     required this.sets,
@@ -26,6 +32,9 @@ class Exercise {
     this.isCompleted = false,
     this.restTimeSeconds = 60,
     this.setsHistory,
+    this.type = ExerciseTypeEntity.weight,
+    this.cardioDurationMinutes,
+    this.cardioIntensity,
   });
 
   Exercise copyWith({
@@ -40,6 +49,9 @@ class Exercise {
     bool? isCompleted,
     int? restTimeSeconds,
     List<ExerciseSetHistory>? setsHistory,
+    ExerciseTypeEntity? type,
+    double? cardioDurationMinutes,
+    String? cardioIntensity,
   }) {
     return Exercise(
       name: name ?? this.name,
@@ -53,6 +65,10 @@ class Exercise {
       isCompleted: isCompleted ?? this.isCompleted,
       restTimeSeconds: restTimeSeconds ?? this.restTimeSeconds,
       setsHistory: setsHistory ?? this.setsHistory,
+      type: type ?? this.type,
+      cardioDurationMinutes:
+          cardioDurationMinutes ?? this.cardioDurationMinutes,
+      cardioIntensity: cardioIntensity ?? this.cardioIntensity,
     );
   }
 }

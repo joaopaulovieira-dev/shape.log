@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
 import '../providers/session_provider.dart';
 import '../../domain/entities/workout.dart';
-import 'package:marquee/marquee.dart';
+import '../../domain/entities/exercise.dart';
 import 'package:confetti/confetti.dart';
 import '../../domain/services/workout_report_service.dart';
 import '../../../profile/presentation/providers/user_profile_provider.dart';
@@ -30,6 +30,23 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
   late TextEditingController _restController;
   late TextEditingController _equipmentController;
 
+  // Cardio Controllers
+  late TextEditingController _cardioDurationController;
+  late TextEditingController _cardioIntensityController;
+
+  // Focus Nodes for Auto-Save
+  final FocusNode _setsFocus = FocusNode();
+  final FocusNode _repsFocus = FocusNode();
+  final FocusNode _weightFocus = FocusNode();
+  final FocusNode _restFocus = FocusNode();
+  final FocusNode _equipmentFocus = FocusNode();
+  final FocusNode _cardioDurationFocus = FocusNode();
+  final FocusNode _cardioIntensityFocus = FocusNode();
+
+  // Visual Feedback
+  bool _showSavedFeedback = false;
+  Timer? _feedbackTimer;
+
   @override
   void initState() {
     super.initState();
@@ -39,21 +56,72 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
     _weightController = TextEditingController();
     _restController = TextEditingController();
     _equipmentController = TextEditingController();
+    _cardioDurationController = TextEditingController();
+    _cardioIntensityController = TextEditingController();
 
     // Initialize session
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(sessionProvider.notifier).startSession(widget.workout);
-      _updateControllers();
+      final sessionState = ref.read(sessionProvider);
+
+      // If we are already running THIS workout, don't restart it (Resume functionality)
+      if (sessionState.activeWorkout?.id == widget.workout.id) {
+        _updateControllers();
+        // Jump to correct page if needed
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(sessionState.currentExerciseIndex);
+        }
+      } else {
+        ref.read(sessionProvider.notifier).startSession(widget.workout);
+        _updateControllers();
+      }
     });
+
+    // Setup Focus Listeners for Auto-Save
+    _setsFocus.addListener(_onFocusChange);
+    _repsFocus.addListener(_onFocusChange);
+    _weightFocus.addListener(_onFocusChange);
+    _restFocus.addListener(_onFocusChange);
+    _equipmentFocus.addListener(_onFocusChange);
+    _cardioDurationFocus.addListener(_onFocusChange);
+    _cardioIntensityFocus.addListener(_onFocusChange);
+  }
+
+  void _onFocusChange() {
+    // If any field lost focus, we ensure state is saved.
+    // Actually, we want to save when *valid* changes happen, which _saveChanges handles.
+    // But we trigger it on blur to be safe.
+    // Checks if any relevant focus node *lost* focus.
+    // A simpler approach: iterate all. If none have focus, or just on every change.
+    // The requirement is: "onFieldSubmitted and FocusNode.addListener (onBlur)"
+    // We just call _saveChanges() on blur.
+
+    // We can just call _saveChanges(). usage of _saveChanges reads from text controllers.
+    // If the text controllers haven't changed, _saveChanges might still trigger an update,
+    // but the provider logic checks against current state if we implemented it right?
+    // Actually SessionProvider.updateCurrentExercise replaces the specific exercise instance.
+    // It's cheap enough.
+
+    // We only care if we *lost* focus on one of them.
+    if (!_setsFocus.hasFocus &&
+        !_repsFocus.hasFocus &&
+        !_weightFocus.hasFocus &&
+        !_restFocus.hasFocus &&
+        !_equipmentFocus.hasFocus &&
+        !_cardioDurationFocus.hasFocus &&
+        !_cardioIntensityFocus.hasFocus) {
+      _saveChanges();
+    } else {
+      // Even if switching between fields, we might want to save the one we just left.
+      // So just calling _saveChanges() whenever a listener fires is safe,
+      // as `_saveChanges` grabs all current values.
+      _saveChanges();
+    }
   }
 
   void _updateControllers() {
     final state = ref.read(sessionProvider);
     final exercise = state.currentExercise;
     if (exercise != null) {
-      // Use existing text if focused to prevent cursor jumping?
-      // For now, simple overwrite. If we type, local state updates.
-      // But if we navigate back and forth, we need overwrite.
       if (_setsController.text != exercise.sets.toString()) {
         _setsController.text = exercise.sets.toString();
       }
@@ -68,6 +136,16 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
       }
       if (_equipmentController.text != (exercise.equipmentNumber ?? '')) {
         _equipmentController.text = exercise.equipmentNumber ?? '';
+      }
+
+      // Cardio
+      if (_cardioDurationController.text !=
+          (exercise.cardioDurationMinutes?.toString() ?? '')) {
+        _cardioDurationController.text =
+            exercise.cardioDurationMinutes?.toString() ?? '';
+      }
+      if (_cardioIntensityController.text != (exercise.cardioIntensity ?? '')) {
+        _cardioIntensityController.text = exercise.cardioIntensity ?? '';
       }
     }
   }
@@ -84,9 +162,29 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
       restTimeSeconds:
           int.tryParse(_restController.text) ?? exercise.restTimeSeconds,
       equipmentNumber: _equipmentController.text,
+      cardioDurationMinutes: double.tryParse(_cardioDurationController.text),
+      cardioIntensity: _cardioIntensityController.text,
     );
 
     ref.read(sessionProvider.notifier).updateCurrentExercise(updatedExercise);
+
+    // Show visual feedback
+    if (mounted) {
+      // Cancel previous timer if any
+      _feedbackTimer?.cancel();
+
+      setState(() {
+        _showSavedFeedback = true;
+      });
+
+      _feedbackTimer = Timer(const Duration(milliseconds: 1500), () {
+        if (mounted) {
+          setState(() {
+            _showSavedFeedback = false;
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -97,6 +195,18 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
     _weightController.dispose();
     _restController.dispose();
     _equipmentController.dispose();
+    _cardioDurationController.dispose();
+    _cardioIntensityController.dispose();
+
+    _setsFocus.dispose();
+    _repsFocus.dispose();
+    _weightFocus.dispose();
+    _restFocus.dispose();
+    _equipmentFocus.dispose();
+    _cardioDurationFocus.dispose();
+    _cardioIntensityFocus.dispose();
+    _feedbackTimer?.cancel();
+
     super.dispose();
   }
 
@@ -244,6 +354,7 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
     final sessionState = ref.watch(sessionProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final size = MediaQuery.of(context).size;
 
     // Sync PageController with State if needed
     ref.listen(sessionProvider, (prev, next) {
@@ -349,238 +460,326 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                   final isCompleted = sessionState.completedExerciseNames
                       .contains(exercise.name);
 
+                  // Set logic (handled in bottom button)
+                  // final setsRecords = sessionState.setsRecords[exercise.name] ?? [];
+                  // final currentSetNumber = setsRecords.length + 1;
+                  // final totalSets = exercise.sets;
+
+                  // unused: final isLastSet = currentSetNumber >= totalSets;
+
                   return SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Image
-                        Container(
-                          height: 300,
-                          margin: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(16),
-                            border: isCompleted
-                                ? Border.all(color: AppColors.primary, width: 3)
-                                : null,
-                            boxShadow: isCompleted
-                                ? [
-                                    BoxShadow(
-                                      color: AppColors.primary.withValues(
-                                        alpha: 0.5,
-                                      ),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                          child: Stack(
-                            children: [
-                              Positioned.fill(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(13),
-                                  child: ColorFiltered(
-                                    colorFilter: isCompleted
-                                        ? ColorFilter.mode(
-                                            Colors.black.withOpacity(0.3),
-                                            BlendMode.darken,
-                                          )
-                                        : const ColorFilter.mode(
-                                            Colors.transparent,
-                                            BlendMode.multiply,
-                                          ),
-                                    child: exercise.imagePaths.isNotEmpty
-                                        ? Image.file(
-                                            File(exercise.imagePaths.first),
-                                            fit: BoxFit.contain,
-                                            errorBuilder: (_, _, _) =>
-                                                const Icon(
-                                                  Icons.broken_image,
-                                                  color: Colors.white,
-                                                  size: 50,
-                                                ),
-                                          )
-                                        : const Center(
-                                            child: Icon(
-                                              Icons.fitness_center,
-                                              color: Colors.white,
-                                              size: 60,
-                                            ),
-                                          ),
-                                  ),
-                                ),
-                              ),
-                              if (isCompleted)
-                                Positioned.fill(
-                                  child: Center(
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 24,
-                                        vertical: 12,
-                                      ),
-                                      decoration: BoxDecoration(
+                        // Image (Reduced Size: 20-25% height)
+                        SizedBox(
+                          height: size.height * 0.22,
+                          child: Container(
+                            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            decoration: BoxDecoration(
+                              color: Colors.black,
+                              borderRadius: BorderRadius.circular(16),
+                              border: isCompleted
+                                  ? Border.all(
+                                      color: AppColors.primary,
+                                      width: 3,
+                                    )
+                                  : null,
+                              boxShadow: isCompleted
+                                  ? [
+                                      BoxShadow(
                                         color: AppColors.primary.withValues(
-                                          alpha: 0.9,
+                                          alpha: 0.5,
                                         ),
-                                        borderRadius: BorderRadius.circular(30),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
                                       ),
-                                      child: const Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.check_circle,
-                                            color: Colors.black,
-                                            size: 28,
-                                          ),
-                                          SizedBox(width: 8),
-                                          Text(
-                                            "CONCLUÍDO",
-                                            style: TextStyle(
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 18,
-                                              letterSpacing: 1.2,
+                                    ]
+                                  : null,
+                            ),
+                            child: Stack(
+                              children: [
+                                Positioned.fill(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(13),
+                                    child: ColorFiltered(
+                                      colorFilter: isCompleted
+                                          ? ColorFilter.mode(
+                                              Colors.black.withOpacity(0.3),
+                                              BlendMode.darken,
+                                            )
+                                          : const ColorFilter.mode(
+                                              Colors.transparent,
+                                              BlendMode.multiply,
                                             ),
-                                          ),
-                                        ],
-                                      ),
+                                      child: exercise.imagePaths.isNotEmpty
+                                          ? Image.file(
+                                              File(exercise.imagePaths.first),
+                                              fit: BoxFit.contain,
+                                              errorBuilder: (_, _, _) =>
+                                                  const Icon(
+                                                    Icons.broken_image,
+                                                    color: Colors.white,
+                                                    size: 50,
+                                                  ),
+                                            )
+                                          : const Center(
+                                              child: Icon(
+                                                Icons.fitness_center,
+                                                color: Colors.white,
+                                                size: 50,
+                                              ),
+                                            ),
                                     ),
                                   ),
                                 ),
-                            ],
+                                if (isCompleted)
+                                  Positioned.fill(
+                                    child: Center(
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 24,
+                                          vertical: 12,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary.withValues(
+                                            alpha: 0.9,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            30,
+                                          ),
+                                        ),
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.check_circle,
+                                              color: Colors.black,
+                                              size: 28,
+                                            ),
+                                            SizedBox(width: 8),
+                                            Text(
+                                              "CONCLUÍDO",
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 18,
+                                                letterSpacing: 1.2,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
 
-                        // Title
+                        // Title with Copy Button
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: SizedBox(
-                            height: 40,
-                            child: Marquee(
-                              text: exercise.name,
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onSurface,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  exercise.name,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.onSurface,
+                                    height: 1.1,
+                                  ),
+                                ),
                               ),
-                              scrollAxis: Axis.horizontal,
-                              blankSpace: 20.0,
-                              velocity: 30.0,
-                              startPadding: 0.0,
-                              accelerationDuration: const Duration(seconds: 1),
-                              decelerationDuration: const Duration(
-                                milliseconds: 500,
+                              IconButton(
+                                icon: const Icon(Icons.copy, size: 20),
+                                color: colorScheme.onSurfaceVariant,
+                                onPressed: () {
+                                  Clipboard.setData(
+                                    ClipboardData(text: exercise.name),
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Nome copiado!'),
+                                      duration: Duration(seconds: 1),
+                                    ),
+                                  );
+                                },
                               ),
-                            ),
+                            ],
                           ),
                         ),
 
                         const SizedBox(height: 16),
 
-                        const SizedBox(height: 8), // Reduced spacing
-                        // GENIUS GRID LAYOUT (Compact 2-Row)
+                        // INPUTS
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Column(
                             children: [
-                              // Row 1: Sets, Reps, Weight
+                              if (exercise.type ==
+                                  ExerciseTypeEntity.cardio) ...[
+                                // CARDIO MODE
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildInputCard(
+                                        context,
+                                        label: "TEMPO (min)",
+                                        controller: _cardioDurationController,
+                                        focusNode: _cardioDurationFocus,
+                                        onChanged: (_) => _saveChanges(),
+                                        largeFont: true,
+                                        showSavedFeedback: _showSavedFeedback,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: _buildInputCard(
+                                        context,
+                                        label: "INTENSIDADE",
+                                        controller: _cardioIntensityController,
+                                        focusNode: _cardioIntensityFocus,
+                                        onChanged: (_) => _saveChanges(),
+                                        isNumber:
+                                            false, // Text input for intensity
+                                        showSavedFeedback: _showSavedFeedback,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ] else ...[
+                                // WEIGHT MODE
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 2, // More width for Weight
+                                      child: _buildInputCard(
+                                        context,
+                                        label: "CARGA (Kg)",
+                                        controller: _weightController,
+                                        focusNode: _weightFocus,
+                                        showHistory: true,
+                                        onHistoryTap: () =>
+                                            _showHistoryDialog(exercise.name),
+                                        onChanged: (_) => _saveChanges(),
+                                        largeFont: true,
+                                        showSavedFeedback: _showSavedFeedback,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: _buildInputCard(
+                                        context,
+                                        label: "REPS",
+                                        controller: _repsController,
+                                        focusNode: _repsFocus,
+                                        onChanged: (_) => _saveChanges(),
+                                        largeFont: true,
+                                        showSavedFeedback: _showSavedFeedback,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+
+                              const SizedBox(height: 16),
+
+                              // Row 2: Sets & Rest
                               Row(
                                 children: [
-                                  Expanded(
-                                    child: _buildInputCard(
-                                      context,
-                                      label: "SÉRIES",
-                                      controller: _setsController,
-                                      onChanged: (_) => _saveChanges(),
+                                  if (exercise.type ==
+                                      ExerciseTypeEntity.weight) ...[
+                                    Expanded(
+                                      child: _buildInputCard(
+                                        context,
+                                        label: "SÉRIES ALVO",
+                                        controller: _setsController,
+                                        focusNode: _setsFocus,
+                                        onChanged: (_) => _saveChanges(),
+                                        showSavedFeedback: _showSavedFeedback,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
+                                    const SizedBox(width: 8),
+                                  ],
                                   Expanded(
-                                    child: _buildInputCard(
-                                      context,
-                                      label: "REPS",
-                                      controller: _repsController,
-                                      onChanged: (_) => _saveChanges(),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    flex: 2, // Larger for weight
-                                    child: _buildInputCard(
-                                      context,
-                                      label: "CARGA (Kg)",
-                                      controller: _weightController,
-                                      showHistory: true,
-                                      onHistoryTap: () =>
-                                          _showHistoryDialog(exercise.name),
-                                      onChanged: (_) => _saveChanges(),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              // Row 2: Equipment, Rest
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildInputCard(
-                                      context,
-                                      label: "EQP.",
-                                      controller: _equipmentController,
-                                      onChanged: (_) => _saveChanges(),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    flex: 2,
                                     child: _buildInputCard(
                                       context,
                                       label: "DESCANSO (s)",
                                       controller: _restController,
+                                      focusNode: _restFocus,
                                       onChanged: (_) => _saveChanges(),
+                                      showSavedFeedback: _showSavedFeedback,
                                     ),
                                   ),
                                 ],
                               ),
-                              // Row 3: Warmup
+
+                              const SizedBox(height: 16),
+
+                              // Row 3: Equipment (Full Width)
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  ChoiceChip(
-                                    avatar: Icon(
-                                      Icons.local_fire_department,
-                                      size: 18,
-                                      color: _isWarmup
-                                          ? Colors.deepOrange
-                                          : null,
-                                    ),
-                                    label: Text(
-                                      _isWarmup
-                                          ? "Aquecimento"
-                                          : "Série Normal",
-                                      style: TextStyle(
-                                        color: _isWarmup
-                                            ? Colors.deepOrange
-                                            : null,
-                                        fontWeight: _isWarmup
-                                            ? FontWeight.bold
-                                            : null,
-                                      ),
-                                    ),
-                                    selected: _isWarmup,
-                                    onSelected: (selected) {
-                                      setState(() => _isWarmup = selected);
-                                    },
-                                    selectedColor: Colors.deepOrange
-                                        .withOpacity(0.2),
-                                    backgroundColor: Theme.of(
+                                  Expanded(
+                                    child: _buildInputCard(
                                       context,
-                                    ).colorScheme.surface,
-                                    showCheckmark: false,
+                                      label: "EQUIPAMENTO",
+                                      controller: _equipmentController,
+                                      focusNode: _equipmentFocus,
+                                      onChanged: (_) => _saveChanges(),
+                                      isNumber: false, // Allow alphanumeric
+                                      showSavedFeedback: _showSavedFeedback,
+                                    ),
                                   ),
                                 ],
                               ),
+
+                              // Warmup Chip (Only for Weights)
+                              if (exercise.type == ExerciseTypeEntity.weight)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      ChoiceChip(
+                                        avatar: Icon(
+                                          Icons.local_fire_department,
+                                          size: 18,
+                                          color: _isWarmup
+                                              ? Colors.deepOrange
+                                              : null,
+                                        ),
+                                        label: Text(
+                                          _isWarmup
+                                              ? "Aquecimento"
+                                              : "Série Normal",
+                                          style: TextStyle(
+                                            color: _isWarmup
+                                                ? Colors.deepOrange
+                                                : null,
+                                            fontWeight: _isWarmup
+                                                ? FontWeight.bold
+                                                : null,
+                                          ),
+                                        ),
+                                        selected: _isWarmup,
+                                        onSelected: (selected) {
+                                          setState(() => _isWarmup = selected);
+                                        },
+                                        selectedColor: Colors.deepOrange
+                                            .withOpacity(0.2),
+                                        backgroundColor: Theme.of(
+                                          context,
+                                        ).colorScheme.surface,
+                                        showCheckmark: false,
+                                      ),
+                                    ],
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -631,33 +830,67 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
             ),
 
             // 3. Bottom Action
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary, // Neon Green
-                    foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+            Consumer(
+              builder: (context, ref, child) {
+                // We need to access the CURRENT exercise logic here
+                // But the button is outside the PageView builder.
+                // We must rely on sessionState.currentExercise which is already synced.
+                final exercise = sessionState.currentExercise;
+                final setsRecords = exercise != null
+                    ? (sessionState.setsRecords[exercise.name] ?? [])
+                    : [];
+                final currentSetNumber = setsRecords.length + 1;
+                final totalSets = exercise?.sets ?? 3;
+                final isLastSet = currentSetNumber >= totalSets;
+                final isCardio = exercise?.type == ExerciseTypeEntity.cardio;
+
+                String buttonLabel =
+                    "CONCLUIR SÉRIE $currentSetNumber de $totalSets";
+                if (isLastSet) buttonLabel = "FINALIZAR EXERCÍCIO";
+                if (isCardio) buttonLabel = "FINALIZAR CARDIO";
+
+                return Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 64, // Bigger button
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: () {
+                        final rest = int.tryParse(_restController.text) ?? 60;
+                        final currentWeight = double.tryParse(
+                          _weightController.text,
+                        );
+                        final currentReps = int.tryParse(_repsController.text);
+
+                        ref
+                            .read(sessionProvider.notifier)
+                            .startRestTimer(
+                              rest,
+                              isWarmup: _isWarmup,
+                              currentWeight: currentWeight,
+                              currentReps: currentReps,
+                            );
+                        if (mounted) setState(() => _isWarmup = false);
+                      },
+                      icon: const Icon(Icons.check_circle_outline, size: 28),
+                      label: Text(
+                        buttonLabel,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
-                  onPressed: () {
-                    final rest = int.tryParse(_restController.text) ?? 60;
-                    ref
-                        .read(sessionProvider.notifier)
-                        .startRestTimer(rest, isWarmup: _isWarmup);
-                    if (mounted) setState(() => _isWarmup = false);
-                  },
-                  icon: const Icon(Icons.check_circle_outline),
-                  label: const Text(
-                    'CONCLUIR SÉRIE',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
+                );
+              },
             ),
           ],
         ),
@@ -669,9 +902,13 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
     BuildContext context, {
     required String label,
     required TextEditingController controller,
+    FocusNode? focusNode,
     bool showHistory = false,
     VoidCallback? onHistoryTap,
     ValueChanged<String>? onChanged,
+    bool largeFont = false,
+    bool isNumber = true,
+    bool showSavedFeedback = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -687,33 +924,48 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                 fontSize: 12,
               ),
             ),
-            if (showHistory)
-              InkWell(
-                onTap: onHistoryTap,
-                child: const Padding(
-                  padding: EdgeInsets.only(bottom: 2),
-                  child: Icon(
-                    Icons.show_chart,
-                    color: AppColors.primary,
-                    size: 20,
+            Row(
+              children: [
+                if (showSavedFeedback)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8, bottom: 2),
+                    child: Icon(
+                      Icons.cloud_done,
+                      size: 16,
+                      color: AppColors.primary.withOpacity(0.8),
+                    ),
                   ),
-                ),
-              ),
+                if (showHistory)
+                  InkWell(
+                    onTap: onHistoryTap,
+                    child: const Padding(
+                      padding: EdgeInsets.only(bottom: 2),
+                      child: Icon(
+                        Icons.show_chart,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ],
         ),
         const SizedBox(height: 4),
         TextField(
           controller: controller,
+          focusNode: focusNode,
           onChanged: onChanged,
-          keyboardType: TextInputType.number,
+          keyboardType: isNumber ? TextInputType.number : TextInputType.text,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 18,
+            fontSize: largeFont ? 40 : 18,
             fontWeight: FontWeight.bold,
             color: Theme.of(context).colorScheme.onSurface,
+            height: 1.2,
           ),
           decoration: InputDecoration(
-            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            contentPadding: EdgeInsets.symmetric(vertical: largeFont ? 16 : 10),
             filled: true,
             fillColor: Theme.of(context).cardColor,
             border: OutlineInputBorder(

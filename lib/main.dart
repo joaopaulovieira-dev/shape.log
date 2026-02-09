@@ -7,6 +7,7 @@ import 'features/workout/data/models/workout_hive_model.dart';
 import 'features/workout/data/models/workout_history_hive_model.dart';
 import 'features/workout/data/models/exercise_model.dart';
 import 'features/workout/data/models/workout_enums_adapter.dart';
+import 'features/workout/data/models/exercise_set_history_hive_model.dart';
 import 'features/body_tracker/data/models/body_measurement_hive_model.dart';
 import 'features/profile/data/models/user_profile_hive_model.dart';
 
@@ -24,6 +25,8 @@ void main() async {
   Hive.registerAdapter(WorkoutHistoryHiveModelAdapter());
   Hive.registerAdapter(BodyMeasurementHiveModelAdapter());
   Hive.registerAdapter(UserProfileHiveModelAdapter());
+  Hive.registerAdapter(ExerciseTypeAdapter());
+  Hive.registerAdapter(ExerciseSetHistoryHiveModelAdapter());
 
   // Open Box
   try {
