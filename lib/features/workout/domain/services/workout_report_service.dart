@@ -69,7 +69,7 @@ class WorkoutReportService {
     final dateFormat = DateFormat('dd/MM/yyyy - HH:mm');
 
     buffer.writeln('RELATÓRIO DE TREINO - SHAPE.LOG');
-    buffer.writeln('--------------------------------------------------');
+    buffer.writeln('-------------------------------------');
 
     if (user != null) {
       buffer.writeln(
@@ -97,7 +97,7 @@ class WorkoutReportService {
     }
     buffer.writeln('INTENSIDADE (RPE 1-5): ${rpe ?? "N/A"} $rpeEmoji');
 
-    buffer.writeln('--------------------------------------------------');
+    buffer.writeln('-------------------------------------');
     buffer.writeln('DETALHAMENTO:');
     buffer.writeln('');
 
@@ -128,7 +128,7 @@ class WorkoutReportService {
       index++;
     }
 
-    buffer.writeln('--------------------------------------------------');
+    buffer.writeln('-------------------------------------');
     buffer.writeln(
       'OBS: Gere uma análise sobre progressão de carga e sugira ajustes para o próximo treino.',
     );
@@ -141,7 +141,7 @@ class WorkoutReportService {
     final dateFormat = DateFormat('dd/MM/yyyy - HH:mm');
 
     buffer.writeln('RELATÓRIO DE TREINO - SHAPE.LOG');
-    buffer.writeln('--------------------------------------------------');
+    buffer.writeln('-------------------------------------');
 
     if (user != null) {
       buffer.writeln(
@@ -170,7 +170,7 @@ class WorkoutReportService {
     }
     buffer.writeln('INTENSIDADE (RPE 1-5): ${rpe ?? "N/A"} $rpeEmoji');
 
-    buffer.writeln('--------------------------------------------------');
+    buffer.writeln('-------------------------------------');
     buffer.writeln('DETALHAMENTO:');
     buffer.writeln('');
 
@@ -218,7 +218,7 @@ class WorkoutReportService {
       index++;
     }
 
-    buffer.writeln('--------------------------------------------------');
+    buffer.writeln('-------------------------------------');
     // No generic footer instructions as requested
 
     return buffer.toString();

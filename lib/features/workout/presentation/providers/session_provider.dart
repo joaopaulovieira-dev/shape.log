@@ -1,19 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:vibration/vibration.dart';
+import 'package:uuid/uuid.dart';
+
 import '../../domain/entities/workout.dart';
 import '../../domain/entities/exercise.dart';
-import 'dart:async';
-import '../providers/workout_provider.dart';
 import '../../domain/entities/workout_history.dart';
-
-import 'package:uuid/uuid.dart';
+import '../providers/workout_provider.dart';
 
 import '../../domain/entities/exercise_set_history.dart';
 import '../../data/services/active_session_service.dart';
-import 'dart:convert';
-
-import '../../../../core/constants/app_sounds.dart';
 
 // State for the active session
 class WorkoutSessionState {
@@ -333,58 +331,40 @@ class SessionController extends Notifier<WorkoutSessionState> {
 
   Future<void> _triggerAlert() async {
     try {
-      // Configure Audio Context for Ducking
-      // Ensure we don't stop user music, just duck it
-      await _audioPlayer.setAudioContext(
-        AudioContext(
-          android: AudioContextAndroid(
-            isSpeakerphoneOn: false,
-            stayAwake: false,
-            contentType: AndroidContentType.sonification,
-            usageType: AndroidUsageType.assistanceSonification,
-            audioFocus: AndroidAudioFocus.gainTransientMayDuck,
-          ),
-          iOS: AudioContextIOS(
-            category: AVAudioSessionCategory.playback,
-            options: {
-              AVAudioSessionOptions.duckOthers,
-              AVAudioSessionOptions.mixWithOthers,
-            },
-          ),
-        ),
-      );
+      // Play using AssetSource (Robust & Standard)
+      await _audioPlayer.setVolume(1.0); // Ensure max volume
 
-      // Decode Base64 sound
-      final bytes = base64Decode(AppSounds.timerAlert);
-
-      // Play sound using BytesSource
-      await _audioPlayer.play(
-        BytesSource(bytes),
-        mode: PlayerMode.lowLatency,
-        ctx: AudioContext(
-          android: AudioContextAndroid(
-            isSpeakerphoneOn: false,
-            stayAwake: false,
-            contentType: AndroidContentType.sonification,
-            usageType: AndroidUsageType.assistanceSonification,
-            audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+      // Play 3 times (Beep... Beep... Beep)
+      for (int i = 0; i < 3; i++) {
+        await _audioPlayer.play(
+          AssetSource('sounds/timer_alert.wav'),
+          mode: PlayerMode.mediaPlayer,
+          ctx: AudioContext(
+            android: AudioContextAndroid(
+              isSpeakerphoneOn: false,
+              stayAwake: true,
+              contentType: AndroidContentType.music,
+              usageType: AndroidUsageType.media,
+              audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+            ),
+            iOS: AudioContextIOS(
+              category: AVAudioSessionCategory.playback,
+              options: {
+                AVAudioSessionOptions.mixWithOthers,
+                AVAudioSessionOptions.duckOthers,
+              },
+            ),
           ),
-          iOS: AudioContextIOS(
-            category: AVAudioSessionCategory.playback,
-            options: {
-              AVAudioSessionOptions.duckOthers,
-              AVAudioSessionOptions.mixWithOthers,
-            },
-          ),
-        ),
-      );
+        );
+        // Wait for beep duration (500ms) + small pause (300ms)
+        if (i < 2) await Future.delayed(const Duration(milliseconds: 800));
+      }
 
-      // Vibrate
+      // 4. Vibrate (Sync with audio: 3x 500ms vibration)
       if (await Vibration.hasVibrator()) {
-        // Pattern: Wait 0ms, Vibrate 500ms, Wait 200ms, Vibrate 500ms
         Vibration.vibrate(
-          pattern: [0, 500, 200, 500],
-          intensities: [0, 255, 0, 255],
+          pattern: [0, 500, 300, 500, 300, 500], // Wait 0, Vib 500, Wait 300...
+          intensities: [0, 255, 0, 255, 0, 255],
         );
       }
     } catch (e) {
