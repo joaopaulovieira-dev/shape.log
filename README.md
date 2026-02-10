@@ -10,6 +10,7 @@
 - **Sanitização Inteligente**: O app gera novos IDs automaticamente, limpa caminhos de imagem externos e reseta datas para evitar conflitos.
 - **Registro de Exercícios**: Adicione exercícios com detalhes de Séries, Repetições, Carga, **Tempo de Descanso** e Técnica.
 - **Timer de Descanso**: Configure o tempo de descanso individual por exercício (padrão 60s), com slider e chips de seleção rápida.
+- **Notificações Sensoriais**: Alerta de fim de descanso com **Som Embutido** (que não interrompe sua música) e **Feedback Tátil** (vibração), garantindo que você nunca perca o início da próxima série.
 - **Histórico de Execução**: Marque treinos como concluídos e acompanhe logs passados.
 - **Interface Polida**: Títulos de treinos longos utilizam efeito *Marquee* (texto deslizante) para visibilidade completa.
 - **Genius Focus Mode**: Interface de execução imersiva com grade compacta, histórico de carga (`📈`) acessível e persistência em tempo real.
@@ -115,6 +116,8 @@ O projeto segue os princípios de **Clean Architecture** para garantir escalabil
   - `intl`: Formatação de datas.
   - `body_part_selector`: Base para o mapa corporal.
   - `google_fonts`: Tipografia premium (Inter).
+  - `audioplayers`: Reprodução de sons.
+  - `vibration`: Feedback tátil.
 
 ---
 

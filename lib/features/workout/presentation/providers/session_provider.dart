@@ -11,6 +11,9 @@ import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/exercise_set_history.dart';
 import '../../data/services/active_session_service.dart';
+import 'dart:convert';
+
+import '../../../../core/constants/app_sounds.dart';
 
 // State for the active session
 class WorkoutSessionState {
@@ -330,15 +333,59 @@ class SessionController extends Notifier<WorkoutSessionState> {
 
   Future<void> _triggerAlert() async {
     try {
-      // Play sound
+      // Configure Audio Context for Ducking
+      // Ensure we don't stop user music, just duck it
+      await _audioPlayer.setAudioContext(
+        AudioContext(
+          android: AudioContextAndroid(
+            isSpeakerphoneOn: false,
+            stayAwake: false,
+            contentType: AndroidContentType.sonification,
+            usageType: AndroidUsageType.assistanceSonification,
+            audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+          ),
+          iOS: AudioContextIOS(
+            category: AVAudioSessionCategory.playback,
+            options: {
+              AVAudioSessionOptions.duckOthers,
+              AVAudioSessionOptions.mixWithOthers,
+            },
+          ),
+        ),
+      );
+
+      // Decode Base64 sound
+      final bytes = base64Decode(AppSounds.timerAlert);
+
+      // Play sound using BytesSource
       await _audioPlayer.play(
-        AssetSource('sounds/timer_end_5s.mp3'),
+        BytesSource(bytes),
         mode: PlayerMode.lowLatency,
+        ctx: AudioContext(
+          android: AudioContextAndroid(
+            isSpeakerphoneOn: false,
+            stayAwake: false,
+            contentType: AndroidContentType.sonification,
+            usageType: AndroidUsageType.assistanceSonification,
+            audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+          ),
+          iOS: AudioContextIOS(
+            category: AVAudioSessionCategory.playback,
+            options: {
+              AVAudioSessionOptions.duckOthers,
+              AVAudioSessionOptions.mixWithOthers,
+            },
+          ),
+        ),
       );
 
       // Vibrate
       if (await Vibration.hasVibrator()) {
-        Vibration.vibrate(duration: 500);
+        // Pattern: Wait 0ms, Vibrate 500ms, Wait 200ms, Vibrate 500ms
+        Vibration.vibrate(
+          pattern: [0, 500, 200, 500],
+          intensities: [0, 255, 0, 255],
+        );
       }
     } catch (e) {
       print("Error playing alert: $e");
