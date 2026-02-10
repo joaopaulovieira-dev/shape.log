@@ -1,14 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../core/utils/snackbar_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
 import 'package:shape_log/features/body_tracker/presentation/providers/body_tracker_provider.dart';
 import 'package:shape_log/features/profile/presentation/providers/user_profile_provider.dart';
-import 'package:shape_log/features/reports/presentation/widgets/analytics_widgets.dart';
+import 'package:shape_log/features/reports/presentation/widgets/advanced_analytics_widgets.dart';
 import 'package:shape_log/features/workout/domain/services/workout_report_service.dart';
-import 'package:shape_log/features/workout/presentation/providers/workout_provider.dart';
 import 'package:shape_log/features/workout/domain/entities/workout_history.dart';
+import 'package:shape_log/features/reports/presentation/pages/workout_history_details_page.dart';
+
+// Hive imports
+import 'package:hive_flutter/hive_flutter.dart';
+import '../../../../features/workout/data/models/workout_history_hive_model.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import '../../../image_library/presentation/image_source_sheet.dart';
+import '../../../common/presentation/widgets/full_screen_image_viewer.dart';
+import '../../../common/services/image_storage_service.dart';
 
 class ReportsPage extends ConsumerStatefulWidget {
   const ReportsPage({super.key});
@@ -52,128 +62,128 @@ class _ReportsPageState extends ConsumerState<ReportsPage>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [_AnalyticsTab(), _HistoryTab()],
+      body: ValueListenableBuilder<Box<WorkoutHistoryHiveModel>>(
+        valueListenable: Hive.box<WorkoutHistoryHiveModel>(
+          'history_log',
+        ).listenable(),
+        builder: (context, box, _) {
+          // Convert Hive models to Domain entities
+          final historyList = box.values.map((e) => e.toEntity()).toList();
+
+          // Sort by date descending (newest first)
+          historyList.sort(
+            (a, b) => b.completedDate.compareTo(a.completedDate),
+          );
+
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              _AnalyticsTab(history: historyList),
+              _HistoryTab(history: historyList),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
-class _AnalyticsTab extends ConsumerStatefulWidget {
-  const _AnalyticsTab();
+class _AnalyticsTab extends StatefulWidget {
+  final List<WorkoutHistory> history;
+
+  const _AnalyticsTab({required this.history});
 
   @override
-  ConsumerState<_AnalyticsTab> createState() => _AnalyticsTabState();
+  State<_AnalyticsTab> createState() => _AnalyticsTabState();
 }
 
-class _AnalyticsTabState extends ConsumerState<_AnalyticsTab> {
+class _AnalyticsTabState extends State<_AnalyticsTab> {
   String _filterMode = '30_days'; // '30_days', 'all'
 
   @override
   Widget build(BuildContext context) {
-    final historyAsync = ref.watch(historyListProvider);
+    // Use passed history instead of ref.watch
+    final history = widget.history;
 
-    return historyAsync.when(
-      data: (history) {
-        if (history.isEmpty) {
-          return _buildEmptyState(context);
-        }
+    if (history.isEmpty) {
+      return _buildEmptyState(context);
+    }
 
-        // Apply Filter
-        final filteredHistory = history.where((h) {
-          if (_filterMode == 'all') return true;
-          final diff = DateTime.now().difference(h.completedDate).inDays;
-          return diff <= 30;
-        }).toList();
+    // Apply Filter
+    final filteredHistory = history.where((h) {
+      if (_filterMode == 'all') return true;
+      final diff = DateTime.now().difference(h.completedDate).inDays;
+      return diff <= 30;
+    }).toList();
 
-        if (filteredHistory.isEmpty && _filterMode != 'all') {
-          return Center(
-            child: Text(
-              'Sem dados nos últimos 30 dias.',
-              style: TextStyle(color: Colors.grey),
-            ),
-          );
-        }
+    if (filteredHistory.isEmpty && _filterMode != 'all') {
+      return Center(
+        child: Text(
+          'Sem dados nos últimos 30 dias.',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
 
-        // Prepare Data
-        final volumeData = _calculateVolumeData(filteredHistory);
-        final frequencyData = _calculateFrequencyData(filteredHistory);
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Filter Toggle
-              Center(
-                child: SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment<String>(
-                      value: '30_days',
-                      label: Text('30 Dias'),
-                      icon: Icon(Icons.calendar_view_month),
-                    ),
-                    ButtonSegment<String>(
-                      value: 'all',
-                      label: Text('Todo o Período'),
-                      icon: Icon(Icons.all_inclusive),
-                    ),
-                  ],
-                  selected: {_filterMode},
-                  onSelectionChanged: (Set<String> newSelection) {
-                    setState(() {
-                      _filterMode = newSelection.first;
-                    });
-                  },
-                  style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.resolveWith<Color>((
-                      Set<MaterialState> states,
-                    ) {
-                      if (states.contains(MaterialState.selected)) {
-                        return AppColors.primary;
-                      }
-                      return AppColors.surface;
-                    }),
-                    foregroundColor: MaterialStateProperty.resolveWith<Color>((
-                      Set<MaterialState> states,
-                    ) {
-                      if (states.contains(MaterialState.selected)) {
-                        return Colors.black;
-                      }
-                      return Colors.white;
-                    }),
-                  ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Filter Toggle
+          Center(
+            child: SegmentedButton<String>(
+              segments: const [
+                ButtonSegment<String>(
+                  value: '30_days',
+                  label: Text('30 Dias'),
+                  icon: Icon(Icons.calendar_view_month),
                 ),
+                ButtonSegment<String>(
+                  value: 'all',
+                  label: Text('Todo o Período'),
+                  icon: Icon(Icons.all_inclusive),
+                ),
+              ],
+              selected: {_filterMode},
+              onSelectionChanged: (Set<String> newSelection) {
+                setState(() {
+                  _filterMode = newSelection.first;
+                });
+              },
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.resolveWith<Color>((
+                  Set<WidgetState> states,
+                ) {
+                  if (states.contains(WidgetState.selected)) {
+                    return AppColors.primary;
+                  }
+                  return AppColors.surface;
+                }),
+                foregroundColor: WidgetStateProperty.resolveWith<Color>((
+                  Set<WidgetState> states,
+                ) {
+                  if (states.contains(WidgetState.selected)) {
+                    return Colors.black;
+                  }
+                  return Colors.white;
+                }),
               ),
-              const SizedBox(height: 24),
-
-              const Text(
-                'Volume de Treino (Carga Total)',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 300,
-                child: VolumeChart(volumeData: volumeData),
-              ), // Increased height
-              const SizedBox(height: 32),
-
-              const Text(
-                'Frequência Semanal',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 250, // Increased height
-                child: FrequencyChart(frequencyData: frequencyData),
-              ),
-            ],
+            ),
           ),
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, s) => Center(child: Text('Erro: $e')),
+          const SizedBox(height: 24),
+
+          VolumeLoadChart(
+            history: filteredHistory,
+            isAllTime: _filterMode == 'all',
+          ),
+          const SizedBox(height: 24),
+          ConsistencyHeatmap(history: filteredHistory),
+          const SizedBox(height: 24),
+          BalancePieChart(history: filteredHistory),
+          const SizedBox(height: 32),
+        ],
+      ),
     );
   }
 
@@ -201,78 +211,16 @@ class _AnalyticsTabState extends ConsumerState<_AnalyticsTab> {
       ),
     );
   }
-
-  List<MapEntry<DateTime, double>> _calculateVolumeData(
-    List<WorkoutHistory> history,
-  ) {
-    final Map<DateTime, double> volumeMap = {};
-
-    for (final h in history) {
-      double totalLoad = 0;
-      for (final ex in h.exercises) {
-        if (ex.setsHistory != null && ex.setsHistory!.isNotEmpty) {
-          for (final set in ex.setsHistory!) {
-            totalLoad += (set.weight * set.reps);
-          }
-        } else {
-          totalLoad += (ex.weight * ex.reps * ex.sets);
-        }
-      }
-
-      final dateCtx = DateTime(
-        h.completedDate.year,
-        h.completedDate.month,
-        h.completedDate.day,
-      );
-      volumeMap[dateCtx] = (volumeMap[dateCtx] ?? 0) + totalLoad;
-    }
-
-    return volumeMap.entries.toList();
-  }
-
-  List<int> _calculateFrequencyData(List<WorkoutHistory> history) {
-    final counts = List.filled(7, 0);
-    final now = DateTime.now();
-    final startOfWeek = now.subtract(Duration(days: now.weekday % 7)); // Sunday
-    final endOfWeek = startOfWeek.add(const Duration(days: 6)); // Saturday
-
-    for (final h in history) {
-      // Only count if within current week? Or distribution of all time?
-      // The user prompt implies "Frequência Semanal", which typically means "This Week".
-      // However, for "All Time", it might be "Average per day".
-      // Given the implementation was checking specific week range, I'll keep it as "Activity by Day of Week"
-      // but strictly speaking the previous logic filtered ONLY for the current week.
-      // Only for "30 days" or "All", maybe we want "Workouts by Day of Week (Aggregate)"?
-      // Let's stick to the previous logic (Current Week) unless user wants history.
-      // Actually, "Frequência Semanal" usually means "How many times I worked out this week".
-      // Let's keep the logic of "Current Week" for now as it was, but ensure it works.
-
-      // WAIT: If I filter 30 days, I probably want to see "How many workouts I did on Monday, Tuesday..." over the last 30 days OR just "This week".
-      // The previous code filtered: if date > startOfWeek-1 && date < endOfWeek+1.
-      // This restricts CHART to current week only.
-      // If I have a 30 day filter, I probably want to see the Volume Chart for 30 days.
-      // The Frequency Chart logic seems specific to "Current Week".
-      // I will leave it as "Current Week Activity" for now to avoid breaking logic,
-      // since the Volume Chart is the main "Time Series".
-
-      if (h.completedDate.isAfter(
-            startOfWeek.subtract(const Duration(days: 1)),
-          ) &&
-          h.completedDate.isBefore(endOfWeek.add(const Duration(days: 1)))) {
-        final weekdayIndex = h.completedDate.weekday % 7;
-        counts[weekdayIndex]++;
-      }
-    }
-    return counts;
-  }
 }
 
 class _HistoryTab extends ConsumerWidget {
-  const _HistoryTab();
+  final List<WorkoutHistory> history;
+
+  const _HistoryTab({required this.history});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final historyAsync = ref.watch(historyListProvider);
+    // No longer watching provider here, using passed history
 
     return Column(
       children: [
@@ -284,7 +232,7 @@ class _HistoryTab extends ConsumerWidget {
             child: FilledButton.icon(
               onPressed: () async {
                 try {
-                  final history = await ref.read(historyListProvider.future);
+                  // We can use the passed history directly
                   final measurements = ref.read(bodyTrackerProvider);
                   final user = await ref.read(userProfileProvider.future);
 
@@ -297,29 +245,9 @@ class _HistoryTab extends ConsumerWidget {
                   await Clipboard.setData(ClipboardData(text: report));
 
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        backgroundColor: AppColors.surface,
-                        content: Row(
-                          children: [
-                            const Icon(
-                              Icons.check_circle,
-                              color: AppColors.primary,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Dossiê Geral copiado para IA!',
-                                style: TextStyle(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                    SnackbarUtils.showSuccess(
+                      context,
+                      'Dossiê Geral copiado para IA!',
                     );
                   }
                 } catch (e) {
@@ -338,91 +266,159 @@ class _HistoryTab extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 elevation: 4,
-                shadowColor: AppColors.primary.withOpacity(0.4),
+                shadowColor: AppColors.primary.withValues(alpha: 0.4),
               ),
             ),
           ),
         ),
         Expanded(
-          child: historyAsync.when(
-            data: (allHistory) {
-              if (allHistory.isEmpty)
-                return const Center(child: Text("Sem histórico."));
-
-              final history = List.of(allHistory)
-                ..sort((a, b) => b.completedDate.compareTo(a.completedDate));
-
-              return ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: history.length,
-                itemBuilder: (context, index) {
-                  final h = history[index];
-                  return Card(
-                    elevation: 0, // Flat look on dark theme
-                    color: AppColors.surface,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+          child: history.isEmpty
+              ? const Center(child: Text("Sem histórico."))
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: history.length,
+                  itemBuilder: (context, index) {
+                    final h = history[index];
+                    return Card(
+                      elevation: 0, // Flat look on dark theme
+                      color: AppColors.surface,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      title: Text(
-                        h.workoutName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 4.0),
-                        child: Text(
-                          '${DateFormat('dd/MM - HH:mm').format(h.completedDate)} • ${h.durationMinutes} min',
-                          style: TextStyle(color: Colors.grey[400]),
-                        ),
-                      ),
-                      trailing: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.black,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          _getRpeEmoji(h.rpe),
-                          style: const TextStyle(fontSize: 20),
-                        ),
-                      ),
-                      onTap: () async {
-                        // Individual Copy logic
-                        final user = await ref.read(userProfileProvider.future);
-                        final report = WorkoutReportService()
-                            .generateClipboardReport(h, user);
-                        await Clipboard.setData(ClipboardData(text: report));
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              backgroundColor: AppColors.surface,
-                              content: Text(
-                                'Treino individual copiado!',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              showCloseIcon: true,
-                              closeIconColor: AppColors.primary,
+                      child: InkWell(
+                        onTap: () async {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  WorkoutHistoryDetailsPage(history: h),
                             ),
                           );
-                        }
-                      },
-                    ),
-                  );
-                },
-              );
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, s) => Center(child: Text('Erro: $e')),
-          ),
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          h.workoutName,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '${DateFormat('dd/MM - HH:mm').format(h.completedDate)} • ${h.durationMinutes} min',
+                                          style: TextStyle(
+                                            color: Colors.grey[400],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.attach_file,
+                                          color: AppColors.primary,
+                                        ),
+                                        tooltip: 'Gerenciar Fotos',
+                                        onPressed: () {
+                                          showModalBottomSheet(
+                                            context: context,
+                                            isScrollControlled: true,
+                                            shape: const RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.vertical(
+                                                    top: Radius.circular(20),
+                                                  ),
+                                            ),
+                                            builder: (ctx) =>
+                                                _PhotoManagerDialog(history: h),
+                                          );
+                                        },
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black,
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          _getRpeEmoji(h.rpe),
+                                          style: const TextStyle(fontSize: 20),
+                                        ),
+                                      ),
+                                      // Delete button REMOVED
+                                    ],
+                                  ),
+                                ],
+                              ),
+
+                              // Thumbnails
+                              if (h.imagePaths.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  height: 60,
+                                  child: ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: h.imagePaths.length,
+                                    separatorBuilder: (c, i) =>
+                                        const SizedBox(width: 6),
+                                    itemBuilder: (c, i) {
+                                      return InkWell(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  FullScreenImageViewer(
+                                                    imagePaths: h.imagePaths,
+                                                    initialIndex: i,
+                                                  ),
+                                            ),
+                                          );
+                                        },
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          child: Image.file(
+                                            File(h.imagePaths[i]),
+                                            width: 60,
+                                            height: 60,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
         ),
       ],
     );
@@ -430,9 +426,238 @@ class _HistoryTab extends ConsumerWidget {
 
   String _getRpeEmoji(int? rpe) {
     if (rpe == null) return '❓';
-    if (rpe <= 2) return '🟢';
-    if (rpe <= 3) return '🟡';
-    if (rpe <= 4) return '🟠';
-    return '🔴';
+    if (rpe == 1) return '😁'; // Muito Leve
+    if (rpe == 2) return '🙂'; // Leve
+    if (rpe == 3) return '😐'; // Moderado
+    if (rpe == 4) return '😫'; // Difícil
+    if (rpe == 5) return '🥵'; // Exaustão
+    return '❓';
+  }
+}
+
+class _PhotoManagerDialog extends StatefulWidget {
+  final WorkoutHistory history;
+
+  const _PhotoManagerDialog({required this.history});
+
+  @override
+  State<_PhotoManagerDialog> createState() => _PhotoManagerDialogState();
+}
+
+class _PhotoManagerDialogState extends State<_PhotoManagerDialog> {
+  final ImageStorageService _imageService = ImageStorageService();
+
+  late List<String> _currentImages;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentImages = List.from(widget.history.imagePaths);
+  }
+
+  Future<void> _deleteImage(int index) async {
+    try {
+      setState(() => _isLoading = true);
+
+      final pathToDelete = _currentImages[index];
+
+      // 1. Delete file
+      await _imageService.deleteImage(pathToDelete);
+
+      // 2. Update local state
+      setState(() {
+        _currentImages.removeAt(index);
+      });
+
+      // 3. Update Hive
+      await _updateHive();
+
+      setState(() => _isLoading = false);
+    } catch (e) {
+      if (mounted) {
+        SnackbarUtils.showError(context, 'Erro ao remover foto: $e');
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _updateHive() async {
+    final box = Hive.box<WorkoutHistoryHiveModel>('history_log');
+
+    final key = box.keys.firstWhere(
+      (k) => box.get(k)?.id == widget.history.id,
+      orElse: () => null,
+    );
+
+    if (key != null) {
+      final oldModel = box.get(key)!;
+      final oldEntity = oldModel.toEntity();
+
+      final updatedModel = WorkoutHistoryHiveModel.fromEntity(
+        WorkoutHistory(
+          id: oldEntity.id,
+          workoutId: oldEntity.workoutId,
+          workoutName: oldEntity.workoutName,
+          completedDate: oldEntity.completedDate,
+          durationMinutes: oldEntity.durationMinutes,
+          exercises: oldEntity.exercises,
+          notes: oldEntity.notes,
+          startTime: oldEntity.startTime,
+          endTime: oldEntity.endTime,
+          completionPercentage: oldEntity.completionPercentage,
+          rpe: oldEntity.rpe,
+          imagePaths: _currentImages,
+        ),
+      );
+
+      await box.put(key, updatedModel);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      height: MediaQuery.of(context).size.height * 0.7, // Slightly taller
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Galeria do Treino',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (_isLoading)
+            const LinearProgressIndicator(color: AppColors.primary),
+
+          const SizedBox(height: 16),
+
+          Expanded(
+            child: _currentImages.isEmpty
+                ? const Center(
+                    child: Text(
+                      'Nenhuma foto adicionada ainda.',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  )
+                : GridView.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                        ),
+                    itemCount: _currentImages.length,
+                    itemBuilder: (context, index) {
+                      final path = _currentImages[index];
+                      return Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => FullScreenImageViewer(
+                                    imagePaths: _currentImages,
+                                    initialIndex: index,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(File(path), fit: BoxFit.cover),
+                            ),
+                          ),
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: GestureDetector(
+                              onTap: () => _deleteImage(index),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                  size: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Large Green "Add Photo" Button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                // Open modal directly, handled by ImageSourceSheet logic (but wait, ImageSourceSheet is a widget).
+                // We need to show modal bottom sheet with ImageSourceSheet.
+                await showModalBottomSheet(
+                  context: context,
+                  builder: (context) =>
+                      const ImageSourceSheet(showLibrary: false),
+                ).then((files) async {
+                  if (files != null && files is List<File>) {
+                    setState(() => _isLoading = true);
+                    for (final file in files) {
+                      try {
+                        // Create XFile from File
+                        final xFile = XFile(file.path);
+                        final permanentPath = await _imageService.saveImage(
+                          xFile,
+                        );
+                        setState(() {
+                          _currentImages.add(permanentPath);
+                        });
+                      } catch (e) {
+                        debugPrint('Error saving image: $e');
+                      }
+                    }
+                    await _updateHive();
+                    setState(() => _isLoading = false);
+                  }
+                });
+              },
+              icon: const Icon(Icons.add_a_photo),
+              label: const Text('ADICIONAR FOTO'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

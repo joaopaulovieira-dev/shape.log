@@ -43,6 +43,10 @@
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Precisamos acessar sua galeria para selecionar fotos do seu shape.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Precisamos acessar a câmera para você registrar fotos do seu shape.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 </dict>

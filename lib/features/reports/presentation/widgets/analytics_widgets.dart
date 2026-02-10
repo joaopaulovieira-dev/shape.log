@@ -111,7 +111,7 @@ class VolumeChart extends StatelessWidget {
                 isCurved: true,
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.primary.withOpacity(0.5),
+                    AppColors.primary.withValues(alpha: 0.5),
                     AppColors.primary,
                   ],
                 ),
@@ -122,8 +122,8 @@ class VolumeChart extends StatelessWidget {
                   show: true,
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.primary.withOpacity(0.3),
-                      AppColors.primary.withOpacity(0.0),
+                      AppColors.primary.withValues(alpha: 0.3),
+                      AppColors.primary.withValues(alpha: 0.0),
                     ],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
@@ -269,7 +269,7 @@ class FrequencyChart extends StatelessWidget {
                         (index < frequencyData.length &&
                             frequencyData[index] > 0)
                         ? AppColors.primary
-                        : Colors.grey.withOpacity(0.2),
+                        : Colors.grey.withValues(alpha: 0.2),
                     width: 20,
                     borderRadius: BorderRadius.circular(4),
                   ),

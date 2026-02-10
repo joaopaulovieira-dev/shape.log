@@ -17,6 +17,7 @@ import '../../domain/services/workout_report_service.dart';
 import '../../../profile/presentation/providers/user_profile_provider.dart';
 
 import 'package:shape_log/core/constants/app_colors.dart';
+import '../../../../core/utils/snackbar_utils.dart';
 
 class WorkoutDetailsPage extends ConsumerStatefulWidget {
   final String workoutId;
@@ -227,10 +228,9 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                               final message =
                                   "Olá! Meu treino '${workout.name}' venceu em $dateStr. Por favor, me ajude a criar uma nova versão dele baseada no meu progresso recente.";
                               Clipboard.setData(ClipboardData(text: message));
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Mensagem copiada!'),
-                                ),
+                              SnackbarUtils.showInfo(
+                                context,
+                                'Mensagem copiada!',
                               );
                             },
                           ),
@@ -282,8 +282,18 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: () {
-                      context.push('/session', extra: workout);
+                    onPressed: () async {
+                      final result = await context.push<bool>(
+                        '/session',
+                        extra: workout,
+                      );
+                      if (result == true) {
+                        ref.invalidate(routineListProvider);
+                        ref.invalidate(historyListProvider);
+                        if (context.mounted) {
+                          setState(() {});
+                        }
+                      }
                     },
                     icon: const Icon(Icons.play_arrow),
                     label: const Text(
@@ -478,11 +488,10 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
 
     await ref.read(workoutRepositoryProvider).saveRoutine(updatedWorkout);
     ref.invalidate(routineListProvider);
+    ref.invalidate(historyListProvider);
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Treino finalizado e salvo!')),
-      );
+      SnackbarUtils.showSuccess(context, 'Treino finalizado e salvo!');
     }
   }
 
@@ -544,8 +553,8 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
 
                             return ListTile(
                               leading: CircleAvatar(
-                                backgroundColor: AppColors.primary.withOpacity(
-                                  0.2,
+                                backgroundColor: AppColors.primary.withValues(
+                                  alpha: 0.2,
                                 ),
                                 child: Text(
                                   _getRpeEmoji(h.rpe),
@@ -577,19 +586,9 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                                     ClipboardData(text: report),
                                   );
                                   if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Relatório copiado! Cole no ChatGPT.',
-                                        ),
-                                        backgroundColor:
-                                            AppColors.surface, // Dark Grey
-                                        action: SnackBarAction(
-                                          label: 'OK',
-                                          textColor: AppColors.primary,
-                                          onPressed: () {},
-                                        ),
-                                      ),
+                                    SnackbarUtils.showInfo(
+                                      context,
+                                      'Relatório copiado! Cole no ChatGPT.',
                                     );
                                   }
                                 },

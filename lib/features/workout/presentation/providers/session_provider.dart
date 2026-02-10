@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:vibration/vibration.dart';
 import '../../domain/entities/workout.dart';
 import '../../domain/entities/exercise.dart';
 import 'dart:async';
@@ -77,11 +79,13 @@ class WorkoutSessionState {
 
 class SessionController extends Notifier<WorkoutSessionState> {
   Timer? _timer;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   WorkoutSessionState build() {
     ref.onDispose(() {
       _timer?.cancel();
+      _audioPlayer.dispose();
     });
     return const WorkoutSessionState();
   }
@@ -312,6 +316,7 @@ class SessionController extends Notifier<WorkoutSessionState> {
         );
       } else {
         // Timer finished
+        _triggerAlert();
         if (isLastSet) {
           // If it was the last set, auto-advance to next exercise
           nextExercise();
@@ -321,6 +326,23 @@ class SessionController extends Notifier<WorkoutSessionState> {
         }
       }
     });
+  }
+
+  Future<void> _triggerAlert() async {
+    try {
+      // Play sound
+      await _audioPlayer.play(
+        AssetSource('sounds/timer_end_5s.mp3'),
+        mode: PlayerMode.lowLatency,
+      );
+
+      // Vibrate
+      if (await Vibration.hasVibrator()) {
+        Vibration.vibrate(duration: 500);
+      }
+    } catch (e) {
+      print("Error playing alert: $e");
+    }
   }
 
   void addTime(int seconds) {
@@ -337,7 +359,10 @@ class SessionController extends Notifier<WorkoutSessionState> {
     state = state.copyWith(isRestTimerRunning: false);
   }
 
-  Future<WorkoutHistory?> finishSessionWithRpe(int rpe) async {
+  Future<WorkoutHistory?> finishSessionWithRpe(
+    int rpe, {
+    List<String> imagePaths = const [],
+  }) async {
     stopRestTimer();
     if (state.activeWorkout == null) return null;
 
@@ -377,6 +402,7 @@ class SessionController extends Notifier<WorkoutSessionState> {
       notes: workout.notes,
       rpe: rpe,
       completionPercentage: percentage,
+      imagePaths: imagePaths,
     );
 
     await ref.read(workoutRepositoryProvider).saveHistory(history);

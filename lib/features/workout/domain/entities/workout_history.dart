@@ -24,7 +24,9 @@ class WorkoutHistory {
     this.endTime,
     this.completionPercentage = 0,
     this.rpe, // Rating of Perceived Exertion (1-5)
+    this.imagePaths = const [],
   });
 
   final int? rpe;
+  final List<String> imagePaths;
 }

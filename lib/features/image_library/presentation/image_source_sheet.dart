@@ -95,7 +95,7 @@ class _OptionButton extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         width: 100,
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceVariant,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(

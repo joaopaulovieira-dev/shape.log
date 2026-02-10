@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart'; // Added for DateFormat
 import '../../../settings/data/services/backup_service.dart';
 import '../../../profile/presentation/providers/user_profile_provider.dart';
 import '../../../workout/presentation/providers/workout_provider.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/snackbar_utils.dart';
 
 class WelcomePage extends ConsumerWidget {
   const WelcomePage({super.key});
@@ -95,35 +97,89 @@ class WelcomePage extends ConsumerWidget {
 
   Future<void> _handleRestoreBackup(BuildContext context, WidgetRef ref) async {
     try {
-      final success = await ref.read(backupServiceProvider).restoreFullBackup();
-      if (success) {
-        // Invalidate providers to reload data
-        ref.invalidate(userProfileProvider);
-        ref.invalidate(routineListProvider);
-        ref.invalidate(
-          historyListProvider,
-        ); // Ensure this provider exists or remove if not needed
+      final analysis = await ref
+          .read(backupServiceProvider)
+          .pickAndAnalyzeBackup();
+
+      if (analysis != null) {
+        if (!context.mounted) return;
+
+        // Show confirmation dialog with summary
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text("Restaurar Backup?"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Resumo do arquivo selecionado:",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "📅 Data: ${DateFormat('dd/MM/yyyy HH:mm').format(analysis.timestamp)}",
+                ),
+                Text("🏋️ Treinos: ${analysis.workoutCount}"),
+                Text("📅 Histórico: ${analysis.historyCount}"),
+                Text("📸 Imagens: ${analysis.imageCount}"),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text("CANCELAR"),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text("RESTAURAR"),
+              ),
+            ],
+          ),
+        );
+
+        if (confirmed != true) return;
+
+        if (!context.mounted) return;
+
+        // Show loading
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) =>
+              const Center(child: CircularProgressIndicator()),
+        );
+
+        final success = await ref
+            .read(backupServiceProvider)
+            .restoreFromAnalysis(analysis);
 
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Backup restaurado com sucesso!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          // Put logic to verify if profile exists now, just in case backup was empty of profile?
-          // Assuming backup has profile if it was a full backup.
-          context.go('/');
+          Navigator.pop(context); // Hide loading
+        }
+
+        if (success) {
+          // Invalidate providers to reload data
+          ref.invalidate(userProfileProvider);
+          ref.invalidate(routineListProvider);
+          // ref.invalidate(historyListProvider); // Ensure this provider exists or remove if not needed. It was invalidating in previous code.
+
+          if (context.mounted) {
+            SnackbarUtils.showSuccess(
+              context,
+              'Backup restaurado com sucesso!',
+            );
+            context.go('/');
+          }
+        } else {
+          if (context.mounted)
+            SnackbarUtils.showError(context, "Falha na restauração.");
         }
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro ao restaurar backup: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        SnackbarUtils.showError(context, 'Erro ao restaurar backup: $e');
       }
     }
   }

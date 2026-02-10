@@ -65,6 +65,9 @@ class BodyMeasurementHiveModel extends HiveObject {
   @HiveField(19)
   final List<String> imagePaths;
 
+  @HiveField(20)
+  final String? reportUrl;
+
   BodyMeasurementHiveModel({
     required this.id,
     required this.date,
@@ -86,6 +89,7 @@ class BodyMeasurementHiveModel extends HiveObject {
     this.forearmLeft,
     this.shoulders,
     this.imagePaths = const [],
+    this.reportUrl,
   });
 
   factory BodyMeasurementHiveModel.fromEntity(BodyMeasurement entity) {
@@ -110,6 +114,7 @@ class BodyMeasurementHiveModel extends HiveObject {
       forearmLeft: entity.forearmLeft,
       shoulders: entity.shoulders,
       imagePaths: entity.imagePaths,
+      reportUrl: entity.reportUrl,
     );
   }
 
@@ -138,6 +143,7 @@ class BodyMeasurementHiveModel extends HiveObject {
       forearmLeft: forearmLeft,
       shoulders: shoulders,
       imagePaths: imagePaths,
+      reportUrl: reportUrl,
     );
   }
 
@@ -163,6 +169,7 @@ class BodyMeasurementHiveModel extends HiveObject {
       'forearmLeft': forearmLeft,
       'shoulders': shoulders,
       'imagePaths': imagePaths,
+      'reportUrl': reportUrl,
     };
   }
 
@@ -188,6 +195,7 @@ class BodyMeasurementHiveModel extends HiveObject {
       forearmLeft: (map['forearmLeft'] as num?)?.toDouble(),
       shoulders: (map['shoulders'] as num?)?.toDouble(),
       imagePaths: List<String>.from(map['imagePaths'] ?? []),
+      reportUrl: map['reportUrl'],
     );
   }
 }

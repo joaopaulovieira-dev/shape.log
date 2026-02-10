@@ -19,6 +19,7 @@ class BodyMeasurement {
   final double? shoulders;
   final String notes;
   final List<String> imagePaths;
+  final String? reportUrl;
 
   BodyMeasurement({
     required this.id,
@@ -41,6 +42,7 @@ class BodyMeasurement {
     this.shoulders,
     this.notes = '',
     this.imagePaths = const [],
+    this.reportUrl,
   });
 
   BodyMeasurement copyWith({
@@ -64,6 +66,7 @@ class BodyMeasurement {
     double? shoulders,
     String? notes,
     List<String>? imagePaths,
+    String? reportUrl,
   }) {
     return BodyMeasurement(
       id: id ?? this.id,
@@ -86,6 +89,7 @@ class BodyMeasurement {
       shoulders: shoulders ?? this.shoulders,
       notes: notes ?? this.notes,
       imagePaths: imagePaths ?? this.imagePaths,
+      reportUrl: reportUrl ?? this.reportUrl,
     );
   }
 }

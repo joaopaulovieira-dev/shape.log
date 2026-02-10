@@ -32,4 +32,9 @@ class WorkoutRepositoryImpl implements WorkoutRepository {
   Future<void> saveHistory(WorkoutHistory history) async {
     return localDataSource.saveHistory(history);
   }
+
+  @override
+  Future<void> deleteHistory(String id) async {
+    return localDataSource.deleteHistory(id);
+  }
 }

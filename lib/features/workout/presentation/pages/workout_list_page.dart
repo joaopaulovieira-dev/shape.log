@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/workout_provider.dart';
 import '../../data/services/workout_import_service.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
+import '../../../../core/utils/snackbar_utils.dart';
 
 class WorkoutListPage extends ConsumerWidget {
   const WorkoutListPage({super.key});
@@ -127,9 +128,7 @@ class WorkoutListPage extends ConsumerWidget {
                           .deleteRoutine(routine.id);
                       ref.invalidate(routineListProvider);
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Treino excluído')),
-                        );
+                        SnackbarUtils.showInfo(context, 'Treino excluído');
                       }
                     },
                     child: Card(
@@ -302,12 +301,15 @@ class WorkoutListPage extends ConsumerWidget {
           .read(workoutImportServiceProvider)
           .importFromFile(context);
       if (count != null && context.mounted) {
-        _showSuccessSnackBar(context, count);
+        SnackbarUtils.showSuccess(
+          context,
+          '$count ${count == 1 ? 'treino importado' : 'treinos importados'} com sucesso!',
+        );
       }
     } catch (e) {
       debugPrint('Erro importação arquivo: $e');
       if (context.mounted) {
-        _showErrorSnackBar(context, 'Erro ao importar arquivo: $e');
+        SnackbarUtils.showError(context, 'Erro ao importar arquivo: $e');
       }
     }
   }
@@ -342,12 +344,15 @@ class WorkoutListPage extends ConsumerWidget {
                     .read(workoutImportServiceProvider)
                     .importFromText(text);
                 if (count != null && context.mounted) {
-                  _showSuccessSnackBar(context, count);
+                  SnackbarUtils.showSuccess(
+                    context,
+                    '$count ${count == 1 ? 'treino importado' : 'treinos importados'} com sucesso!',
+                  );
                 }
               } catch (e) {
                 debugPrint('Erro ao colar JSON: $e');
                 if (context.mounted) {
-                  _showErrorSnackBar(context, 'Erro: $e');
+                  SnackbarUtils.showError(context, 'Erro: $e');
                 }
               }
             },
@@ -355,23 +360,6 @@ class WorkoutListPage extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-
-  void _showSuccessSnackBar(BuildContext context, int count) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$count ${count == 1 ? 'treino importado' : 'treinos importados'} com sucesso!',
-        ),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
-
-  void _showErrorSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.error),
     );
   }
 

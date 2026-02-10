@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/workout_provider.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
+import '../../../../core/utils/snackbar_utils.dart';
 
 class ExerciseDetailsPage extends ConsumerWidget {
   final String workoutId;
@@ -198,7 +199,7 @@ class ExerciseDetailsPage extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.red.withOpacity(0.4),
+                                color: Colors.red.withValues(alpha: 0.4),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -217,12 +218,9 @@ class ExerciseDetailsPage extends ConsumerWidget {
                                   );
                                 } else {
                                   if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Não foi possível abrir o link.',
-                                        ),
-                                      ),
+                                    SnackbarUtils.showError(
+                                      context,
+                                      'Não foi possível abrir o link.',
                                     );
                                   }
                                 }

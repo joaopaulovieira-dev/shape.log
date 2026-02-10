@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shape_log/features/image_library/application/image_library_service.dart';
 import 'package:path/path.dart' as path;
+import '../../../../core/utils/snackbar_utils.dart';
 
 class ImageLibrarySettingsPage extends ConsumerStatefulWidget {
   const ImageLibrarySettingsPage({super.key});
@@ -32,15 +33,14 @@ class _ImageLibrarySettingsPageState
         ref.invalidate(libraryImagesProvider);
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('$count imagens importadas com sucesso!')),
+          SnackbarUtils.showSuccess(
+            context,
+            '$count imagens importadas com sucesso!',
           );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Erro ao importar: $e')));
+          SnackbarUtils.showError(context, 'Erro ao importar: $e');
         }
       }
     }

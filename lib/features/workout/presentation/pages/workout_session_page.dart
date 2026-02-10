@@ -11,6 +11,9 @@ import 'package:confetti/confetti.dart';
 import '../../domain/services/workout_report_service.dart';
 import '../../../profile/presentation/providers/user_profile_provider.dart';
 import 'package:flutter/services.dart';
+import '../../../../core/utils/snackbar_utils.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../common/services/image_storage_service.dart';
 
 class WorkoutSessionPage extends ConsumerStatefulWidget {
   final Workout workout;
@@ -46,6 +49,7 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
   // Visual Feedback
   bool _showSavedFeedback = false;
   Timer? _feedbackTimer;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -118,7 +122,17 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
     }
   }
 
+  void _onFieldChanged(String value) {
+    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) _saveChanges();
+    });
+  }
+
   void _updateControllers() {
+    // Cancel any pending debounce to avoid overwriting new state with old inputs
+    _debounceTimer?.cancel();
+
     final state = ref.read(sessionProvider);
     final exercise = state.currentExercise;
     if (exercise != null) {
@@ -206,6 +220,7 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
     _cardioDurationFocus.dispose();
     _cardioIntensityFocus.dispose();
     _feedbackTimer?.cancel();
+    _debounceTimer?.cancel();
 
     super.dispose();
   }
@@ -249,11 +264,49 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => _FeedbackDialog(
-        onSave: (rpe) {
-          ref.read(sessionProvider.notifier).finishSessionWithRpe(rpe);
-          // Navigate out after save
-          context.pop(); // Close dialog
-          context.pop(); // Exit page
+        onSave: (rpe, imagePaths) async {
+          // Logic moved from _FeedbackDialog to here (or kept there if it was cleaner, but let's follow the pattern)
+          // Actually, in the previous implementation, the dialog handled the logic.
+          // In the new implementation I wrote above, the dialog *calls* onSave with the data.
+          // So I need to execute the saving logic here.
+
+          try {
+            final history = await ref
+                .read(sessionProvider.notifier)
+                .finishSessionWithRpe(rpe, imagePaths: imagePaths);
+
+            if (history != null && mounted) {
+              // Generate report
+              final user = await ref.read(userProfileProvider.future);
+              final reportStr = WorkoutReportService().generateClipboardReport(
+                history,
+                user,
+              );
+
+              // Copy to clipboard
+              await Clipboard.setData(ClipboardData(text: reportStr));
+
+              if (mounted) {
+                SnackbarUtils.showSuccess(
+                  context,
+                  'Relatório copiado para a área de transferência!',
+                );
+              }
+            }
+          } catch (e, stack) {
+            debugPrint("Error saving session: $e\n$stack");
+            if (mounted) {
+              SnackbarUtils.showError(context, 'Erro ao salvar: $e');
+            }
+          } finally {
+            // Close things
+            if (mounted) {
+              context.pop(); // Dialog
+              if (context.mounted) {
+                context.pop(true); // Exit page
+              }
+            }
+          }
         },
       ),
     );
@@ -311,8 +364,8 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
 
                             return ListTile(
                               leading: CircleAvatar(
-                                backgroundColor: AppColors.primary.withOpacity(
-                                  0.2,
+                                backgroundColor: AppColors.primary.withValues(
+                                  alpha: 0.2,
                                 ),
                                 child: const Icon(
                                   Icons.history,
@@ -602,11 +655,9 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                   Clipboard.setData(
                                     ClipboardData(text: exercise.name),
                                   );
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Nome copiado!'),
-                                      duration: Duration(seconds: 1),
-                                    ),
+                                  SnackbarUtils.showInfo(
+                                    context,
+                                    'Nome copiado!',
                                   );
                                 },
                               ),
@@ -624,6 +675,7 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                               if (exercise.type ==
                                   ExerciseTypeEntity.cardio) ...[
                                 // CARDIO MODE
+                                // Row 1: Time | Rest
                                 Row(
                                   children: [
                                     Expanded(
@@ -632,7 +684,7 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                         label: "TEMPO (min)",
                                         controller: _cardioDurationController,
                                         focusNode: _cardioDurationFocus,
-                                        onChanged: (_) => _saveChanges(),
+                                        onChanged: _onFieldChanged,
                                         largeFont: true,
                                         showSavedFeedback: _showSavedFeedback,
                                       ),
@@ -641,12 +693,28 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                     Expanded(
                                       child: _buildInputCard(
                                         context,
+                                        label: "DESCANSO (s)",
+                                        controller: _restController,
+                                        focusNode: _restFocus,
+                                        onChanged: _onFieldChanged,
+                                        largeFont: true,
+                                        showSavedFeedback: _showSavedFeedback,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                // Row 2: Intensity (Full Width)
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildInputCard(
+                                        context,
                                         label: "INTENSIDADE",
                                         controller: _cardioIntensityController,
                                         focusNode: _cardioIntensityFocus,
-                                        onChanged: (_) => _saveChanges(),
-                                        isNumber:
-                                            false, // Text input for intensity
+                                        onChanged: _onFieldChanged,
+                                        isNumber: false, // Text input
                                         showSavedFeedback: _showSavedFeedback,
                                       ),
                                     ),
@@ -666,7 +734,7 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                         showHistory: true,
                                         onHistoryTap: () =>
                                             _showHistoryDialog(exercise.name),
-                                        onChanged: (_) => _saveChanges(),
+                                        onChanged: _onFieldChanged,
                                         largeFont: true,
                                         showSavedFeedback: _showSavedFeedback,
                                       ),
@@ -678,46 +746,41 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                         label: "REPS",
                                         controller: _repsController,
                                         focusNode: _repsFocus,
-                                        onChanged: (_) => _saveChanges(),
+                                        onChanged: _onFieldChanged,
                                         largeFont: true,
                                         showSavedFeedback: _showSavedFeedback,
                                       ),
                                     ),
                                   ],
                                 ),
-                              ],
-
-                              const SizedBox(height: 16),
-
-                              // Row 2: Sets & Rest
-                              Row(
-                                children: [
-                                  if (exercise.type ==
-                                      ExerciseTypeEntity.weight) ...[
+                                const SizedBox(height: 16),
+                                // Row 2: Sets & Rest (Only for Weight, Rest is here)
+                                Row(
+                                  children: [
                                     Expanded(
                                       child: _buildInputCard(
                                         context,
                                         label: "SÉRIES ALVO",
                                         controller: _setsController,
                                         focusNode: _setsFocus,
-                                        onChanged: (_) => _saveChanges(),
+                                        onChanged: _onFieldChanged,
                                         showSavedFeedback: _showSavedFeedback,
                                       ),
                                     ),
                                     const SizedBox(width: 8),
-                                  ],
-                                  Expanded(
-                                    child: _buildInputCard(
-                                      context,
-                                      label: "DESCANSO (s)",
-                                      controller: _restController,
-                                      focusNode: _restFocus,
-                                      onChanged: (_) => _saveChanges(),
-                                      showSavedFeedback: _showSavedFeedback,
+                                    Expanded(
+                                      child: _buildInputCard(
+                                        context,
+                                        label: "DESCANSO (s)",
+                                        controller: _restController,
+                                        focusNode: _restFocus,
+                                        onChanged: _onFieldChanged,
+                                        showSavedFeedback: _showSavedFeedback,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
+                                  ],
+                                ),
+                              ],
 
                               const SizedBox(height: 16),
 
@@ -730,7 +793,7 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                       label: "EQUIPAMENTO",
                                       controller: _equipmentController,
                                       focusNode: _equipmentFocus,
-                                      onChanged: (_) => _saveChanges(),
+                                      onChanged: _onFieldChanged,
                                       isNumber: false, // Allow alphanumeric
                                       showSavedFeedback: _showSavedFeedback,
                                     ),
@@ -792,10 +855,12 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                             child: Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
+                                color: AppColors.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: AppColors.primary.withOpacity(0.3),
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.3,
+                                  ),
                                 ),
                               ),
                               child: Column(
@@ -908,6 +973,7 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
     ValueChanged<String>? onChanged,
     bool largeFont = false,
     bool isNumber = true,
+    int? maxLines = 1,
     bool showSavedFeedback = false,
   }) {
     return Column(
@@ -932,7 +998,7 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                     child: Icon(
                       Icons.cloud_done,
                       size: 16,
-                      color: AppColors.primary.withOpacity(0.8),
+                      color: AppColors.primary.withValues(alpha: 0.8),
                     ),
                   ),
                 if (showHistory)
@@ -956,7 +1022,10 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
           controller: controller,
           focusNode: focusNode,
           onChanged: onChanged,
-          keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+          keyboardType: isNumber
+              ? TextInputType.number
+              : (maxLines != 1 ? TextInputType.multiline : TextInputType.text),
+          maxLines: maxLines,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: largeFont ? 40 : 18,
@@ -1073,7 +1142,7 @@ class _GlobalTimerWidgetState extends State<_GlobalTimerWidget> {
 }
 
 class _FeedbackDialog extends ConsumerStatefulWidget {
-  final Function(int) onSave;
+  final Function(int, List<String>) onSave;
 
   const _FeedbackDialog({required this.onSave});
 
@@ -1085,6 +1154,9 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
   late ConfettiController _confettiController;
   int? _selectedRpe;
   bool _isSaving = false;
+  final List<String> _tempImagePaths = [];
+  final ImagePicker _picker = ImagePicker();
+  final ImageStorageService _imageService = ImageStorageService();
 
   @override
   void initState() {
@@ -1101,69 +1173,50 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
     super.dispose();
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        imageQuality: 80, // Optimization
+      );
+      if (image != null) {
+        setState(() {
+          _tempImagePaths.add(image.path);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        SnackbarUtils.showError(context, 'Erro ao selecionar imagem: $e');
+      }
+    }
+  }
+
   Future<void> _handleSave() async {
     if (_selectedRpe == null) return;
 
     setState(() => _isSaving = true);
 
     try {
-      final history = await ref
-          .read(sessionProvider.notifier)
-          .finishSessionWithRpe(_selectedRpe!);
-
-      if (history != null && mounted) {
-        // Generate report
-        final user = await ref.read(userProfileProvider.future);
-        final reportStr = WorkoutReportService().generateClipboardReport(
-          history,
-          user,
-        );
-
-        // Copy to clipboard
-        await Clipboard.setData(ClipboardData(text: reportStr));
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: const [
-                  Icon(Icons.check_circle, color: Colors.white),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Relatório copiado para a área de transferência!',
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 4),
-              action: SnackBarAction(
-                label: 'OK',
-                textColor: Colors.white,
-                onPressed: () {},
-              ),
-            ),
-          );
-        }
+      // 1. Save images permanently
+      final permanentPaths = <String>[];
+      for (final path in _tempImagePaths) {
+        // Create an XFile from the path (which is currently in cache)
+        final xFile = XFile(path);
+        final permanentPath = await _imageService.saveImage(xFile);
+        permanentPaths.add(permanentPath);
       }
+
+      // 2. Call onSave with RPE and Paths
+      widget.onSave(_selectedRpe!, permanentPaths);
     } catch (e, stack) {
       debugPrint("Error saving session: $e\n$stack");
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro ao salvar: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
+        SnackbarUtils.showError(context, 'Erro ao salvar: $e');
         setState(() => _isSaving = false);
-        context.pop(); // Dialog
-        context.pop(); // Page
       }
     }
+    // Logic for closing is handled in parent callback or we can do it here if we pass function differently
+    // The original onSave handled the finishSession call.
   }
 
   @override
@@ -1177,52 +1230,134 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
           ),
           child: Padding(
             padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Treino Concluído! 🎉',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Como foi a intensidade?',
-                  style: TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 24),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    _buildEmojiOption(1, '😁', 'Muito Leve'),
-                    _buildEmojiOption(2, '🙂', 'Leve'),
-                    _buildEmojiOption(3, '😐', 'Moderado'),
-                    _buildEmojiOption(4, '😫', 'Difícil'),
-                    _buildEmojiOption(5, '🥵', 'Exaustão'),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: FilledButton(
-                    onPressed: _selectedRpe == null || _isSaving
-                        ? null
-                        : _handleSave,
-                    child: _isSaving
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Text('Salvar e Copiar Relatório'),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Treino Concluído! 🎉',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Como foi a intensidade?',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // RPE Selector
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      _buildEmojiOption(1, '😁', 'Muito Leve'),
+                      _buildEmojiOption(2, '🙂', 'Leve'),
+                      _buildEmojiOption(3, '😐', 'Moderado'),
+                      _buildEmojiOption(4, '😫', 'Difícil'),
+                      _buildEmojiOption(5, '🥵', 'Exaustão'),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Photos Section
+                  const Text(
+                    'Registrar Foto do Shape (Opcional)',
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Horizontal List of Photos + Add Button
+                  SizedBox(
+                    height: 100,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _tempImagePaths.length + 1,
+                      separatorBuilder: (ctx, i) => const SizedBox(width: 8),
+                      itemBuilder: (ctx, index) {
+                        if (index == _tempImagePaths.length) {
+                          // Add Button
+                          return Row(
+                            children: [
+                              _buildAddPhotoButton(
+                                Icons.camera_alt,
+                                "Câmera",
+                                ImageSource.camera,
+                              ),
+                              const SizedBox(width: 8),
+                              _buildAddPhotoButton(
+                                Icons.photo_library,
+                                "Galeria",
+                                ImageSource.gallery,
+                              ),
+                            ],
+                          );
+                        }
+
+                        // Photo Thumbnail
+                        final path = _tempImagePaths[index];
+                        return Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.file(
+                                File(path),
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _tempImagePaths.removeAt(index);
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: FilledButton(
+                      onPressed: _selectedRpe == null || _isSaving
+                          ? null
+                          : _handleSave,
+                      child: _isSaving
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text('Salvar e Copiar Relatório'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -1245,6 +1380,36 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
     );
   }
 
+  Widget _buildAddPhotoButton(IconData icon, String label, ImageSource source) {
+    return InkWell(
+      onTap: () => _pickImage(source),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 80,
+        height: 100,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: Colors.grey.withValues(alpha: 0.5),
+            style: BorderStyle.solid,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: AppColors.primary, size: 28),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 10, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildEmojiOption(int value, String emoji, String label) {
     final isSelected = _selectedRpe == value;
     return GestureDetector(
@@ -1259,12 +1424,12 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.primary.withOpacity(0.2)
+                  ? AppColors.primary.withValues(alpha: 0.2)
                   : Colors.transparent,
               border: Border.all(
                 color: isSelected
                     ? AppColors.primary
-                    : Colors.grey.withOpacity(0.3),
+                    : Colors.grey.withValues(alpha: 0.3),
                 width: 2,
               ),
               borderRadius: BorderRadius.circular(12),

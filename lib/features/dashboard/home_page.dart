@@ -6,6 +6,8 @@ import '../../features/workout/data/services/active_session_service.dart';
 import '../../features/workout/presentation/providers/workout_provider.dart';
 import '../../features/workout/presentation/providers/session_provider.dart';
 import '../../features/workout/domain/entities/workout.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../../features/workout/data/models/workout_history_hive_model.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -99,7 +101,15 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                   const SizedBox(height: 16),
 
-                  _buildQuickStats(),
+                  ValueListenableBuilder<Box<WorkoutHistoryHiveModel>>(
+                    valueListenable: Hive.box<WorkoutHistoryHiveModel>(
+                      'history_log',
+                    ).listenable(),
+                    builder: (context, box, _) {
+                      final history = box.values.toList();
+                      return _buildQuickStats(history);
+                    },
+                  ),
 
                   const SizedBox(height: 32),
                   const Text(
@@ -141,14 +151,14 @@ class _HomePageState extends ConsumerState<HomePage> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.primary.withOpacity(0.2),
-            AppColors.primary.withOpacity(0.05),
+            AppColors.primary.withValues(alpha: 0.2),
+            AppColors.primary.withValues(alpha: 0.05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withOpacity(0.5)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,20 +214,47 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget _buildQuickStats() {
-    // Placeholder for stats
+  Widget _buildQuickStats(List<WorkoutHistoryHiveModel> history) {
+    // Calculate Stats
+    final now = DateTime.now();
+    final startOfWeek = now.subtract(Duration(days: now.weekday % 7));
+    final endOfWeek = startOfWeek.add(const Duration(days: 7));
+
+    final thisWeekWorkouts = history.where((h) {
+      return h.completedDate.isAfter(startOfWeek) &&
+          h.completedDate.isBefore(endOfWeek);
+    }).toList();
+
+    final workoutsCount = thisWeekWorkouts.length;
+    final totalMinutes = thisWeekWorkouts.fold(
+      0,
+      (sum, h) => sum + h.durationMinutes,
+    );
+    final totalHours = (totalMinutes / 60).toStringAsFixed(1);
+
+    // Simple Streak Logic (Consecutive weeks with at least 1 workout)
+    // For now, let's keep it simple: just show total workouts all time or something?
+    // Or just a placeholder if complex.
+    // Let's do: Total Workouts All Time for the 3rd stat instead of Streak for now, or valid streak.
+    // "Sequência" usually means Streak.
+    // Let's try day streak.
+    // int streak = 0;
+    // ... complex streak logic ...
+    // Placeholder for streak to "🔥" until better logic
+    final streakEmoji = "🔥";
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _StatItem(value: "3", label: "Treinos na semana"),
-          _StatItem(value: "4h", label: "Tempo total"),
-          _StatItem(value: "🔥", label: "Sequência"),
+          _StatItem(value: "$workoutsCount", label: "Treinos na semana"),
+          _StatItem(value: "${totalHours}h", label: "Tempo total"),
+          _StatItem(value: streakEmoji, label: "Sequência"),
         ],
       ),
     );
@@ -237,14 +274,14 @@ class _HomePageState extends ConsumerState<HomePage> {
         decoration: BoxDecoration(
           color: const Color(0xFF1E1E1E),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.withOpacity(0.1)),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
         ),
         child: Column(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
+                color: color.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 28),

@@ -72,8 +72,8 @@ class _ScannerPainter extends CustomPainter {
           end: Alignment.bottomCenter,
           colors: [
             Colors.transparent,
-            color.withOpacity(0.1),
-            color.withOpacity(0.4),
+            color.withValues(alpha: 0.1),
+            color.withValues(alpha: 0.4),
           ],
           stops: const [0.0, 0.8, 1.0],
         ).createShader(

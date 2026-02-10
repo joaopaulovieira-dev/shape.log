@@ -11,6 +11,7 @@ abstract class WorkoutLocalDataSource {
 
   Future<List<WorkoutHistory>> getHistory();
   Future<void> saveHistory(WorkoutHistory history);
+  Future<void> deleteHistory(String id);
 }
 
 class WorkoutHiveDataSource implements WorkoutLocalDataSource {
@@ -73,6 +74,12 @@ class WorkoutHiveDataSource implements WorkoutLocalDataSource {
     await _ensureBoxes();
     final model = WorkoutHistoryHiveModel.fromEntity(history);
     await _historyBox.put(model.id, model);
+  }
+
+  @override
+  Future<void> deleteHistory(String id) async {
+    await _ensureBoxes();
+    await _historyBox.delete(id);
   }
 
   // Deprecated methods from interface refactor - removing/replacing

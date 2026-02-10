@@ -110,7 +110,7 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   title: const Text('Restaurar Backup'),
                   subtitle: const Text('Importa dados de um arquivo anterior'),
-                  onTap: () => _showRestoreConfirmation(context, ref),
+                  onTap: () => _handleRestore(context, ref),
                 ),
               ],
             ),
@@ -186,51 +186,87 @@ class SettingsPage extends ConsumerWidget {
     }
   }
 
-  void _showRestoreConfirmation(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      useRootNavigator: true,
-      builder: (context) => AlertDialog(
-        title: const Text("Restaurar Backup?"),
-        content: const Text(
-          "AVISO: Isso substituirá todos os seus dados atuais (Treinos, Medidas e Perfil) pelos dados do arquivo. Esta ação não pode ser desfeita.",
-          style: TextStyle(color: Colors.red),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-            child: const Text("CANCELAR"),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context, rootNavigator: true).pop();
-              _handleRestore(context, ref);
-            },
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text("ENTENDO, RESTAURAR"),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _handleRestore(BuildContext context, WidgetRef ref) async {
     final rootNavigator = Navigator.of(context, rootNavigator: true);
 
-    // Show loading
-    showDialog(
-      context: context,
-      useRootNavigator: true,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
-
     try {
+      // 1. Pick and Analyze
+      final analysis = await ref
+          .read(backupServiceProvider)
+          .pickAndAnalyzeBackup();
+
+      if (analysis == null) {
+        // User cancelled picker or error analysis (error printed in service)
+        return;
+      }
+
+      if (!context.mounted) return;
+
+      // 2. Show Detailed Confirmation
+      final confirmed = await showDialog<bool>(
+        context: context,
+        useRootNavigator: true,
+        builder: (ctx) => AlertDialog(
+          title: const Text("Restaurar Backup?"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Isso substituirá TODOS os dados atuais pelos do arquivo selecionado:",
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "📅 Data: ${DateFormat('dd/MM/yyyy HH:mm').format(analysis.timestamp)}",
+              ),
+              const SizedBox(height: 8),
+              Text("🏋️ Treinos: ${analysis.workoutCount}"),
+              Text("📅 Histórico: ${analysis.historyCount} registros"),
+              Text("📏 Medidas: ${analysis.measurementCount} registros"),
+              Text("📸 Imagens: ${analysis.imageCount} arquivos"),
+              const SizedBox(height: 16),
+              const Text(
+                "Essa ação não pode ser desfeita.",
+                style: TextStyle(fontStyle: FontStyle.italic),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text("CANCELAR"),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text("CONFIRMAR RESTAURAÇÃO"),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+
+      // 3. Execute Restore
+      if (!context.mounted) return;
+
+      showDialog(
+        context: context,
+        useRootNavigator: true,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
       print('Starting Full Restore...');
-      final success = await ref.read(backupServiceProvider).restoreFullBackup();
+      final success = await ref
+          .read(backupServiceProvider)
+          .restoreFromAnalysis(analysis);
       print('Full Restore finished. Success: $success');
 
-      // Small delay to ensure the dialog is fully rendered before popping
       await Future.delayed(const Duration(milliseconds: 200));
 
       if (rootNavigator.canPop()) {
@@ -238,27 +274,28 @@ class SettingsPage extends ConsumerWidget {
       }
 
       if (success) {
-        // Invalidate/Refresh providers AFTER popping the dialog
+        // Invalidate/Refresh providers
         final _ = ref.refresh(userProfileProvider);
         ref.invalidate(bodyTrackerProvider);
         ref.invalidate(routineListProvider);
         ref.invalidate(historyListProvider);
 
-        SnackbarUtils.showSuccess(
-          context,
-          'Backup completo restaurado! Dados e fotos foram atualizados.',
-        );
+        if (context.mounted) {
+          SnackbarUtils.showSuccess(context, 'Backup restaurado com sucesso!');
+        }
       } else {
-        SnackbarUtils.showInfo(context, 'Restauração cancelada ou falhou.');
+        if (context.mounted) {
+          SnackbarUtils.showInfo(context, 'Falha ao restaurar backup.');
+        }
       }
     } catch (e) {
       print('Restore process error: $e');
-      // Ensure dialog is closed even on error
       if (rootNavigator.canPop()) {
         rootNavigator.pop();
       }
-
-      SnackbarUtils.showError(context, 'Erro ao restaurar backup: $e');
+      if (context.mounted) {
+        SnackbarUtils.showError(context, 'Erro ao restaurar: $e');
+      }
     }
   }
 

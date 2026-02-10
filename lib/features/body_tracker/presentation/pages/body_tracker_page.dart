@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 import '../providers/body_tracker_provider.dart';
 import '../../../profile/presentation/providers/user_profile_provider.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../common/presentation/widgets/full_screen_image_viewer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class BodyTrackerPage extends ConsumerStatefulWidget {
   const BodyTrackerPage({super.key});
@@ -200,6 +202,41 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
                                       Icons.camera_alt,
                                       size: 16,
                                       color: Colors.grey,
+                                    ),
+                                  ],
+                                  if (current.reportUrl != null &&
+                                      current.reportUrl!.isNotEmpty) ...[
+                                    const SizedBox(width: 8),
+                                    InkWell(
+                                      onTap: () async {
+                                        final uri = Uri.parse(
+                                          current.reportUrl!,
+                                        );
+                                        if (await canLaunchUrl(uri)) {
+                                          await launchUrl(
+                                            uri,
+                                            mode:
+                                                LaunchMode.externalApplication,
+                                          );
+                                        } else {
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Não foi possível abrir o link.',
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      },
+                                      child: const Icon(
+                                        Icons.medical_information,
+                                        size: 20,
+                                        color: Colors.blue,
+                                      ),
                                     ),
                                   ],
                                   const Spacer(),
@@ -472,33 +509,15 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
                                       itemBuilder: (context, i) {
                                         return GestureDetector(
                                           onTap: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (_) => Dialog(
-                                                backgroundColor: Colors.black,
-                                                child: Stack(
-                                                  alignment: Alignment.topRight,
-                                                  children: [
-                                                    InteractiveViewer(
-                                                      child: Image.file(
-                                                        File(
-                                                          current.imagePaths[i],
-                                                        ),
-                                                        fit: BoxFit.contain,
-                                                      ),
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    FullScreenImageViewer(
+                                                      imagePaths:
+                                                          current.imagePaths,
+                                                      initialIndex: i,
                                                     ),
-                                                    IconButton(
-                                                      icon: const Icon(
-                                                        Icons.close,
-                                                        color: Colors.white,
-                                                      ),
-                                                      onPressed: () =>
-                                                          Navigator.pop(
-                                                            context,
-                                                          ),
-                                                    ),
-                                                  ],
-                                                ),
                                               ),
                                             );
                                           },

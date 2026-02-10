@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
@@ -45,6 +46,7 @@ class _BodyMeasurementEntryPageState
   final _forearmLeftController = TextEditingController();
 
   final _notesController = TextEditingController();
+  final _reportUrlController = TextEditingController();
 
   List<String> _imagePaths = [];
 
@@ -132,6 +134,7 @@ class _BodyMeasurementEntryPageState
         : '';
 
     _notesController.text = measurement.notes;
+    _reportUrlController.text = measurement.reportUrl ?? '';
     _imagePaths = List.from(measurement.imagePaths);
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _updateFilledParts());
@@ -201,6 +204,7 @@ class _BodyMeasurementEntryPageState
     _forearmRightController.dispose();
     _forearmLeftController.dispose();
     _notesController.dispose();
+    _reportUrlController.dispose();
     super.dispose();
   }
 
@@ -364,7 +368,7 @@ class _BodyMeasurementEntryPageState
                     triggerMode: TooltipTriggerMode.tap,
                     child: Icon(
                       Icons.info_outline,
-                      color: AppColors.primary.withOpacity(0.7),
+                      color: AppColors.primary.withValues(alpha: 0.7),
                       size: 20,
                     ),
                   ),
@@ -477,6 +481,9 @@ class _BodyMeasurementEntryPageState
           _forearmLeftController.text.replaceAll(',', '.'),
         ),
         notes: _notesController.text,
+        reportUrl: _reportUrlController.text.isNotEmpty
+            ? _reportUrlController.text
+            : null,
         imagePaths: _imagePaths,
       );
 
@@ -549,6 +556,40 @@ class _BodyMeasurementEntryPageState
                 ),
               ),
 
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                child: TextFormField(
+                  controller: _reportUrlController,
+                  decoration: InputDecoration(
+                    labelText: 'Link do Relatório (Bioimpedância)',
+                    hintText: 'Cole o link...',
+                    prefixIcon: const Icon(
+                      Icons.link,
+                      color: AppColors.primary,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.paste, color: AppColors.primary),
+                      onPressed: () async {
+                        final data = await Clipboard.getData(
+                          Clipboard.kTextPlain,
+                        );
+                        if (data?.text != null) {
+                          setState(() {
+                            _reportUrlController.text = data!.text!;
+                          });
+                        }
+                      },
+                      tooltip: 'Colar Link',
+                    ),
+                    border: const OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.url,
+                ),
+              ),
+
               if (_currentBMI > 0)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -572,7 +613,7 @@ class _BodyMeasurementEntryPageState
                         side: _selectedSide,
                         mirrored: false,
                         selectedColor: AppColors.primary,
-                        unselectedColor: Colors.grey.withOpacity(0.2),
+                        unselectedColor: Colors.grey.withValues(alpha: 0.2),
                       ),
                     ),
                     Positioned(
