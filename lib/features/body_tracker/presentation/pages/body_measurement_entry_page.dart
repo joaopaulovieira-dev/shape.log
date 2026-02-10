@@ -11,6 +11,7 @@ import '../../domain/entities/body_measurement.dart';
 import '../providers/body_tracker_provider.dart';
 import '../widgets/bmi_gauge.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/presentation/widgets/app_modals.dart';
 
 class BodyMeasurementEntryPage extends ConsumerStatefulWidget {
   final BodyMeasurement? measurementToEdit;
@@ -333,79 +334,59 @@ class _BodyMeasurementEntryPageState
     TextEditingController controller,
     String helpText,
   ) {
-    showModalBottomSheet(
+    AppModals.showAppModal(
       context: context,
-      backgroundColor: Colors.grey.shade900,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-            left: 20,
-            right: 20,
-            top: 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Tooltip(
-                    message: helpText,
-                    triggerMode: TooltipTriggerMode.tap,
-                    child: Icon(
-                      Icons.info_outline,
-                      color: AppColors.primary.withValues(alpha: 0.7),
-                      size: 20,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: controller,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                autofocus: true,
-                textAlign: TextAlign.center,
+              Text(
+                label,
                 style: const TextStyle(
-                  fontSize: 32,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
-                ),
-                decoration: const InputDecoration(
-                  suffixText: "cm",
-                  border: InputBorder.none,
-                  hintText: "0.0",
+                  color: AppColors.primary,
                 ),
               ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.black,
-                  minimumSize: const Size(double.infinity, 50),
+              const SizedBox(width: 8),
+              Tooltip(
+                message: helpText,
+                triggerMode: TooltipTriggerMode.tap,
+                child: Icon(
+                  Icons.info_outline,
+                  color: AppColors.primary.withValues(alpha: 0.7),
+                  size: 20,
                 ),
-                child: const Text("Confirmar"),
               ),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 10),
+          TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            autofocus: true,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+            decoration: const InputDecoration(
+              suffixText: "cm",
+              border: InputBorder.none,
+              hintText: "0.0",
+            ),
+          ),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.black,
+              minimumSize: const Size(double.infinity, 50),
+            ),
+            child: const Text("Confirmar"),
+          ),
+        ],
+      ),
     );
   }
 
@@ -788,10 +769,10 @@ class _BodyMeasurementEntryPageState
               Center(
                 child: ElevatedButton.icon(
                   onPressed: () async {
-                    await showModalBottomSheet(
+                    await AppModals.showAppModal(
                       context: context,
-                      builder: (context) =>
-                          const ImageSourceSheet(showLibrary: false),
+                      title: 'Selecionar Imagem',
+                      child: const ImageSourceSheet(showLibrary: false),
                     ).then((files) {
                       if (files != null && files is List<File>) {
                         setState(() {

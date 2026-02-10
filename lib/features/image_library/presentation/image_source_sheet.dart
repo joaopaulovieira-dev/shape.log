@@ -36,41 +36,32 @@ class ImageSourceSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      height: 250, // Fixed height for 3 options
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'Selecionar Imagem',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _OptionButton(
+              icon: Icons.camera_alt,
+              label: 'Câmera',
+              onTap: () => _pickImage(context, ImageSource.camera),
+            ),
+            _OptionButton(
+              icon: Icons.photo_library,
+              label: 'Galeria',
+              onTap: () => _pickImage(context, ImageSource.gallery),
+            ),
+            if (showLibrary)
               _OptionButton(
-                icon: Icons.camera_alt,
-                label: 'Câmera',
-                onTap: () => _pickImage(context, ImageSource.camera),
+                icon: Icons.fitness_center, // Icon for equipment/library
+                label: 'Biblioteca',
+                onTap: () => _pickFromLibrary(context),
               ),
-              _OptionButton(
-                icon: Icons.photo_library,
-                label: 'Galeria',
-                onTap: () => _pickImage(context, ImageSource.gallery),
-              ),
-              if (showLibrary)
-                _OptionButton(
-                  icon: Icons.fitness_center, // Icon for equipment/library
-                  label: 'Biblioteca',
-                  onTap: () => _pickFromLibrary(context),
-                ),
-            ],
-          ),
-        ],
-      ),
+          ],
+        ),
+      ],
     );
   }
 }

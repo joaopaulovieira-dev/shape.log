@@ -19,6 +19,7 @@ import 'dart:io';
 import '../../../image_library/presentation/image_source_sheet.dart';
 import '../../../common/presentation/widgets/full_screen_image_viewer.dart';
 import '../../../common/services/image_storage_service.dart';
+import '../../../../core/presentation/widgets/app_modals.dart';
 
 class ReportsPage extends ConsumerStatefulWidget {
   const ReportsPage({super.key});
@@ -338,17 +339,12 @@ class _HistoryTab extends ConsumerWidget {
                                         ),
                                         tooltip: 'Gerenciar Fotos',
                                         onPressed: () {
-                                          showModalBottomSheet(
+                                          AppModals.showAppModal(
                                             context: context,
-                                            isScrollControlled: true,
-                                            shape: const RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.vertical(
-                                                    top: Radius.circular(20),
-                                                  ),
+                                            title: 'Galeria do Treino',
+                                            child: _PhotoManagerDialog(
+                                              history: h,
                                             ),
-                                            builder: (ctx) =>
-                                                _PhotoManagerDialog(history: h),
                                           );
                                         },
                                       ),
@@ -517,26 +513,11 @@ class _PhotoManagerDialogState extends State<_PhotoManagerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      height: MediaQuery.of(context).size.height * 0.7, // Slightly taller
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.7,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Galeria do Treino',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
           if (_isLoading)
             const LinearProgressIndicator(color: AppColors.primary),
 
@@ -612,12 +593,10 @@ class _PhotoManagerDialogState extends State<_PhotoManagerDialog> {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: () async {
-                // Open modal directly, handled by ImageSourceSheet logic (but wait, ImageSourceSheet is a widget).
-                // We need to show modal bottom sheet with ImageSourceSheet.
-                await showModalBottomSheet(
+                await AppModals.showAppModal(
                   context: context,
-                  builder: (context) =>
-                      const ImageSourceSheet(showLibrary: false),
+                  title: 'Selecionar Imagem',
+                  child: const ImageSourceSheet(showLibrary: false),
                 ).then((files) async {
                   if (files != null && files is List<File>) {
                     setState(() => _isLoading = true);

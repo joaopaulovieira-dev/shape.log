@@ -7,6 +7,7 @@ import '../../../profile/presentation/providers/user_profile_provider.dart';
 import '../../../workout/presentation/providers/workout_provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/snackbar_utils.dart';
+import '../../../../core/presentation/widgets/app_dialogs.dart';
 
 class WelcomePage extends ConsumerWidget {
   const WelcomePage({super.key});
@@ -105,38 +106,28 @@ class WelcomePage extends ConsumerWidget {
         if (!context.mounted) return;
 
         // Show confirmation dialog with summary
-        final confirmed = await showDialog<bool>(
+        // Show confirmation dialog with summary
+        final confirmed = await AppDialogs.showConfirmDialog<bool>(
           context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text("Restaurar Backup?"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Resumo do arquivo selecionado:",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "📅 Data: ${DateFormat('dd/MM/yyyy HH:mm').format(analysis.timestamp)}",
-                ),
-                Text("🏋️ Treinos: ${analysis.workoutCount}"),
-                Text("📅 Histórico: ${analysis.historyCount}"),
-                Text("📸 Imagens: ${analysis.imageCount}"),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text("CANCELAR"),
+          title: "Restaurar Backup?",
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Resumo do arquivo selecionado:",
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              FilledButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text("RESTAURAR"),
+              const SizedBox(height: 8),
+              Text(
+                "📅 Data: ${DateFormat('dd/MM/yyyy HH:mm').format(analysis.timestamp)}",
               ),
+              Text("🏋️ Treinos: ${analysis.workoutCount}"),
+              Text("📅 Histórico: ${analysis.historyCount}"),
+              Text("📸 Imagens: ${analysis.imageCount}"),
             ],
           ),
+          confirmText: "RESTAURAR",
         );
 
         if (confirmed != true) return;
@@ -144,19 +135,15 @@ class WelcomePage extends ConsumerWidget {
         if (!context.mounted) return;
 
         // Show loading
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) =>
-              const Center(child: CircularProgressIndicator()),
-        );
+        // Show loading
+        AppDialogs.showLoadingDialog(context);
 
         final success = await ref
             .read(backupServiceProvider)
             .restoreFromAnalysis(analysis);
 
         if (context.mounted) {
-          Navigator.pop(context); // Hide loading
+          AppDialogs.hideLoadingDialog(context); // Hide loading
         }
 
         if (success) {

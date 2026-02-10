@@ -14,6 +14,8 @@ import 'package:flutter/services.dart';
 import '../../../../core/utils/snackbar_utils.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../common/services/image_storage_service.dart';
+import '../../../../core/presentation/widgets/app_dialogs.dart';
+import '../../../../core/presentation/widgets/app_modals.dart';
 
 class WorkoutSessionPage extends ConsumerStatefulWidget {
   final Workout workout;
@@ -225,35 +227,25 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
     super.dispose();
   }
 
-  void _tryFinishWorkout() {
+  Future<void> _tryFinishWorkout() async {
     final state = ref.read(sessionProvider);
     final total = widget.workout.exercises.length;
     final completed = state.completedExerciseNames.length;
 
     if (completed < total) {
       // Show warning
-      showDialog(
+      final confirmed = await AppDialogs.showConfirmDialog(
         context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Treino Incompleto'),
-          content: Text(
+        title: 'Treino Incompleto',
+        description:
             'Você completou $completed de $total exercícios. Deseja finalizar mesmo assim?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                _showFeedbackDialog();
-              },
-              child: const Text('Finalizar'),
-            ),
-          ],
-        ),
+        confirmText: 'FINALIZAR',
+        cancelText: 'VOLTAR',
       );
+
+      if (confirmed == true) {
+        _showFeedbackDialog();
+      }
     } else {
       _showFeedbackDialog();
     }
@@ -319,85 +311,65 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
 
     if (!mounted) return;
 
-    showModalBottomSheet(
+    if (!mounted) return;
+
+    AppModals.showAppModal(
       context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) {
-          return Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              children: [
-                Text(
-                  'Histórico: $exerciseName',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+      title: 'Histórico: $exerciseName',
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.6,
+        child: history.isEmpty
+            ? const Center(
+                child: Text(
+                  'Nenhum histórico encontrado.',
+                  style: TextStyle(color: Colors.grey),
                 ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: history.isEmpty
-                      ? const Center(
-                          child: Text('Nenhum histórico encontrado.'),
-                        )
-                      : ListView.builder(
-                          controller: scrollController,
-                          itemCount: history.length,
-                          itemBuilder: (ctx, index) {
-                            final h = history[index];
-                            final exercise = h.exercises.firstWhere(
-                              (e) => e.name == exerciseName,
-                              orElse: () => h.exercises.first,
-                            );
+              )
+            : ListView.builder(
+                itemCount: history.length,
+                itemBuilder: (ctx, index) {
+                  final h = history[index];
+                  final exercise = h.exercises.firstWhere(
+                    (e) => e.name == exerciseName,
+                    orElse: () => h.exercises.first,
+                  );
 
-                            // Improve date formatting
-                            final dateStr =
-                                "${h.completedDate.day.toString().padLeft(2, '0')}/${h.completedDate.month.toString().padLeft(2, '0')}/${h.completedDate.year}";
+                  // Improve date formatting
+                  final dateStr =
+                      "${h.completedDate.day.toString().padLeft(2, '0')}/${h.completedDate.month.toString().padLeft(2, '0')}/${h.completedDate.year}";
 
-                            return ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: AppColors.primary.withValues(
-                                  alpha: 0.2,
-                                ),
-                                child: const Icon(
-                                  Icons.history,
-                                  color: AppColors.primary,
-                                  size: 20,
-                                ),
-                              ),
-                              title: Text(
-                                dateStr,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              subtitle: Text(
-                                "${exercise.sets} séries x ${exercise.reps} reps",
-                              ),
-                              trailing: Text(
-                                "${exercise.weight} Kg",
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            ),
-          );
-        },
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: CircleAvatar(
+                      backgroundColor: AppColors.primary.withOpacity(0.2),
+                      child: const Icon(
+                        Icons.history,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                    ),
+                    title: Text(
+                      dateStr,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    subtitle: Text(
+                      "${exercise.sets} séries x ${exercise.reps} reps",
+                      style: TextStyle(color: Colors.grey[400]),
+                    ),
+                    trailing: Text(
+                      "${exercise.weight} Kg",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  );
+                },
+              ),
       ),
     );
   }

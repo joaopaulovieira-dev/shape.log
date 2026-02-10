@@ -8,6 +8,7 @@ import '../../../profile/presentation/providers/user_profile_provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../common/presentation/widgets/full_screen_image_viewer.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/presentation/widgets/app_dialogs.dart';
 
 class BodyTrackerPage extends ConsumerStatefulWidget {
   const BodyTrackerPage({super.key});
@@ -252,32 +253,17 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
                                         );
                                       } else if (value == 'delete') {
                                         // Delete
-                                        final confirm = await showDialog<bool>(
-                                          context: context,
-                                          builder: (ctx) => AlertDialog(
-                                            title: const Text("Excluir"),
-                                            content: const Text(
-                                              "Tem certeza que deseja excluir este registro?",
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () =>
-                                                    Navigator.pop(ctx, false),
-                                                child: const Text("Cancelar"),
-                                              ),
-                                              TextButton(
-                                                onPressed: () =>
-                                                    Navigator.pop(ctx, true),
-                                                child: const Text(
-                                                  "Excluir",
-                                                  style: TextStyle(
-                                                    color: Colors.red,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
+                                        final confirm =
+                                            await AppDialogs.showConfirmDialog<
+                                              bool
+                                            >(
+                                              context: context,
+                                              title: "Excluir",
+                                              description:
+                                                  "Tem certeza que deseja excluir este registro?",
+                                              confirmText: "EXCLUIR",
+                                              isDestructive: true,
+                                            );
 
                                         if (confirm == true) {
                                           ref

@@ -18,6 +18,8 @@ import '../../../profile/presentation/providers/user_profile_provider.dart';
 
 import 'package:shape_log/core/constants/app_colors.dart';
 import '../../../../core/utils/snackbar_utils.dart';
+import '../../../../core/presentation/widgets/app_dialogs.dart';
+import '../../../../core/presentation/widgets/app_modals.dart';
 
 class WorkoutDetailsPage extends ConsumerStatefulWidget {
   final String workoutId;
@@ -110,27 +112,13 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                   if (value == 'edit') {
                     context.push('/workouts/${workout.id}/edit');
                   } else if (value == 'delete') {
-                    final confirmed = await showDialog<bool>(
+                    final confirmed = await AppDialogs.showConfirmDialog(
                       context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Excluir Treino'),
-                        content: const Text(
+                      title: 'Excluir Treino',
+                      description:
                           'Tem certeza que deseja excluir esta treino?',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text('Cancelar'),
-                          ),
-                          TextButton(
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.red,
-                            ),
-                            onPressed: () => Navigator.pop(ctx, true),
-                            child: const Text('Excluir'),
-                          ),
-                        ],
-                      ),
+                      confirmText: 'EXCLUIR',
+                      isDestructive: true,
                     );
 
                     if (confirmed == true) {
@@ -496,119 +484,100 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
   }
 
   void _showWorkoutHistory(BuildContext context, String workoutId) {
-    showModalBottomSheet(
+    AppModals.showAppModal(
       context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) {
-          return Consumer(
-            builder: (context, ref, child) {
-              final historyAsync = ref.watch(historyListProvider);
+      title: 'Histórico de Execuções',
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.7,
+        child: Consumer(
+          builder: (context, ref, child) {
+            final historyAsync = ref.watch(historyListProvider);
 
-              return historyAsync.when(
-                data: (allHistory) {
-                  final history = allHistory
-                      .where((h) => h.workoutId == workoutId)
-                      .toList();
+            return historyAsync.when(
+              data: (allHistory) {
+                final history = allHistory
+                    .where((h) => h.workoutId == workoutId)
+                    .toList();
 
-                  // Sort by date descending
-                  history.sort(
-                    (a, b) => b.completedDate.compareTo(a.completedDate),
+                // Sort by date descending
+                history.sort(
+                  (a, b) => b.completedDate.compareTo(a.completedDate),
+                );
+
+                if (history.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'Nenhum histórico encontrado para este treino.',
+                      style: TextStyle(color: Colors.grey),
+                    ),
                   );
+                }
 
-                  if (history.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'Nenhum histórico encontrado para este treino.',
+                return ListView.separated(
+                  itemCount: history.length,
+                  separatorBuilder: (ctx, index) =>
+                      Divider(color: Colors.grey[800]),
+                  itemBuilder: (ctx, index) {
+                    final h = history[index];
+                    final dateStr = DateFormat(
+                      'dd/MM/yyyy HH:mm',
+                    ).format(h.completedDate);
+
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: CircleAvatar(
+                        backgroundColor: AppColors.primary.withOpacity(0.2),
+                        child: Text(
+                          _getRpeEmoji(h.rpe),
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                      ),
+                      title: Text(
+                        dateStr,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Duração: ${h.durationMinutes} min • RPE: ${h.rpe ?? "?"}',
+                        style: TextStyle(color: Colors.grey[400]),
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(
+                          Icons.copy_all,
+                          color: AppColors.primary,
+                        ),
+                        tooltip: 'Copiar Relatório para IA',
+                        onPressed: () async {
+                          final user = await ref.read(
+                            userProfileProvider.future,
+                          );
+                          final report = WorkoutReportService()
+                              .generateClipboardReport(h, user);
+                          await Clipboard.setData(ClipboardData(text: report));
+                          if (context.mounted) {
+                            SnackbarUtils.showInfo(
+                              context,
+                              'Relatório copiado! Cole no ChatGPT.',
+                            );
+                          }
+                        },
                       ),
                     );
-                  }
-
-                  return Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Text(
-                          'Histórico de Execuções',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                      ),
-                      Expanded(
-                        child: ListView.separated(
-                          controller: scrollController,
-                          itemCount: history.length,
-                          separatorBuilder: (ctx, index) => const Divider(),
-                          itemBuilder: (ctx, index) {
-                            final h = history[index];
-                            final dateStr = DateFormat(
-                              'dd/MM/yyyy HH:mm',
-                            ).format(h.completedDate);
-
-                            return ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: AppColors.primary.withValues(
-                                  alpha: 0.2,
-                                ),
-                                child: Text(
-                                  _getRpeEmoji(h.rpe),
-                                  style: const TextStyle(fontSize: 20),
-                                ),
-                              ),
-                              title: Text(
-                                dateStr,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              subtitle: Text(
-                                'Duração: ${h.durationMinutes} min • RPE: ${h.rpe ?? "?"}',
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(
-                                  Icons.copy_all,
-                                  color: AppColors.primary,
-                                ),
-                                tooltip: 'Copiar Relatório para IA',
-                                onPressed: () async {
-                                  final user = await ref.read(
-                                    userProfileProvider.future,
-                                  );
-                                  final report = WorkoutReportService()
-                                      .generateClipboardReport(h, user);
-                                  await Clipboard.setData(
-                                    ClipboardData(text: report),
-                                  );
-                                  if (context.mounted) {
-                                    SnackbarUtils.showInfo(
-                                      context,
-                                      'Relatório copiado! Cole no ChatGPT.',
-                                    );
-                                  }
-                                },
-                              ),
-                              onTap: () {
-                                // Could show detailed view here if needed
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) => Center(child: Text('Erro: $err')),
-              );
-            },
-          );
-        },
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(
+                child: Text(
+                  'Erro: $err',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

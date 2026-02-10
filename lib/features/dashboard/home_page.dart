@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
+import 'package:shape_log/features/dashboard/widgets/dashboard_widgets.dart'; // Import Widgets
 import '../../features/workout/data/services/active_session_service.dart';
 import '../../features/workout/presentation/providers/workout_provider.dart';
 import '../../features/workout/presentation/providers/session_provider.dart';
@@ -70,8 +71,41 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
   }
 
+  // --- Logic for Smart Suggestion ---
+  Workout? _getSuggestedWorkout(
+    List<WorkoutHistoryHiveModel> history,
+    List<Workout> allWorkouts,
+  ) {
+    if (allWorkouts.isEmpty) return null;
+    if (history.isEmpty)
+      return allWorkouts.first; // Start with first if no history
+
+    // Sort history by date desc
+    final sortedHistory = List<WorkoutHistoryHiveModel>.from(history)
+      ..sort((a, b) => b.completedDate.compareTo(a.completedDate));
+
+    final lastWorkoutHistory = sortedHistory.first;
+
+    // Find index of last workout in the current list of routines
+    // We match by ID or Name (ID is safer)
+    final lastIndex = allWorkouts.indexWhere(
+      (w) => w.id == lastWorkoutHistory.workoutId,
+    );
+
+    if (lastIndex == -1) {
+      // Last workout not found (maybe deleted), default to first
+      return allWorkouts.first;
+    }
+
+    // Cycle: (Index + 1) % length
+    final nextIndex = (lastIndex + 1) % allWorkouts.length;
+    return allWorkouts[nextIndex];
+  }
+
   @override
   Widget build(BuildContext context) {
+    final workoutAsync = ref.watch(routineListProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -85,61 +119,85 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
       body: _isLoadingSession
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_activeWorkout != null) ...[
-                    _buildResumeCard(),
-                    const SizedBox(height: 24),
-                  ],
+          : workoutAsync.when(
+              data: (allWorkouts) {
+                return ValueListenableBuilder<Box<WorkoutHistoryHiveModel>>(
+                  valueListenable: Hive.box<WorkoutHistoryHiveModel>(
+                    'history_log',
+                  ).listenable(),
+                  builder: (context, box, _) {
+                    final history = box.values.toList();
 
-                  const Text(
-                    'Dashboard',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
+                    // Sort history for usage
+                    final sortedHistory =
+                        List<WorkoutHistoryHiveModel>.from(history)..sort(
+                          (a, b) => b.completedDate.compareTo(a.completedDate),
+                        );
 
-                  ValueListenableBuilder<Box<WorkoutHistoryHiveModel>>(
-                    valueListenable: Hive.box<WorkoutHistoryHiveModel>(
-                      'history_log',
-                    ).listenable(),
-                    builder: (context, box, _) {
-                      final history = box.values.toList();
-                      return _buildQuickStats(history);
-                    },
-                  ),
+                    final lastSession = sortedHistory.isNotEmpty
+                        ? sortedHistory.first
+                        : null;
+                    final suggestedWorkout = _getSuggestedWorkout(
+                      history,
+                      allWorkouts,
+                    );
 
-                  const SizedBox(height: 32),
-                  const Text(
-                    'Acesso Rápido',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildActionCard(
-                          icon: Icons.fitness_center,
-                          label: "Meus Treinos",
-                          color: AppColors.primary,
-                          onTap: () => context.go('/workouts'),
-                        ),
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 1. Resume Active Session (Priority)
+                          if (_activeWorkout != null) ...[
+                            _buildResumeCard(),
+                            const SizedBox(height: 24),
+                          ],
+
+                          // 2. Weekly Streak Strip
+                          WeeklyConsistencyStrip(history: history),
+                          const SizedBox(height: 24),
+
+                          // 3. Smart Action Card (Suggestion)
+                          if (_activeWorkout ==
+                              null) // Only show if no active session
+                            SmartActionCard(
+                              suggestedWorkout: suggestedWorkout,
+                              onStart: () {
+                                if (suggestedWorkout != null) {
+                                  context.push(
+                                    '/session',
+                                    extra: suggestedWorkout,
+                                  );
+                                } else {
+                                  // Fallback or go to workouts creation
+                                  context.go('/workouts');
+                                }
+                              },
+                            ),
+
+                          if (_activeWorkout == null)
+                            const SizedBox(height: 24),
+
+                          // 4. Last Session Recap
+                          if (lastSession != null) ...[
+                            LastSessionRecap(lastSession: lastSession),
+                            const SizedBox(height: 24),
+                          ],
+
+                          // 5. Quick Menu Grid
+                          // 5. Weekly Performance Card
+                          WeeklyPerformanceCard(history: history),
+
+                          const SizedBox(height: 40), // Bottom padding
+                        ],
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildActionCard(
-                          icon: Icons.history,
-                          label: "Histórico",
-                          color: Colors.blueAccent,
-                          onTap: () => context.go('/reports'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) =>
+                  Center(child: Text('Erro ao carregar treinos: $err')),
             ),
     );
   }
@@ -211,110 +269,6 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildQuickStats(List<WorkoutHistoryHiveModel> history) {
-    // Calculate Stats
-    final now = DateTime.now();
-    final startOfWeek = now.subtract(Duration(days: now.weekday % 7));
-    final endOfWeek = startOfWeek.add(const Duration(days: 7));
-
-    final thisWeekWorkouts = history.where((h) {
-      return h.completedDate.isAfter(startOfWeek) &&
-          h.completedDate.isBefore(endOfWeek);
-    }).toList();
-
-    final workoutsCount = thisWeekWorkouts.length;
-    final totalMinutes = thisWeekWorkouts.fold(
-      0,
-      (sum, h) => sum + h.durationMinutes,
-    );
-    final totalHours = (totalMinutes / 60).toStringAsFixed(1);
-
-    // Simple Streak Logic (Consecutive weeks with at least 1 workout)
-    // For now, let's keep it simple: just show total workouts all time or something?
-    // Or just a placeholder if complex.
-    // Let's do: Total Workouts All Time for the 3rd stat instead of Streak for now, or valid streak.
-    // "Sequência" usually means Streak.
-    // Let's try day streak.
-    // int streak = 0;
-    // ... complex streak logic ...
-    // Placeholder for streak to "🔥" until better logic
-    final streakEmoji = "🔥";
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _StatItem(value: "$workoutsCount", label: "Treinos na semana"),
-          _StatItem(value: "${totalHours}h", label: "Tempo total"),
-          _StatItem(value: streakEmoji, label: "Sequência"),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionCard({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 28),
-            ),
-            const SizedBox(height: 12),
-            Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatItem extends StatelessWidget {
-  final String value;
-  final String label;
-  const _StatItem({required this.value, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[400])),
-      ],
     );
   }
 }
