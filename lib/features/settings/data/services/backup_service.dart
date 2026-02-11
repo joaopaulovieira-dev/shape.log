@@ -99,6 +99,19 @@ class BackupService {
         }
       }
 
+      // Handle Profile Picture
+      if (backupData['profile'] != null &&
+          backupData['profile']['profilePicturePath'] != null) {
+        final originalPath =
+            backupData['profile']['profilePicturePath'] as String;
+        final file = File(originalPath);
+        if (file.existsSync()) {
+          final name = p.basename(originalPath);
+          encoder.addFile(file, 'images/$name');
+          backupData['profile']['profilePicturePath'] = 'images/$name';
+        }
+      }
+
       for (var workout in backupData['workouts']) {
         processImages(workout['exercises']);
       }
@@ -217,7 +230,7 @@ class BackupService {
         await imageDir.create(recursive: true);
       }
 
-      // 5. Extract Images & Library
+      // 4. Extract Images & Library
       final libraryDir = Directory('${appDir.path}/image_library');
       if (!await libraryDir.exists()) {
         await libraryDir.create(recursive: true);
@@ -251,6 +264,15 @@ class BackupService {
         }
       }
       inputStream.close();
+
+      // Handle Profile Path Fix
+      if (data['profile'] != null &&
+          data['profile']['profilePicturePath'] != null) {
+        final relPath = data['profile']['profilePicturePath'] as String;
+        if (imageMapping.containsKey(relPath)) {
+          data['profile']['profilePicturePath'] = imageMapping[relPath];
+        }
+      }
 
       // 6. Reconstruct Absolute Paths in JSON
       void fixPaths(List entities) {
