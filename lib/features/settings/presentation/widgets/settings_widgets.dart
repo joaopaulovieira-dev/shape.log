@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
 import 'package:shape_log/features/profile/domain/entities/user_profile.dart';
+import 'dart:io';
 
 // 1. Profile Hero Card
 class ProfileHeroCard extends StatelessWidget {
@@ -36,6 +37,7 @@ class ProfileHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final badge = _getBadge(totalWorkouts);
     final badgeColor = _getBadgeColor(totalWorkouts);
+    final hasPhoto = userProfile?.profilePicturePath != null;
 
     return Container(
       width: double.infinity,
@@ -71,19 +73,29 @@ class ProfileHeroCard extends StatelessWidget {
                       blurRadius: 10,
                     ),
                   ],
+                  image: hasPhoto
+                      ? DecorationImage(
+                          image: FileImage(
+                            File(userProfile!.profilePicturePath!),
+                          ),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: Center(
-                  child: Text(
-                    userProfile?.name.isNotEmpty == true
-                        ? userProfile!.name[0].toUpperCase()
-                        : "U",
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
+                child: !hasPhoto
+                    ? Center(
+                        child: Text(
+                          userProfile?.name.isNotEmpty == true
+                              ? userProfile!.name[0].toUpperCase()
+                              : "U",
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      )
+                    : null,
               ),
               const SizedBox(width: 16),
               // Info

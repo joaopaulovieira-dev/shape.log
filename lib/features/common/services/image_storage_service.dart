@@ -6,9 +6,12 @@ import 'package:image_picker/image_picker.dart';
 class ImageStorageService {
   static const String _subDirName = 'workout_photos';
 
-  Future<String> saveImage(XFile imageFile) async {
+  Future<String> saveImage(
+    XFile imageFile, {
+    String subDir = _subDirName,
+  }) async {
     final docsDir = await getApplicationDocumentsDirectory();
-    final photosDir = Directory(path.join(docsDir.path, _subDirName));
+    final photosDir = Directory(path.join(docsDir.path, subDir));
 
     if (!await photosDir.exists()) {
       await photosDir.create(recursive: true);

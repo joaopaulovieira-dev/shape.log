@@ -11,6 +11,8 @@ class UserProfile {
   final List<String> limitations; // e.g. "Joelhos", "Ombros"
   final DietType dietType;
 
+  final String? profilePicturePath;
+
   const UserProfile({
     required this.name,
     required this.age,
@@ -20,6 +22,7 @@ class UserProfile {
     required this.activityLevel,
     required this.limitations,
     required this.dietType,
+    this.profilePicturePath,
   });
 
   UserProfile copyWith({
@@ -31,6 +34,7 @@ class UserProfile {
     ActivityLevel? activityLevel,
     List<String>? limitations,
     DietType? dietType,
+    String? profilePicturePath,
   }) {
     return UserProfile(
       name: name ?? this.name,
@@ -41,6 +45,7 @@ class UserProfile {
       activityLevel: activityLevel ?? this.activityLevel,
       limitations: limitations ?? this.limitations,
       dietType: dietType ?? this.dietType,
+      profilePicturePath: profilePicturePath ?? this.profilePicturePath,
     );
   }
 }

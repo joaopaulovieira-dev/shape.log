@@ -28,6 +28,9 @@ class UserProfileHiveModel extends HiveObject {
   @HiveField(6)
   final String dietType; // Store as String
 
+  @HiveField(7)
+  final String? profilePicturePath;
+
   UserProfileHiveModel({
     required this.name,
     required this.age,
@@ -36,6 +39,7 @@ class UserProfileHiveModel extends HiveObject {
     required this.activityLevel,
     required this.limitations,
     required this.dietType,
+    this.profilePicturePath,
   });
 
   // Mapper: From Entity
@@ -48,6 +52,7 @@ class UserProfileHiveModel extends HiveObject {
       activityLevel: entity.activityLevel.name,
       limitations: entity.limitations,
       dietType: entity.dietType.name,
+      profilePicturePath: entity.profilePicturePath,
     );
   }
 
@@ -67,6 +72,7 @@ class UserProfileHiveModel extends HiveObject {
         (e) => e.name == dietType,
         orElse: () => DietType.maintenance,
       ),
+      profilePicturePath: profilePicturePath,
     );
   }
 
@@ -79,6 +85,7 @@ class UserProfileHiveModel extends HiveObject {
       'activityLevel': activityLevel,
       'limitations': limitations,
       'dietType': dietType,
+      'profilePicturePath': profilePicturePath,
     };
   }
 
@@ -91,6 +98,7 @@ class UserProfileHiveModel extends HiveObject {
       activityLevel: map['activityLevel'] ?? 'moderate',
       limitations: List<String>.from(map['limitations'] ?? []),
       dietType: map['dietType'] ?? 'maintenance',
+      profilePicturePath: map['profilePicturePath'],
     );
   }
 }
