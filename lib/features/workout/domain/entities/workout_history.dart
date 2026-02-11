@@ -9,6 +9,7 @@ class WorkoutHistory {
   final List<Exercise> exercises; // Snapshot of what was actually done
   final String notes;
   final DateTime? startTime;
+  final DateTime? endTime;
   final double completionPercentage;
 
   const WorkoutHistory({
@@ -20,9 +21,12 @@ class WorkoutHistory {
     required this.exercises,
     required this.notes,
     this.startTime,
+    this.endTime,
     this.completionPercentage = 0,
     this.rpe, // Rating of Perceived Exertion (1-5)
+    this.imagePaths = const [],
   });
 
   final int? rpe;
+  final List<String> imagePaths;
 }

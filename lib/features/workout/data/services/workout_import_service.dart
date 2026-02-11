@@ -73,12 +73,34 @@ class WorkoutImportService {
       for (var exData in exercisesData) {
         if (exData is! Map<String, dynamic>) continue;
 
+        final typeStr = exData['type'] as String?;
+        final type = typeStr == 'cardio'
+            ? ExerciseTypeEntity.cardio
+            : ExerciseTypeEntity.weight;
+
         exercises.add(
           Exercise(
             name: exData['name'] ?? 'Exercício sem nome',
+            type: type,
             sets: _toInt(exData['sets']),
-            reps: _toInt(exData['reps']),
-            weight: _toDouble(exData['weight']),
+            // Cardio: durationMinutes replaces reps
+            // Weight: reps
+            reps: type == ExerciseTypeEntity.weight
+                ? _toInt(exData['reps'])
+                : 0,
+            cardioDurationMinutes: type == ExerciseTypeEntity.cardio
+                ? (_toDouble(exData['durationMinutes'] ?? exData['reps']))
+                : null,
+            // Cardio: intensity replaces weight
+            // Weight: weight
+            weight: type == ExerciseTypeEntity.weight
+                ? _toDouble(exData['weight'])
+                : 0.0,
+            cardioIntensity: type == ExerciseTypeEntity.cardio
+                ? (exData['intensity'] as String? ??
+                      exData['weight']?.toString())
+                : null,
+
             youtubeUrl: exData['youtubeUrl'],
             imagePaths:
                 const [], // Sanitização: limpar caminhos de imagem externos

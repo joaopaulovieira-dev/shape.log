@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../image_library/presentation/image_source_sheet.dart';
+import '../../../../core/presentation/widgets/app_modals.dart';
 import '../../domain/entities/exercise.dart';
 import '../../domain/entities/workout.dart';
 import '../providers/workout_provider.dart';
@@ -307,9 +308,10 @@ class _ExerciseEditPageState extends ConsumerState<ExerciseEditPage> {
             Center(
               child: ElevatedButton.icon(
                 onPressed: () async {
-                  await showModalBottomSheet(
+                  await AppModals.showAppModal(
                     context: context,
-                    builder: (context) => const ImageSourceSheet(),
+                    title: 'Selecionar Imagem',
+                    child: const ImageSourceSheet(),
                   ).then((files) {
                     if (files != null && files is List<File>) {
                       setState(() {

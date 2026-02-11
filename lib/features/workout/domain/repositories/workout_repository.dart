@@ -9,4 +9,5 @@ abstract class WorkoutRepository {
 
   Future<List<WorkoutHistory>> getHistory();
   Future<void> saveHistory(WorkoutHistory history);
+  Future<void> deleteHistory(String id);
 }

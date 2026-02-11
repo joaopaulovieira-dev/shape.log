@@ -8,6 +8,9 @@ import '../../workout/presentation/providers/workout_provider.dart';
 import '../data/services/backup_service.dart';
 import '../data/repositories/settings_repository.dart';
 import '../../image_library/presentation/image_library_settings_page.dart';
+import '../../../../core/utils/snackbar_utils.dart';
+import 'widgets/settings_widgets.dart';
+import '../../../../core/presentation/widgets/app_dialogs.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -17,306 +20,215 @@ class SettingsPage extends ConsumerWidget {
     final userProfileState = ref.watch(userProfileProvider);
     final userProfile = userProfileState.asData?.value;
 
+    final routinesAsync = ref.watch(routineListProvider);
+    final historyAsync = ref.watch(historyListProvider);
+    final measurements = ref.watch(bodyTrackerProvider);
+    final settingsRepo = ref.watch(settingsRepositoryProvider);
+
+    final workoutCount = routinesAsync.asData?.value.length ?? 0;
+    final historyCount = historyAsync.asData?.value.length ?? 0;
+    final measurementCount = measurements.length;
+    final lastBackup = settingsRepo.getLastBackupDate();
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Ajustes')),
+      appBar: AppBar(title: const Text('Central de Ajustes')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildSectionHeader(context, "DADOS PESSOAIS"),
-          const SizedBox(height: 8),
-          Card(
-            clipBehavior: Clip.antiAlias,
-            child: ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Colors.blueGrey,
-                child: Icon(Icons.person, color: Colors.white),
-              ),
-              title: const Text(
-                'Meu Perfil Bio-Data',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(
-                userProfile != null
-                    ? '${userProfile.age} anos • ${userProfile.height}m • ${userProfile.targetWeight}kg (Meta)'
-                    : 'Toque para configurar seu perfil',
-              ),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
-                context.push('/profile/edit');
-              },
+          // 1. Profile Hero (ID Badge)
+          ProfileHeroCard(
+            userProfile: userProfile,
+            totalWorkouts: historyCount, // Badge based on experience (history)
+            onEditTap: () => context.push('/profile/edit'),
+          ),
+          const SizedBox(height: 24),
+
+          // 2. System Health (Stats)
+          SystemHealthCard(
+            workoutCount: workoutCount,
+            historyCount: historyCount,
+            measurementCount: measurementCount,
+          ),
+          const SizedBox(height: 24),
+
+          // 3. Data Vault (Backup)
+          DataVaultCard(
+            lastBackupDate: lastBackup,
+            onBackup: () => _handleBackup(context, ref),
+            onRestore: () => _handleRestore(context, ref),
+          ),
+          const SizedBox(height: 24),
+
+          // 4. General Settings Grid/List
+          const Text(
+            "PREFERÊNCIAS & SISTEMA",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+              fontSize: 12,
+              letterSpacing: 1.2,
             ),
           ),
+          const SizedBox(height: 12),
 
-          const SizedBox(height: 24),
-          _buildSectionHeader(context, "SISTEMA"),
-          const SizedBox(height: 8),
-
-          Card(
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.photo_library),
-                  title: const Text('Biblioteca de Ativos'),
-                  subtitle: const Text('Gerenciar imagens de equipamentos'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ImageLibrarySettingsPage(),
-                      ),
-                    );
-                  },
+          SettingsMenuItem(
+            icon: Icons.photo_library,
+            title: 'Biblioteca de Ativos',
+            subtitle: 'Gerenciar imagens de equipamentos',
+            iconColor: Colors.purpleAccent,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ImageLibrarySettingsPage(),
                 ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.info_outline),
-                  title: const Text('Sobre'),
-                  subtitle: const Text('Versão 1.0.0'),
-                  onTap: () => _showAboutDialog(context),
-                ),
-              ],
-            ),
+              );
+            },
           ),
-
-          const SizedBox(height: 24),
-          _buildSectionHeader(context, "DADOS & SEGURANÇA"),
-          const SizedBox(height: 8),
-
-          Card(
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              children: [
-                _buildBackupStatusTile(context, ref),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(
-                    Icons.cloud_upload_outlined,
-                    color: Colors.blue,
-                  ),
-                  title: const Text('Fazer Backup Agora'),
-                  subtitle: const Text(
-                    'Gera um arquivo .ZIP para salvar externamente',
-                  ),
-                  onTap: () => _handleBackup(context, ref),
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(
-                    Icons.settings_backup_restore,
-                    color: Colors.orange,
-                  ),
-                  title: const Text('Restaurar Backup'),
-                  subtitle: const Text('Importa dados de um arquivo anterior'),
-                  onTap: () => _showRestoreConfirmation(context, ref),
-                ),
-              ],
-            ),
+          SettingsMenuItem(
+            icon: Icons.info_outline,
+            title: 'Sobre',
+            subtitle: 'Versão 1.0.0 • Shape.log',
+            iconColor: Colors.tealAccent,
+            onTap: () => _showAboutDialog(context),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildBackupStatusTile(BuildContext context, WidgetRef ref) {
-    final settingsRepo = ref.watch(settingsRepositoryProvider);
-    final lastBackup = settingsRepo.getLastBackupDate();
-
-    String statusText = 'Nunca';
-    Color textColor = Colors.grey;
-    bool isUrgent = false;
-
-    if (lastBackup != null) {
-      final daysSince = DateTime.now().difference(lastBackup).inDays;
-      statusText = DateFormat('dd/MM/yyyy HH:mm').format(lastBackup);
-
-      if (daysSince > 7) {
-        textColor = Colors.red;
-        isUrgent = true;
-      } else {
-        textColor = Colors.green;
-      }
-    }
-
-    return ListTile(
-      leading: Icon(
-        isUrgent ? Icons.warning_amber_rounded : Icons.security,
-        color: textColor,
-      ),
-      title: const Text('Último backup'),
-      subtitle: Text(
-        statusText,
-        style: TextStyle(
-          color: textColor,
-          fontWeight: isUrgent ? FontWeight.bold : null,
-        ),
       ),
     );
   }
 
   Future<void> _handleBackup(BuildContext context, WidgetRef ref) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-
     // Show loading using root navigator to avoid GoRouter conflicts
-    showDialog(
-      context: context,
-      useRootNavigator: true,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
+    // Show loading using root navigator to avoid GoRouter conflicts
+    AppDialogs.showLoadingDialog(context);
 
     try {
       final success = await ref.read(backupServiceProvider).createFullBackup();
 
       if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop(); // Hide loading
+        AppDialogs.hideLoadingDialog(context); // Hide loading
       }
 
       if (success) {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text('Backup enviado!'),
-            duration: Duration(seconds: 5),
-          ),
-        );
+        SnackbarUtils.showSuccess(context, 'Backup enviado!');
       }
     } catch (e) {
       if (context.mounted) {
-        Navigator.of(
-          context,
-          rootNavigator: true,
-        ).pop(); // Hide loading on error
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('Erro ao realizar backup: $e')),
-        );
+        AppDialogs.hideLoadingDialog(context); // Hide loading on error
+        SnackbarUtils.showError(context, 'Erro ao realizar backup: $e');
       }
     }
   }
 
-  void _showRestoreConfirmation(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      useRootNavigator: true,
-      builder: (context) => AlertDialog(
-        title: const Text("Restaurar Backup?"),
-        content: const Text(
-          "AVISO: Isso substituirá todos os seus dados atuais (Treinos, Medidas e Perfil) pelos dados do arquivo. Esta ação não pode ser desfeita.",
-          style: TextStyle(color: Colors.red),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-            child: const Text("CANCELAR"),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context, rootNavigator: true).pop();
-              _handleRestore(context, ref);
-            },
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text("ENTENDO, RESTAURAR"),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _handleRestore(BuildContext context, WidgetRef ref) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
     final rootNavigator = Navigator.of(context, rootNavigator: true);
 
-    // Show loading
-    showDialog(
-      context: context,
-      useRootNavigator: true,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
-
     try {
+      // 1. Pick and Analyze
+      final analysis = await ref
+          .read(backupServiceProvider)
+          .pickAndAnalyzeBackup();
+
+      if (analysis == null) {
+        // User cancelled picker or error analysis (error printed in service)
+        return;
+      }
+
+      if (!context.mounted) return;
+
+      // 2. Show Detailed Confirmation
+      // 2. Show Detailed Confirmation
+      final confirmed = await AppDialogs.showConfirmDialog<bool>(
+        context: context,
+        title: "Restaurar Backup?",
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Isso substituirá TODOS os dados atuais pelos do arquivo selecionado:",
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "📅 Data: ${DateFormat('dd/MM/yyyy HH:mm').format(analysis.timestamp)}",
+            ),
+            const SizedBox(height: 8),
+            Text("🏋️ Treinos: ${analysis.workoutCount}"),
+            Text("📅 Histórico: ${analysis.historyCount} registros"),
+            Text("📏 Medidas: ${analysis.measurementCount} registros"),
+            Text("📸 Imagens: ${analysis.imageCount} arquivos"),
+            const SizedBox(height: 16),
+            const Text(
+              "Essa ação não pode ser desfeita.",
+              style: TextStyle(fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
+        confirmText: "CONFIRMAR RESTAURAÇÃO",
+        isDestructive: true,
+      );
+
+      if (confirmed != true) return;
+
+      // 3. Execute Restore
+      if (!context.mounted) return;
+
+      AppDialogs.showLoadingDialog(context);
+
       print('Starting Full Restore...');
-      final success = await ref.read(backupServiceProvider).restoreFullBackup();
+      final success = await ref
+          .read(backupServiceProvider)
+          .restoreFromAnalysis(analysis);
       print('Full Restore finished. Success: $success');
 
-      // Small delay to ensure the dialog is fully rendered before popping
       await Future.delayed(const Duration(milliseconds: 200));
 
       if (rootNavigator.canPop()) {
-        rootNavigator.pop(); // Hide loading
+        AppDialogs.hideLoadingDialog(context); // Hide loading
       }
 
       if (success) {
-        // Invalidate/Refresh providers AFTER popping the dialog
+        // Invalidate/Refresh providers
         final _ = ref.refresh(userProfileProvider);
         ref.invalidate(bodyTrackerProvider);
         ref.invalidate(routineListProvider);
         ref.invalidate(historyListProvider);
 
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Backup completo restaurado! Dados e fotos foram atualizados.',
-            ),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 4),
-          ),
-        );
+        if (context.mounted) {
+          SnackbarUtils.showSuccess(context, 'Backup restaurado com sucesso!');
+        }
       } else {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(content: Text('Restauração cancelada ou falhou.')),
-        );
+        if (context.mounted) {
+          SnackbarUtils.showInfo(context, 'Falha ao restaurar backup.');
+        }
       }
     } catch (e) {
       print('Restore process error: $e');
-      // Ensure dialog is closed even on error
       if (rootNavigator.canPop()) {
-        rootNavigator.pop();
+        AppDialogs.hideLoadingDialog(context);
       }
-
-      scaffoldMessenger.showSnackBar(
-        SnackBar(content: Text('Erro ao restaurar backup: $e')),
-      );
+      if (context.mounted) {
+        SnackbarUtils.showError(context, 'Erro ao restaurar: $e');
+      }
     }
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 4),
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: Colors.grey,
-          letterSpacing: 1.2,
-        ),
-      ),
-    );
-  }
-
   void _showAboutDialog(BuildContext context) {
-    showDialog(
+    AppDialogs.showInfoDialog(
       context: context,
-      useRootNavigator: true,
-      builder: (context) => AlertDialog(
-        title: const Text("Shape.log"),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Seu companheiro de treinos e medidas."),
-            SizedBox(height: 8),
-            Text("Versão: 1.0.0"),
-            Text("Desenvolvido com Flutter & Riverpod."),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-            child: const Text("OK"),
-          ),
+      title: "Shape.log",
+      content: const Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Seu companheiro de treinos e medidas."),
+          SizedBox(height: 8),
+          Text("Versão: 1.0.0"),
+          Text("Desenvolvido com Flutter & Riverpod."),
         ],
       ),
+      buttonText: "OK",
     );
   }
 }

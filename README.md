@@ -10,6 +10,7 @@
 - **Sanitização Inteligente**: O app gera novos IDs automaticamente, limpa caminhos de imagem externos e reseta datas para evitar conflitos.
 - **Registro de Exercícios**: Adicione exercícios com detalhes de Séries, Repetições, Carga, **Tempo de Descanso** e Técnica.
 - **Timer de Descanso**: Configure o tempo de descanso individual por exercício (padrão 60s), com slider e chips de seleção rápida.
+- **Notificações Sensoriais**: Alerta de fim de descanso com **Som Embutido** (que não interrompe sua música) e **Feedback Tátil** (vibração), garantindo que você nunca perca o início da próxima série.
 - **Histórico de Execução**: Marque treinos como concluídos e acompanhe logs passados.
 - **Interface Polida**: Títulos de treinos longos utilizam efeito *Marquee* (texto deslizante) para visibilidade completa.
 - **Genius Focus Mode**: Interface de execução imersiva com grade compacta, histórico de carga (`📈`) acessível e persistência em tempo real.
@@ -54,25 +55,35 @@
 
 Para que o sistema de importação funcione corretamente (via arquivo ou texto), o JSON deve seguir a estrutura abaixo. O app é flexível e aceita tanto uma lista direta `[]` quanto um objeto contendo a chave `"workouts"`.
 
-### Exemplo de Estrutura Completa
+### Exemplo de Estrutura Completa (Híbrido)
 ```json
 {
   "workouts": [
     {
-      "name": "Nome do Treino (ex: Treino A - Peitoral)",
+      "name": "Treino Híbrido (Peito + Cardio)",
       "scheduledDays": [1, 3, 5],
       "targetDurationMinutes": 60,
       "expiryDate": "2024-12-31",
-      "notes": "Foco em progressão de carga",
+      "notes": "Foco em progressão de carga e resistência",
       "exercises": [
         {
           "name": "Supino Reto",
+          "type": "strength",
           "sets": 4,
           "reps": "8-10",
           "weight": 30.0,
           "restTime": 90,
           "technique": "Cadência 3-0-1",
           "equipmentNumber": "12"
+        },
+        {
+          "name": "Corrida na Esteira",
+          "type": "cardio",
+          "sets": 1,
+          "durationMinutes": 30,
+          "intensity": "Velocidade 8-10km/h",
+          "technique": "Manter postura ereta",
+          "restTime": 60
         }
       ]
     }
@@ -81,12 +92,15 @@ Para que o sistema de importação funcione corretamente (via arquivo ou texto),
 ```
 
 ### Especificações Técnicas:
+- **`type`**: "strength" (padrão) ou "cardio".
 - **`scheduledDays`**: Lista de números de 1 (Segunda) a 7 (Domingo).
 - **`expiryDate`**: Data de validade do treino no formato `YYYY-MM-DD` (Opcional).
-- **`reps`**: Aceita números (`12`) ou strings para intervalos (`"10-12"`).
-- **`weight`**: Valor numérico (double/float) representando o peso em kg.
+- **`reps`**: (Strength) Aceita números (`12`) ou strings para intervalos (`"10-12"`).
+- **`weight`**: (Strength) Valor numérico (double/float) representando o peso em kg.
+- **`durationMinutes`**: (Cardio) Tempo em minutos.
+- **`intensity`**: (Cardio) String livre para descrever velocidade/zona (ex: "Zona 2").
 - **`restTime`** (ou `restSeconds`): Tempo de descanso em segundos (ex: `60`, `90`). Padrão: 60s.
-- **Sanitização Automática**: Os campos `id`, `imagePaths` e `activeStartTime` são gerados ou resetados pelo app, portanto, não precisam ser enviados no JSON.
+- **Sanitização Automática**: Os campos `id`, `imagePaths` e `activeStartTime` são gerados ou resetados pelo app.
 
 ---
 
@@ -102,6 +116,8 @@ O projeto segue os princípios de **Clean Architecture** para garantir escalabil
   - `intl`: Formatação de datas.
   - `body_part_selector`: Base para o mapa corporal.
   - `google_fonts`: Tipografia premium (Inter).
+  - `audioplayers`: Reprodução de sons.
+  - `vibration`: Feedback tátil.
 
 ---
 

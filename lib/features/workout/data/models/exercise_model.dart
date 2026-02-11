@@ -1,7 +1,16 @@
 import 'package:hive/hive.dart';
 import '../../domain/entities/exercise.dart';
+import 'exercise_set_history_hive_model.dart';
 
 part 'exercise_model.g.dart';
+
+@HiveType(typeId: 9)
+enum ExerciseType {
+  @HiveField(0)
+  weight,
+  @HiveField(1)
+  cardio,
+}
 
 @HiveType(typeId: 3)
 class ExerciseModel extends HiveObject {
@@ -30,11 +39,22 @@ class ExerciseModel extends HiveObject {
   final String? technique;
 
   @HiveField(8)
-  @HiveField(8)
   final bool isCompleted;
 
   @HiveField(10)
   final int restTimeSeconds;
+
+  @HiveField(11)
+  final List<ExerciseSetHistoryHiveModel> setsHistory;
+
+  @HiveField(12)
+  final ExerciseType? type;
+
+  @HiveField(13)
+  final double? cardioDurationMinutes;
+
+  @HiveField(14)
+  final String? cardioIntensity;
 
   ExerciseModel({
     required this.name,
@@ -47,6 +67,10 @@ class ExerciseModel extends HiveObject {
     this.technique,
     this.isCompleted = false,
     this.restTimeSeconds = 60,
+    this.setsHistory = const [],
+    this.type = ExerciseType.weight,
+    this.cardioDurationMinutes,
+    this.cardioIntensity,
   });
 
   factory ExerciseModel.fromEntity(Exercise exercise) {
@@ -61,6 +85,14 @@ class ExerciseModel extends HiveObject {
       technique: exercise.technique,
       isCompleted: exercise.isCompleted,
       restTimeSeconds: exercise.restTimeSeconds,
+      setsHistory:
+          exercise.setsHistory
+              ?.map((e) => ExerciseSetHistoryHiveModel.fromEntity(e))
+              .toList() ??
+          [],
+      type: ExerciseType.values.byName(exercise.type.name),
+      cardioDurationMinutes: exercise.cardioDurationMinutes,
+      cardioIntensity: exercise.cardioIntensity,
     );
   }
 
@@ -76,6 +108,12 @@ class ExerciseModel extends HiveObject {
       technique: technique,
       isCompleted: isCompleted,
       restTimeSeconds: restTimeSeconds,
+      setsHistory: setsHistory.map((e) => e.toEntity()).toList(),
+      type: ExerciseTypeEntity.values.byName(
+        (type ?? ExerciseType.weight).name,
+      ),
+      cardioDurationMinutes: cardioDurationMinutes,
+      cardioIntensity: cardioIntensity,
     );
   }
 
@@ -91,6 +129,10 @@ class ExerciseModel extends HiveObject {
       'technique': technique,
       'isCompleted': isCompleted,
       'restTimeSeconds': restTimeSeconds,
+      'setsHistory': setsHistory.map((e) => e.toMap()).toList(),
+      'type': type?.name,
+      'cardioDurationMinutes': cardioDurationMinutes,
+      'cardioIntensity': cardioIntensity,
     };
   }
 
@@ -106,6 +148,18 @@ class ExerciseModel extends HiveObject {
       technique: map['technique'],
       isCompleted: map['isCompleted'] ?? false,
       restTimeSeconds: map['restTimeSeconds'] ?? 60,
+      setsHistory: (map['setsHistory'] as List? ?? [])
+          .map(
+            (e) => ExerciseSetHistoryHiveModel.fromMap(
+              Map<String, dynamic>.from(e),
+            ),
+          )
+          .toList(),
+      type: map['type'] != null
+          ? ExerciseType.values.byName(map['type'])
+          : ExerciseType.weight,
+      cardioDurationMinutes: (map['cardioDurationMinutes'] ?? 0.0).toDouble(),
+      cardioIntensity: map['cardioIntensity'],
     );
   }
 }

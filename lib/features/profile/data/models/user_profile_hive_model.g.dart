@@ -24,13 +24,14 @@ class UserProfileHiveModelAdapter extends TypeAdapter<UserProfileHiveModel> {
       activityLevel: fields[4] as String,
       limitations: (fields[5] as List).cast<String>(),
       dietType: fields[6] as String,
+      profilePicturePath: fields[7] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserProfileHiveModel obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class UserProfileHiveModelAdapter extends TypeAdapter<UserProfileHiveModel> {
       ..writeByte(5)
       ..write(obj.limitations)
       ..writeByte(6)
-      ..write(obj.dietType);
+      ..write(obj.dietType)
+      ..writeByte(7)
+      ..write(obj.profilePicturePath);
   }
 
   @override

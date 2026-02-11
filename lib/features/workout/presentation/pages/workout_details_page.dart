@@ -13,7 +13,13 @@ import '../providers/workout_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import '../../domain/services/workout_report_service.dart';
+import '../../../profile/presentation/providers/user_profile_provider.dart';
+
 import 'package:shape_log/core/constants/app_colors.dart';
+import '../../../../core/utils/snackbar_utils.dart';
+import '../../../../core/presentation/widgets/app_dialogs.dart';
+import '../../../../core/presentation/widgets/app_modals.dart';
 
 class WorkoutDetailsPage extends ConsumerStatefulWidget {
   final String workoutId;
@@ -96,32 +102,23 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
               ),
             ),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.history),
+                tooltip: 'Histórico de Execuções',
+                onPressed: () => _showWorkoutHistory(context, workout.id),
+              ),
               PopupMenuButton<String>(
                 onSelected: (value) async {
                   if (value == 'edit') {
                     context.push('/workouts/${workout.id}/edit');
                   } else if (value == 'delete') {
-                    final confirmed = await showDialog<bool>(
+                    final confirmed = await AppDialogs.showConfirmDialog(
                       context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Excluir Treino'),
-                        content: const Text(
+                      title: 'Excluir Treino',
+                      description:
                           'Tem certeza que deseja excluir esta treino?',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text('Cancelar'),
-                          ),
-                          TextButton(
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.red,
-                            ),
-                            onPressed: () => Navigator.pop(ctx, true),
-                            child: const Text('Excluir'),
-                          ),
-                        ],
-                      ),
+                      confirmText: 'EXCLUIR',
+                      isDestructive: true,
                     );
 
                     if (confirmed == true) {
@@ -219,10 +216,9 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                               final message =
                                   "Olá! Meu treino '${workout.name}' venceu em $dateStr. Por favor, me ajude a criar uma nova versão dele baseada no meu progresso recente.";
                               Clipboard.setData(ClipboardData(text: message));
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Mensagem copiada!'),
-                                ),
+                              SnackbarUtils.showInfo(
+                                context,
+                                'Mensagem copiada!',
                               );
                             },
                           ),
@@ -274,8 +270,18 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: () {
-                      context.push('/session', extra: workout);
+                    onPressed: () async {
+                      final result = await context.push<bool>(
+                        '/session',
+                        extra: workout,
+                      );
+                      if (result == true) {
+                        ref.invalidate(routineListProvider);
+                        ref.invalidate(historyListProvider);
+                        if (context.mounted) {
+                          setState(() {});
+                        }
+                      }
                     },
                     icon: const Icon(Icons.play_arrow),
                     label: const Text(
@@ -324,9 +330,8 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                             const SizedBox(height: 4),
                             Text(
                               'Conclusão: ${(percent * 100).toInt()}% ($completedCount/$totalCount)',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                           ],
                         );
@@ -357,7 +362,7 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                       width: 50,
                       height: 50,
                       decoration: BoxDecoration(
-                        color: Colors.grey[300],
+                        color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: ex.imagePaths.isNotEmpty
@@ -390,14 +395,20 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                               decoration: ex.isCompleted
                                   ? TextDecoration.lineThrough
                                   : null,
-                              color: ex.isCompleted ? Colors.grey : null,
+                              color: ex.isCompleted
+                                  ? Colors.grey
+                                  : Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.color,
                             ),
                           ),
                         ],
                       ),
                     ),
                     subtitle: Text(
-                      '${ex.sets} séries x ${ex.reps} reps - ${ex.weight}kg',
+                      ex.type == ExerciseTypeEntity.cardio
+                          ? '${ex.cardioDurationMinutes?.toInt() ?? 0} min • ${ex.cardioIntensity ?? "Normal"} • ${ex.restTimeSeconds}s desc'
+                          : '${ex.sets} séries x ${ex.reps} reps • ${ex.weight}kg',
                     ),
                     onTap: () {
                       context.push('/workouts/${workout.id}/exercises/$index');
@@ -467,11 +478,126 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
 
     await ref.read(workoutRepositoryProvider).saveRoutine(updatedWorkout);
     ref.invalidate(routineListProvider);
+    ref.invalidate(historyListProvider);
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Treino finalizado e salvo!')),
-      );
+      SnackbarUtils.showSuccess(context, 'Treino finalizado e salvo!');
+    }
+  }
+
+  void _showWorkoutHistory(BuildContext context, String workoutId) {
+    AppModals.showAppModal(
+      context: context,
+      title: 'Histórico de Execuções',
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.7,
+        child: Consumer(
+          builder: (context, ref, child) {
+            final historyAsync = ref.watch(historyListProvider);
+
+            return historyAsync.when(
+              data: (allHistory) {
+                final history = allHistory
+                    .where((h) => h.workoutId == workoutId)
+                    .toList();
+
+                // Sort by date descending
+                history.sort(
+                  (a, b) => b.completedDate.compareTo(a.completedDate),
+                );
+
+                if (history.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'Nenhum histórico encontrado para este treino.',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  );
+                }
+
+                return ListView.separated(
+                  itemCount: history.length,
+                  separatorBuilder: (ctx, index) =>
+                      Divider(color: Colors.grey[800]),
+                  itemBuilder: (ctx, index) {
+                    final h = history[index];
+                    final dateStr = DateFormat(
+                      'dd/MM/yyyy HH:mm',
+                    ).format(h.completedDate);
+
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: CircleAvatar(
+                        backgroundColor: AppColors.primary.withOpacity(0.2),
+                        child: Text(
+                          _getRpeEmoji(h.rpe),
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                      ),
+                      title: Text(
+                        dateStr,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Duração: ${h.durationMinutes} min • RPE: ${h.rpe ?? "?"}',
+                        style: TextStyle(color: Colors.grey[400]),
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(
+                          Icons.copy_all,
+                          color: AppColors.primary,
+                        ),
+                        tooltip: 'Copiar Relatório para IA',
+                        onPressed: () async {
+                          final user = await ref.read(
+                            userProfileProvider.future,
+                          );
+                          final report = WorkoutReportService()
+                              .generateClipboardReport(h, user);
+                          await Clipboard.setData(ClipboardData(text: report));
+                          if (context.mounted) {
+                            SnackbarUtils.showInfo(
+                              context,
+                              'Relatório copiado! Cole no ChatGPT.',
+                            );
+                          }
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(
+                child: Text(
+                  'Erro: $err',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  String _getRpeEmoji(int? rpe) {
+    switch (rpe) {
+      case 1:
+        return '😁';
+      case 2:
+        return '🙂';
+      case 3:
+        return '😐';
+      case 4:
+        return '😫';
+      case 5:
+        return '🥵';
+      default:
+        return '🏋️';
     }
   }
 
@@ -479,7 +605,7 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: Colors.grey[600]),
+        Icon(icon, size: 20, color: AppColors.primary),
         const SizedBox(width: 8),
         Text('$label ', style: const TextStyle(fontWeight: FontWeight.bold)),
         Expanded(child: Text(value)),

@@ -13,8 +13,10 @@ import '../../features/body_tracker/presentation/pages/body_measurement_entry_pa
 import '../../features/settings/presentation/settings_page.dart';
 import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
+import '../../features/splash/presentation/pages/welcome_page.dart';
 import '../../features/workout/presentation/pages/workout_session_page.dart';
 import '../../features/workout/domain/entities/workout.dart';
+import '../../features/reports/presentation/pages/reports_page.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -24,6 +26,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/splash',
     routes: [
       GoRoute(path: '/splash', builder: (context, state) => const SplashPage()),
+      GoRoute(
+        path: '/welcome',
+        builder: (context, state) => const WelcomePage(),
+      ),
       ShellRoute(
         builder: (context, state, child) {
           return ScaffoldWithBottomNavBar(child: child);
@@ -103,6 +109,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
           GoRoute(
+            path: '/reports',
+            builder: (context, state) {
+              return const ReportsPage();
+            },
+          ),
+          GoRoute(
             path: '/settings',
             builder: (context, state) => const SettingsPage(),
           ),
@@ -161,6 +173,11 @@ class ScaffoldWithBottomNavBar extends StatelessWidget {
             label: 'Medidas',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.assessment_outlined),
+            activeIcon: Icon(Icons.assessment),
+            label: 'Relatórios',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),
             activeIcon: Icon(Icons.settings),
             label: 'Ajustes',
@@ -179,6 +196,9 @@ class ScaffoldWithBottomNavBar extends StatelessWidget {
       return 2;
     }
     if (location.startsWith('/settings')) {
+      return 4;
+    }
+    if (location.startsWith('/reports')) {
       return 3;
     }
     return 0;
@@ -196,6 +216,9 @@ class ScaffoldWithBottomNavBar extends StatelessWidget {
         GoRouter.of(context).go('/body-tracker');
         break;
       case 3:
+        GoRouter.of(context).go('/reports');
+        break;
+      case 4:
         GoRouter.of(context).go('/settings');
         break;
     }

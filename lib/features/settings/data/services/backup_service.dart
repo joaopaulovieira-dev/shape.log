@@ -17,6 +17,27 @@ import '../repositories/settings_repository.dart';
 
 final backupServiceProvider = Provider((ref) => BackupService(ref));
 
+class BackupAnalysis {
+  final File zipFile;
+  final Map<String, dynamic> metadata;
+  final int workoutCount;
+  final int historyCount;
+  final int measurementCount;
+  final int imageCount;
+
+  BackupAnalysis({
+    required this.zipFile,
+    required this.metadata,
+    required this.workoutCount,
+    required this.historyCount,
+    required this.measurementCount,
+    required this.imageCount,
+  });
+
+  DateTime get timestamp => DateTime.parse(metadata['timestamp']);
+  String get version => metadata['version'];
+}
+
 class BackupService {
   final Ref _ref;
 
@@ -78,9 +99,24 @@ class BackupService {
         }
       }
 
+      // Handle Profile Picture
+      if (backupData['profile'] != null &&
+          backupData['profile']['profilePicturePath'] != null) {
+        final originalPath =
+            backupData['profile']['profilePicturePath'] as String;
+        final file = File(originalPath);
+        if (file.existsSync()) {
+          final name = p.basename(originalPath);
+          encoder.addFile(file, 'images/$name');
+          backupData['profile']['profilePicturePath'] = 'images/$name';
+        }
+      }
+
       for (var workout in backupData['workouts']) {
         processImages(workout['exercises']);
       }
+      // Process newly added gallery images in history items
+      processImages(backupData['history']);
       for (var historyEntry in backupData['history']) {
         processImages(historyEntry['exercises']);
       }
@@ -123,33 +159,69 @@ class BackupService {
     }
   }
 
-  Future<bool> restoreFullBackup() async {
+  Future<BackupAnalysis?> pickAndAnalyzeBackup() async {
     try {
       FilePickerResult? pickResult = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['zip'],
       );
 
-      if (pickResult == null) return false;
+      if (pickResult == null) return null;
 
       final zipFile = File(pickResult.files.single.path!);
 
-      // 1. Decode ZIP using buffer to save memory
+      // Analyze ZIP without extracting everything
       final inputStream = InputFileStream(zipFile.path);
       final archive = ZipDecoder().decodeBuffer(inputStream);
 
-      // 2. Find and Parse JSON
       final jsonFile = archive.findFile('backup_data.json');
       if (jsonFile == null) {
-        throw Exception('Arquivo de dados não encontrado no ZIP');
+        throw Exception('Dados inválidos: "backup_data.json" não encontrado.');
       }
 
       final jsonString = utf8.decode(jsonFile.content);
       final Map<String, dynamic> data = jsonDecode(jsonString);
 
       if (double.parse(data['version'] ?? '0') < 1.0) {
-        throw Exception('Versão de backup incompatível');
+        throw Exception('Versão de backup incompatível.');
       }
+
+      // Count images
+      int imageCount = 0;
+      for (final file in archive) {
+        if (file.isFile &&
+            (file.name.startsWith('images/') ||
+                file.name.startsWith('library/'))) {
+          imageCount++;
+        }
+      }
+
+      inputStream.close();
+
+      return BackupAnalysis(
+        zipFile: zipFile,
+        metadata: data,
+        workoutCount: (data['workouts'] as List?)?.length ?? 0,
+        historyCount: (data['history'] as List?)?.length ?? 0,
+        measurementCount: (data['measurements'] as List?)?.length ?? 0,
+        imageCount: imageCount,
+      );
+    } catch (e) {
+      print('Analysis error: $e');
+      return null;
+    }
+  }
+
+  Future<bool> restoreFromAnalysis(BackupAnalysis analysis) async {
+    try {
+      final zipFile = analysis.zipFile;
+      final data = analysis.metadata;
+
+      // 1. Decode ZIP (Need to reopen stream as close() was termed)
+      // Actually we decoded it in memory before but we closed the stream.
+      // Let's reopen.
+      final inputStream = InputFileStream(zipFile.path);
+      final archive = ZipDecoder().decodeBuffer(inputStream);
 
       // 3. Prepare Image Directory
       final appDir = await getApplicationDocumentsDirectory();
@@ -158,7 +230,7 @@ class BackupService {
         await imageDir.create(recursive: true);
       }
 
-      // 5. Extract Images & Library
+      // 4. Extract Images & Library
       final libraryDir = Directory('${appDir.path}/image_library');
       if (!await libraryDir.exists()) {
         await libraryDir.create(recursive: true);
@@ -193,6 +265,15 @@ class BackupService {
       }
       inputStream.close();
 
+      // Handle Profile Path Fix
+      if (data['profile'] != null &&
+          data['profile']['profilePicturePath'] != null) {
+        final relPath = data['profile']['profilePicturePath'] as String;
+        if (imageMapping.containsKey(relPath)) {
+          data['profile']['profilePicturePath'] = imageMapping[relPath];
+        }
+      }
+
       // 6. Reconstruct Absolute Paths in JSON
       void fixPaths(List entities) {
         for (var entity in entities) {
@@ -208,6 +289,8 @@ class BackupService {
       for (var workout in data['workouts']) {
         fixPaths(workout['exercises']);
       }
+      // Fix newly added gallery images in history items
+      fixPaths(data['history']);
       for (var historyEntry in data['history']) {
         fixPaths(historyEntry['exercises']);
       }

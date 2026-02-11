@@ -6,6 +6,11 @@ import '../../domain/enums/activity_level.dart';
 import '../../domain/enums/diet_type.dart';
 import '../providers/user_profile_provider.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/presentation/widgets/app_modals.dart';
+import '../../../image_library/presentation/image_source_sheet.dart';
+import '../../../common/services/image_storage_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class EditProfilePage extends ConsumerStatefulWidget {
   final bool isFirstRun; // If true, don't show "Cancel" button, force save
@@ -25,6 +30,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   double _height = 1.75; // Default height
   ActivityLevel _activityLevel = ActivityLevel.moderate;
   DietType _dietType = DietType.maintenance;
+  String? _profilePicturePath;
   final Set<String> _limitations = {};
 
   final List<String> _availableLimitations = [
@@ -57,6 +63,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       _height = profile.height;
       _activityLevel = profile.activityLevel;
       _dietType = profile.dietType;
+      _profilePicturePath = profile.profilePicturePath;
       _limitations.clear();
       _limitations.addAll(profile.limitations);
     });
@@ -80,6 +87,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         activityLevel: _activityLevel,
         limitations: _limitations.toList(),
         dietType: _dietType,
+        profilePicturePath: _profilePicturePath,
       );
 
       ref.read(userProfileProvider.notifier).saveProfile(profile);
@@ -139,6 +147,47 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                 style: TextStyle(color: Colors.grey),
               ),
               const SizedBox(height: 24),
+
+              // PROFILE PHOTO
+              Center(
+                child: Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 60,
+                      backgroundColor: AppColors.primary.withOpacity(0.1),
+                      backgroundImage: _profilePicturePath != null
+                          ? FileImage(File(_profilePicturePath!))
+                          : null,
+                      child: _profilePicturePath == null
+                          ? Icon(
+                              Icons.person,
+                              size: 60,
+                              color: AppColors.primary,
+                            )
+                          : null,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black, width: 2),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.black,
+                          ),
+                          onPressed: _pickProfilePhoto,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
 
               // NAME & AGE
               Row(
@@ -266,7 +315,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                   return FilterChip(
                     label: Text(limitation),
                     selected: isSelected,
-                    selectedColor: AppColors.primary.withOpacity(0.2),
+                    selectedColor: AppColors.primary.withValues(alpha: 0.2),
                     checkmarkColor: AppColors.primary,
                     labelStyle: TextStyle(
                       color: isSelected ? AppColors.primary : Colors.white,
@@ -307,5 +356,26 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickProfilePhoto() async {
+    final result = await AppModals.showAppModal(
+      context: context,
+      title: 'Foto de Perfil',
+      child: const ImageSourceSheet(showLibrary: false),
+    );
+
+    if (result != null && result is List<File> && result.isNotEmpty) {
+      final file = result.first;
+      final storageService = ImageStorageService();
+      final permanentPath = await storageService.saveImage(
+        XFile(file.path),
+        subDir: 'profile_photos',
+      );
+
+      setState(() {
+        _profilePicturePath = permanentPath;
+      });
+    }
   }
 }

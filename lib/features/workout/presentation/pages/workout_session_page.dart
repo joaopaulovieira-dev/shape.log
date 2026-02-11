@@ -6,8 +6,17 @@ import 'package:go_router/go_router.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
 import '../providers/session_provider.dart';
 import '../../domain/entities/workout.dart';
-import 'package:marquee/marquee.dart';
+import '../../domain/entities/exercise.dart';
 import 'package:confetti/confetti.dart';
+import '../../domain/services/workout_report_service.dart';
+import '../../../profile/presentation/providers/user_profile_provider.dart';
+import 'package:flutter/services.dart';
+import '../../../../core/utils/snackbar_utils.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../image_library/presentation/image_source_sheet.dart';
+import '../../../common/services/image_storage_service.dart';
+import '../../../../core/presentation/widgets/app_dialogs.dart';
+import '../../../../core/presentation/widgets/app_modals.dart';
 
 class WorkoutSessionPage extends ConsumerStatefulWidget {
   final Workout workout;
@@ -20,11 +29,32 @@ class WorkoutSessionPage extends ConsumerStatefulWidget {
 
 class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
   late PageController _pageController;
+  bool _isWarmup = false;
   late TextEditingController _setsController;
   late TextEditingController _repsController;
   late TextEditingController _weightController;
   late TextEditingController _restController;
   late TextEditingController _equipmentController;
+
+  final List<String> _recoveredImages = [];
+
+  // Cardio Controllers
+  late TextEditingController _cardioDurationController;
+  late TextEditingController _cardioIntensityController;
+
+  // Focus Nodes for Auto-Save
+  final FocusNode _setsFocus = FocusNode();
+  final FocusNode _repsFocus = FocusNode();
+  final FocusNode _weightFocus = FocusNode();
+  final FocusNode _restFocus = FocusNode();
+  final FocusNode _equipmentFocus = FocusNode();
+  final FocusNode _cardioDurationFocus = FocusNode();
+  final FocusNode _cardioIntensityFocus = FocusNode();
+
+  // Visual Feedback
+  bool _showSavedFeedback = false;
+  Timer? _feedbackTimer;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -35,21 +65,103 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
     _weightController = TextEditingController();
     _restController = TextEditingController();
     _equipmentController = TextEditingController();
+    _cardioDurationController = TextEditingController();
+    _cardioIntensityController = TextEditingController();
+
+    _retrieveLostData();
 
     // Initialize session
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(sessionProvider.notifier).startSession(widget.workout);
-      _updateControllers();
+      final sessionState = ref.read(sessionProvider);
+
+      // If we are already running THIS workout, don't restart it (Resume functionality)
+      if (sessionState.activeWorkout?.id == widget.workout.id) {
+        _updateControllers();
+        // Jump to correct page if needed
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(sessionState.currentExerciseIndex);
+        }
+      } else {
+        ref.read(sessionProvider.notifier).startSession(widget.workout);
+        _updateControllers();
+      }
+    });
+
+    // Setup Focus Listeners for Auto-Save
+    _setsFocus.addListener(_onFocusChange);
+    _repsFocus.addListener(_onFocusChange);
+    _weightFocus.addListener(_onFocusChange);
+    _restFocus.addListener(_onFocusChange);
+    _equipmentFocus.addListener(_onFocusChange);
+    _cardioDurationFocus.addListener(_onFocusChange);
+    _cardioIntensityFocus.addListener(_onFocusChange);
+  }
+
+  Future<void> _retrieveLostData() async {
+    final LostDataResponse response = await ImageSourceSheet.picker
+        .retrieveLostData();
+    if (response.isEmpty) return;
+    if (response.file != null) {
+      _recoveredImages.add(response.file!.path);
+    } else if (response.files != null) {
+      _recoveredImages.addAll(response.files!.map((f) => f.path));
+    }
+
+    if (_recoveredImages.isNotEmpty) {
+      // If we recovered images, it means the activity was killed while taking a photo.
+      // We should show the feedback dialog immediately so the user can save.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showFeedbackDialog();
+      });
+    }
+  }
+
+  void _onFocusChange() {
+    // If any field lost focus, we ensure state is saved.
+    // Actually, we want to save when *valid* changes happen, which _saveChanges handles.
+    // But we trigger it on blur to be safe.
+    // Checks if any relevant focus node *lost* focus.
+    // A simpler approach: iterate all. If none have focus, or just on every change.
+    // The requirement is: "onFieldSubmitted and FocusNode.addListener (onBlur)"
+    // We just call _saveChanges() on blur.
+
+    // We can just call _saveChanges(). usage of _saveChanges reads from text controllers.
+    // If the text controllers haven't changed, _saveChanges might still trigger an update,
+    // but the provider logic checks against current state if we implemented it right?
+    // Actually SessionProvider.updateCurrentExercise replaces the specific exercise instance.
+    // It's cheap enough.
+
+    // We only care if we *lost* focus on one of them.
+    if (!_setsFocus.hasFocus &&
+        !_repsFocus.hasFocus &&
+        !_weightFocus.hasFocus &&
+        !_restFocus.hasFocus &&
+        !_equipmentFocus.hasFocus &&
+        !_cardioDurationFocus.hasFocus &&
+        !_cardioIntensityFocus.hasFocus) {
+      _saveChanges();
+    } else {
+      // Even if switching between fields, we might want to save the one we just left.
+      // So just calling _saveChanges() whenever a listener fires is safe,
+      // as `_saveChanges` grabs all current values.
+      _saveChanges();
+    }
+  }
+
+  void _onFieldChanged(String value) {
+    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) _saveChanges();
     });
   }
 
   void _updateControllers() {
+    // Cancel any pending debounce to avoid overwriting new state with old inputs
+    _debounceTimer?.cancel();
+
     final state = ref.read(sessionProvider);
     final exercise = state.currentExercise;
     if (exercise != null) {
-      // Use existing text if focused to prevent cursor jumping?
-      // For now, simple overwrite. If we type, local state updates.
-      // But if we navigate back and forth, we need overwrite.
       if (_setsController.text != exercise.sets.toString()) {
         _setsController.text = exercise.sets.toString();
       }
@@ -64,6 +176,16 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
       }
       if (_equipmentController.text != (exercise.equipmentNumber ?? '')) {
         _equipmentController.text = exercise.equipmentNumber ?? '';
+      }
+
+      // Cardio
+      if (_cardioDurationController.text !=
+          (exercise.cardioDurationMinutes?.toString() ?? '')) {
+        _cardioDurationController.text =
+            exercise.cardioDurationMinutes?.toString() ?? '';
+      }
+      if (_cardioIntensityController.text != (exercise.cardioIntensity ?? '')) {
+        _cardioIntensityController.text = exercise.cardioIntensity ?? '';
       }
     }
   }
@@ -80,9 +202,29 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
       restTimeSeconds:
           int.tryParse(_restController.text) ?? exercise.restTimeSeconds,
       equipmentNumber: _equipmentController.text,
+      cardioDurationMinutes: double.tryParse(_cardioDurationController.text),
+      cardioIntensity: _cardioIntensityController.text,
     );
 
     ref.read(sessionProvider.notifier).updateCurrentExercise(updatedExercise);
+
+    // Show visual feedback
+    if (mounted) {
+      // Cancel previous timer if any
+      _feedbackTimer?.cancel();
+
+      setState(() {
+        _showSavedFeedback = true;
+      });
+
+      _feedbackTimer = Timer(const Duration(milliseconds: 1500), () {
+        if (mounted) {
+          setState(() {
+            _showSavedFeedback = false;
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -93,38 +235,41 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
     _weightController.dispose();
     _restController.dispose();
     _equipmentController.dispose();
+    _cardioDurationController.dispose();
+    _cardioIntensityController.dispose();
+
+    _setsFocus.dispose();
+    _repsFocus.dispose();
+    _weightFocus.dispose();
+    _restFocus.dispose();
+    _equipmentFocus.dispose();
+    _cardioDurationFocus.dispose();
+    _cardioIntensityFocus.dispose();
+    _feedbackTimer?.cancel();
+    _debounceTimer?.cancel();
+
     super.dispose();
   }
 
-  void _tryFinishWorkout() {
+  Future<void> _tryFinishWorkout() async {
     final state = ref.read(sessionProvider);
     final total = widget.workout.exercises.length;
     final completed = state.completedExerciseNames.length;
 
     if (completed < total) {
       // Show warning
-      showDialog(
+      final confirmed = await AppDialogs.showConfirmDialog(
         context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Treino Incompleto'),
-          content: Text(
+        title: 'Treino Incompleto',
+        description:
             'Você completou $completed de $total exercícios. Deseja finalizar mesmo assim?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                _showFeedbackDialog();
-              },
-              child: const Text('Finalizar'),
-            ),
-          ],
-        ),
+        confirmText: 'FINALIZAR',
+        cancelText: 'VOLTAR',
       );
+
+      if (confirmed == true) {
+        _showFeedbackDialog();
+      }
     } else {
       _showFeedbackDialog();
     }
@@ -135,11 +280,50 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => _FeedbackDialog(
-        onSave: (rpe) {
-          ref.read(sessionProvider.notifier).finishSessionWithRpe(rpe);
-          // Navigate out after save
-          context.pop(); // Close dialog
-          context.pop(); // Exit page
+        initialImagePaths: _recoveredImages,
+        onSave: (rpe, imagePaths) async {
+          // Logic moved from _FeedbackDialog to here (or kept there if it was cleaner, but let's follow the pattern)
+          // Actually, in the previous implementation, the dialog handled the logic.
+          // In the new implementation I wrote above, the dialog *calls* onSave with the data.
+          // So I need to execute the saving logic here.
+
+          try {
+            final history = await ref
+                .read(sessionProvider.notifier)
+                .finishSessionWithRpe(rpe, imagePaths: imagePaths);
+
+            if (history != null && mounted) {
+              // Generate report
+              final user = await ref.read(userProfileProvider.future);
+              final reportStr = WorkoutReportService().generateClipboardReport(
+                history,
+                user,
+              );
+
+              // Copy to clipboard
+              await Clipboard.setData(ClipboardData(text: reportStr));
+
+              if (mounted) {
+                SnackbarUtils.showSuccess(
+                  context,
+                  'Relatório copiado para a área de transferência!',
+                );
+              }
+            }
+          } catch (e, stack) {
+            debugPrint("Error saving session: $e\n$stack");
+            if (mounted) {
+              SnackbarUtils.showError(context, 'Erro ao salvar: $e');
+            }
+          } finally {
+            // Close things
+            if (mounted) {
+              context.pop(); // Dialog
+              if (context.mounted) {
+                context.pop(true); // Exit page
+              }
+            }
+          }
         },
       ),
     );
@@ -152,85 +336,65 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
 
     if (!mounted) return;
 
-    showModalBottomSheet(
+    if (!mounted) return;
+
+    AppModals.showAppModal(
       context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) {
-          return Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              children: [
-                Text(
-                  'Histórico: $exerciseName',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+      title: 'Histórico: $exerciseName',
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.6,
+        child: history.isEmpty
+            ? const Center(
+                child: Text(
+                  'Nenhum histórico encontrado.',
+                  style: TextStyle(color: Colors.grey),
                 ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: history.isEmpty
-                      ? const Center(
-                          child: Text('Nenhum histórico encontrado.'),
-                        )
-                      : ListView.builder(
-                          controller: scrollController,
-                          itemCount: history.length,
-                          itemBuilder: (ctx, index) {
-                            final h = history[index];
-                            final exercise = h.exercises.firstWhere(
-                              (e) => e.name == exerciseName,
-                              orElse: () => h.exercises.first,
-                            );
+              )
+            : ListView.builder(
+                itemCount: history.length,
+                itemBuilder: (ctx, index) {
+                  final h = history[index];
+                  final exercise = h.exercises.firstWhere(
+                    (e) => e.name == exerciseName,
+                    orElse: () => h.exercises.first,
+                  );
 
-                            // Improve date formatting
-                            final dateStr =
-                                "${h.completedDate.day.toString().padLeft(2, '0')}/${h.completedDate.month.toString().padLeft(2, '0')}/${h.completedDate.year}";
+                  // Improve date formatting
+                  final dateStr =
+                      "${h.completedDate.day.toString().padLeft(2, '0')}/${h.completedDate.month.toString().padLeft(2, '0')}/${h.completedDate.year}";
 
-                            return ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: AppColors.primary.withOpacity(
-                                  0.2,
-                                ),
-                                child: const Icon(
-                                  Icons.history,
-                                  color: AppColors.primary,
-                                  size: 20,
-                                ),
-                              ),
-                              title: Text(
-                                dateStr,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              subtitle: Text(
-                                "${exercise.sets} séries x ${exercise.reps} reps",
-                              ),
-                              trailing: Text(
-                                "${exercise.weight} Kg",
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            ),
-          );
-        },
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: CircleAvatar(
+                      backgroundColor: AppColors.primary.withOpacity(0.2),
+                      child: const Icon(
+                        Icons.history,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                    ),
+                    title: Text(
+                      dateStr,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    subtitle: Text(
+                      "${exercise.sets} séries x ${exercise.reps} reps",
+                      style: TextStyle(color: Colors.grey[400]),
+                    ),
+                    trailing: Text(
+                      "${exercise.weight} Kg",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  );
+                },
+              ),
       ),
     );
   }
@@ -240,9 +404,16 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
     final sessionState = ref.watch(sessionProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final size = MediaQuery.of(context).size;
 
     // Sync PageController with State if needed
     ref.listen(sessionProvider, (prev, next) {
+      // Update controllers if workout data changes (e.g. history loaded)
+      // This fixes the issue where initial load was showing default values instead of history
+      if (prev?.activeWorkout != next.activeWorkout) {
+        _updateControllers();
+      }
+
       if (prev?.currentExerciseIndex != next.currentExerciseIndex) {
         if (_pageController.hasClients &&
             _pageController.page?.round() != next.currentExerciseIndex) {
@@ -252,11 +423,6 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
             curve: Curves.easeInOut,
           );
         }
-        _updateControllers();
-      }
-
-      // Initialize controllers when session starts (fixes empty fields bug)
-      if (prev?.activeWorkout == null && next.activeWorkout != null) {
         _updateControllers();
       }
 
@@ -344,201 +510,342 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                   final exercise = widget.workout.exercises[index];
                   final isCompleted = sessionState.completedExerciseNames
                       .contains(exercise.name);
+                  final lastHistory =
+                      sessionState.lastHistoryMap[exercise.name];
+
+                  // Set logic (handled in bottom button)
+                  // final setsRecords = sessionState.setsRecords[exercise.name] ?? [];
+                  // final currentSetNumber = setsRecords.length + 1;
+                  // final totalSets = exercise.sets;
+
+                  // unused: final isLastSet = currentSetNumber >= totalSets;
 
                   return SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Image
-                        Container(
-                          height: 300,
-                          margin: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(16),
-                            border: isCompleted
-                                ? Border.all(color: AppColors.primary, width: 3)
-                                : null,
-                            boxShadow: isCompleted
-                                ? [
-                                    BoxShadow(
-                                      color: AppColors.primary.withValues(
-                                        alpha: 0.5,
-                                      ),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                          child: Stack(
-                            children: [
-                              Positioned.fill(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(13),
-                                  child: ColorFiltered(
-                                    colorFilter: isCompleted
-                                        ? ColorFilter.mode(
-                                            Colors.black.withOpacity(0.3),
-                                            BlendMode.darken,
-                                          )
-                                        : const ColorFilter.mode(
-                                            Colors.transparent,
-                                            BlendMode.multiply,
-                                          ),
-                                    child: exercise.imagePaths.isNotEmpty
-                                        ? Image.file(
-                                            File(exercise.imagePaths.first),
-                                            fit: BoxFit.contain,
-                                            errorBuilder: (_, __, ___) =>
-                                                const Icon(
-                                                  Icons.broken_image,
-                                                  color: Colors.white,
-                                                  size: 50,
-                                                ),
-                                          )
-                                        : const Center(
-                                            child: Icon(
-                                              Icons.fitness_center,
-                                              color: Colors.white,
-                                              size: 60,
-                                            ),
-                                          ),
-                                  ),
-                                ),
-                              ),
-                              if (isCompleted)
-                                Positioned.fill(
-                                  child: Center(
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 24,
-                                        vertical: 12,
-                                      ),
-                                      decoration: BoxDecoration(
+                        // Image (Reduced Size: 20-25% height)
+                        SizedBox(
+                          height: size.height * 0.22,
+                          child: Container(
+                            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            decoration: BoxDecoration(
+                              color: Colors.black,
+                              borderRadius: BorderRadius.circular(16),
+                              border: isCompleted
+                                  ? Border.all(
+                                      color: AppColors.primary,
+                                      width: 3,
+                                    )
+                                  : null,
+                              boxShadow: isCompleted
+                                  ? [
+                                      BoxShadow(
                                         color: AppColors.primary.withValues(
-                                          alpha: 0.9,
+                                          alpha: 0.5,
                                         ),
-                                        borderRadius: BorderRadius.circular(30),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
                                       ),
-                                      child: const Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.check_circle,
-                                            color: Colors.black,
-                                            size: 28,
-                                          ),
-                                          SizedBox(width: 8),
-                                          Text(
-                                            "CONCLUÍDO",
-                                            style: TextStyle(
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 18,
-                                              letterSpacing: 1.2,
+                                    ]
+                                  : null,
+                            ),
+                            child: Stack(
+                              children: [
+                                Positioned.fill(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(13),
+                                    child: ColorFiltered(
+                                      colorFilter: isCompleted
+                                          ? ColorFilter.mode(
+                                              Colors.black.withOpacity(0.3),
+                                              BlendMode.darken,
+                                            )
+                                          : const ColorFilter.mode(
+                                              Colors.transparent,
+                                              BlendMode.multiply,
                                             ),
-                                          ),
-                                        ],
-                                      ),
+                                      child: exercise.imagePaths.isNotEmpty
+                                          ? Image.file(
+                                              File(exercise.imagePaths.first),
+                                              fit: BoxFit.contain,
+                                              errorBuilder: (_, _, _) =>
+                                                  const Icon(
+                                                    Icons.broken_image,
+                                                    color: Colors.white,
+                                                    size: 50,
+                                                  ),
+                                            )
+                                          : const Center(
+                                              child: Icon(
+                                                Icons.fitness_center,
+                                                color: Colors.white,
+                                                size: 50,
+                                              ),
+                                            ),
                                     ),
                                   ),
                                 ),
-                            ],
+                                if (isCompleted)
+                                  Positioned.fill(
+                                    child: Center(
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 24,
+                                          vertical: 12,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary.withValues(
+                                            alpha: 0.9,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            30,
+                                          ),
+                                        ),
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.check_circle,
+                                              color: Colors.black,
+                                              size: 28,
+                                            ),
+                                            SizedBox(width: 8),
+                                            Text(
+                                              "CONCLUÍDO",
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 18,
+                                                letterSpacing: 1.2,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
 
-                        // Title
+                        // Title with Copy Button
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: SizedBox(
-                            height: 40,
-                            child: Marquee(
-                              text: exercise.name,
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onSurface,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  exercise.name,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.onSurface,
+                                    height: 1.1,
+                                  ),
+                                ),
                               ),
-                              scrollAxis: Axis.horizontal,
-                              blankSpace: 20.0,
-                              velocity: 30.0,
-                              startPadding: 0.0,
-                              accelerationDuration: const Duration(seconds: 1),
-                              decelerationDuration: const Duration(
-                                milliseconds: 500,
+                              IconButton(
+                                icon: const Icon(Icons.copy, size: 20),
+                                color: colorScheme.onSurfaceVariant,
+                                onPressed: () {
+                                  Clipboard.setData(
+                                    ClipboardData(text: exercise.name),
+                                  );
+                                  SnackbarUtils.showInfo(
+                                    context,
+                                    'Nome copiado!',
+                                  );
+                                },
                               ),
-                            ),
+                            ],
                           ),
                         ),
 
                         const SizedBox(height: 16),
 
-                        const SizedBox(height: 8), // Reduced spacing
-                        // GENIUS GRID LAYOUT (Compact 2-Row)
+                        // INPUTS
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Column(
                             children: [
-                              // Row 1: Sets, Reps, Weight
+                              if (exercise.type ==
+                                  ExerciseTypeEntity.cardio) ...[
+                                // CARDIO MODE
+                                // Row 1: Time | Rest
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildInputCard(
+                                        context,
+                                        label: "TEMPO (min)",
+                                        controller: _cardioDurationController,
+                                        focusNode: _cardioDurationFocus,
+                                        onChanged: _onFieldChanged,
+                                        largeFont: true,
+                                        showSavedFeedback: _showSavedFeedback,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: _buildInputCard(
+                                        context,
+                                        label: "DESCANSO (s)",
+                                        controller: _restController,
+                                        focusNode: _restFocus,
+                                        onChanged: _onFieldChanged,
+                                        largeFont: true,
+                                        showSavedFeedback: _showSavedFeedback,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                // Row 2: Intensity (Full Width)
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildInputCard(
+                                        context,
+                                        label: "INTENSIDADE",
+                                        controller: _cardioIntensityController,
+                                        focusNode: _cardioIntensityFocus,
+                                        onChanged: _onFieldChanged,
+                                        isNumber: false, // Text input
+                                        showSavedFeedback: _showSavedFeedback,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ] else ...[
+                                // WEIGHT MODE
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 2, // More width for Weight
+                                      child: _buildInputCard(
+                                        context,
+                                        label: "CARGA (Kg)",
+                                        subtitle: lastHistory != null
+                                            ? "Último: ${lastHistory.weight}kg"
+                                            : null,
+                                        controller: _weightController,
+                                        focusNode: _weightFocus,
+                                        showHistory: true,
+                                        onHistoryTap: () =>
+                                            _showHistoryDialog(exercise.name),
+                                        onChanged: _onFieldChanged,
+                                        largeFont: true,
+                                        showSavedFeedback: _showSavedFeedback,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: _buildInputCard(
+                                        context,
+                                        label: "REPS",
+                                        controller: _repsController,
+                                        focusNode: _repsFocus,
+                                        onChanged: _onFieldChanged,
+                                        largeFont: true,
+                                        showSavedFeedback: _showSavedFeedback,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                // Row 2: Sets & Rest (Only for Weight, Rest is here)
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildInputCard(
+                                        context,
+                                        label: "SÉRIES ALVO",
+                                        controller: _setsController,
+                                        focusNode: _setsFocus,
+                                        onChanged: _onFieldChanged,
+                                        showSavedFeedback: _showSavedFeedback,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: _buildInputCard(
+                                        context,
+                                        label: "DESCANSO (s)",
+                                        controller: _restController,
+                                        focusNode: _restFocus,
+                                        onChanged: _onFieldChanged,
+                                        showSavedFeedback: _showSavedFeedback,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+
+                              const SizedBox(height: 16),
+
+                              // Row 3: Equipment (Full Width)
                               Row(
                                 children: [
                                   Expanded(
                                     child: _buildInputCard(
                                       context,
-                                      label: "SÉRIES",
-                                      controller: _setsController,
-                                      onChanged: (_) => _saveChanges(),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: _buildInputCard(
-                                      context,
-                                      label: "REPS",
-                                      controller: _repsController,
-                                      onChanged: (_) => _saveChanges(),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    flex: 2, // Larger for weight
-                                    child: _buildInputCard(
-                                      context,
-                                      label: "CARGA (Kg)",
-                                      controller: _weightController,
-                                      showHistory: true,
-                                      onHistoryTap: () =>
-                                          _showHistoryDialog(exercise.name),
-                                      onChanged: (_) => _saveChanges(),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              // Row 2: Equipment, Rest
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildInputCard(
-                                      context,
-                                      label: "EQP.",
+                                      label: "EQUIPAMENTO",
                                       controller: _equipmentController,
-                                      onChanged: (_) => _saveChanges(),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    flex: 2,
-                                    child: _buildInputCard(
-                                      context,
-                                      label: "DESCANSO (s)",
-                                      controller: _restController,
-                                      onChanged: (_) => _saveChanges(),
+                                      focusNode: _equipmentFocus,
+                                      onChanged: _onFieldChanged,
+                                      isNumber: false, // Allow alphanumeric
+                                      showSavedFeedback: _showSavedFeedback,
                                     ),
                                   ),
                                 ],
                               ),
+
+                              // Warmup Chip (Only for Weights)
+                              if (exercise.type == ExerciseTypeEntity.weight)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      ChoiceChip(
+                                        avatar: Icon(
+                                          Icons.local_fire_department,
+                                          size: 18,
+                                          color: _isWarmup
+                                              ? Colors.deepOrange
+                                              : null,
+                                        ),
+                                        label: Text(
+                                          _isWarmup
+                                              ? "Aquecimento"
+                                              : "Série Normal",
+                                          style: TextStyle(
+                                            color: _isWarmup
+                                                ? Colors.deepOrange
+                                                : null,
+                                            fontWeight: _isWarmup
+                                                ? FontWeight.bold
+                                                : null,
+                                          ),
+                                        ),
+                                        selected: _isWarmup,
+                                        onSelected: (selected) {
+                                          setState(() => _isWarmup = selected);
+                                        },
+                                        selectedColor: Colors.deepOrange
+                                            .withOpacity(0.2),
+                                        backgroundColor: Theme.of(
+                                          context,
+                                        ).colorScheme.surface,
+                                        showCheckmark: false,
+                                      ),
+                                    ],
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -551,10 +858,12 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                             child: Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
+                                color: AppColors.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: AppColors.primary.withOpacity(0.3),
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.3,
+                                  ),
                                 ),
                               ),
                               child: Column(
@@ -589,30 +898,67 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
             ),
 
             // 3. Bottom Action
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+            Consumer(
+              builder: (context, ref, child) {
+                // We need to access the CURRENT exercise logic here
+                // But the button is outside the PageView builder.
+                // We must rely on sessionState.currentExercise which is already synced.
+                final exercise = sessionState.currentExercise;
+                final setsRecords = exercise != null
+                    ? (sessionState.setsRecords[exercise.name] ?? [])
+                    : [];
+                final currentSetNumber = setsRecords.length + 1;
+                final totalSets = exercise?.sets ?? 3;
+                final isLastSet = currentSetNumber >= totalSets;
+                final isCardio = exercise?.type == ExerciseTypeEntity.cardio;
+
+                String buttonLabel =
+                    "CONCLUIR SÉRIE $currentSetNumber de $totalSets";
+                if (isLastSet) buttonLabel = "FINALIZAR EXERCÍCIO";
+                if (isCardio) buttonLabel = "FINALIZAR CARDIO";
+
+                return Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 64, // Bigger button
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: () {
+                        final rest = int.tryParse(_restController.text) ?? 60;
+                        final currentWeight = double.tryParse(
+                          _weightController.text,
+                        );
+                        final currentReps = int.tryParse(_repsController.text);
+
+                        ref
+                            .read(sessionProvider.notifier)
+                            .startRestTimer(
+                              rest,
+                              isWarmup: _isWarmup,
+                              currentWeight: currentWeight,
+                              currentReps: currentReps,
+                            );
+                        if (mounted) setState(() => _isWarmup = false);
+                      },
+                      icon: const Icon(Icons.check_circle_outline, size: 28),
+                      label: Text(
+                        buttonLabel,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
-                  onPressed: () {
-                    final rest = int.tryParse(_restController.text) ?? 60;
-                    ref.read(sessionProvider.notifier).startRestTimer(rest);
-                  },
-                  icon: const Icon(Icons.check_circle_outline),
-                  label: const Text(
-                    'CONCLUIR SÉRIE',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
+                );
+              },
             ),
           ],
         ),
@@ -624,58 +970,110 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
     BuildContext context, {
     required String label,
     required TextEditingController controller,
+    FocusNode? focusNode,
     bool showHistory = false,
     VoidCallback? onHistoryTap,
     ValueChanged<String>? onChanged,
+    bool largeFont = false,
+    bool isNumber = true,
+    int? maxLines = 1,
+    bool showSavedFeedback = false,
+    String? subtitle,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurfaceVariant,
-                fontSize: 12,
-              ),
-            ),
-            if (showHistory)
-              InkWell(
-                onTap: onHistoryTap,
-                child: const Padding(
-                  padding: EdgeInsets.only(bottom: 2),
-                  child: Icon(
-                    Icons.show_chart,
-                    color: AppColors.primary,
-                    size: 20,
+            Row(
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12,
                   ),
                 ),
-              ),
+                if (subtitle != null) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            Row(
+              children: [
+                if (showSavedFeedback)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8, bottom: 2),
+                    child: Icon(
+                      Icons.cloud_done,
+                      size: 16,
+                      color: AppColors.primary.withValues(alpha: 0.8),
+                    ),
+                  ),
+                if (showHistory)
+                  InkWell(
+                    onTap: onHistoryTap,
+                    child: const Padding(
+                      padding: EdgeInsets.only(bottom: 2),
+                      child: Icon(
+                        Icons.show_chart,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ],
         ),
         const SizedBox(height: 4),
         TextField(
           controller: controller,
+          focusNode: focusNode,
           onChanged: onChanged,
-          keyboardType: TextInputType.number,
+          keyboardType: isNumber
+              ? TextInputType.number
+              : (maxLines != 1 ? TextInputType.multiline : TextInputType.text),
+          maxLines: maxLines,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 18, // Slightly smaller font
+            fontSize: largeFont ? 40 : 18,
             fontWeight: FontWeight.bold,
-            color: colorScheme.onSurface,
+            color: Theme.of(context).colorScheme.onSurface,
+            height: 1.2,
           ),
           decoration: InputDecoration(
-            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            contentPadding: EdgeInsets.symmetric(vertical: largeFont ? 16 : 10),
+            filled: true,
+            fillColor: Theme.of(context).cardColor,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
-            filled: true,
-            fillColor: colorScheme.surfaceContainerHighest,
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+            ),
           ),
         ),
       ],
@@ -772,18 +1170,25 @@ class _GlobalTimerWidgetState extends State<_GlobalTimerWidget> {
   }
 }
 
-class _FeedbackDialog extends StatefulWidget {
-  final Function(int) onSave;
+class _FeedbackDialog extends ConsumerStatefulWidget {
+  final Function(int, List<String>) onSave;
+  final List<String> initialImagePaths;
 
-  const _FeedbackDialog({required this.onSave});
+  const _FeedbackDialog({
+    required this.onSave,
+    this.initialImagePaths = const [],
+  });
 
   @override
-  State<_FeedbackDialog> createState() => _FeedbackDialogState();
+  ConsumerState<_FeedbackDialog> createState() => _FeedbackDialogState();
 }
 
-class _FeedbackDialogState extends State<_FeedbackDialog> {
+class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
   late ConfettiController _confettiController;
   int? _selectedRpe;
+  bool _isSaving = false;
+  final List<String> _tempImagePaths = [];
+  final ImageStorageService _imageService = ImageStorageService();
 
   @override
   void initState() {
@@ -792,12 +1197,61 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
       duration: const Duration(seconds: 3),
     );
     _confettiController.play();
+    _tempImagePaths.addAll(widget.initialImagePaths);
   }
 
   @override
   void dispose() {
     _confettiController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? image = await ImageSourceSheet.picker.pickImage(
+        source: source,
+        maxWidth: 1080,
+        maxHeight: 1920,
+        imageQuality: 60,
+      );
+      if (image != null) {
+        setState(() {
+          _tempImagePaths.add(image.path);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        SnackbarUtils.showError(context, 'Erro ao selecionar imagem: $e');
+      }
+    }
+  }
+
+  Future<void> _handleSave() async {
+    if (_selectedRpe == null) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      // 1. Save images permanently
+      final permanentPaths = <String>[];
+      for (final path in _tempImagePaths) {
+        // Create an XFile from the path (which is currently in cache)
+        final xFile = XFile(path);
+        final permanentPath = await _imageService.saveImage(xFile);
+        permanentPaths.add(permanentPath);
+      }
+
+      // 2. Call onSave with RPE and Paths
+      widget.onSave(_selectedRpe!, permanentPaths);
+    } catch (e, stack) {
+      debugPrint("Error saving session: $e\n$stack");
+      if (mounted) {
+        SnackbarUtils.showError(context, 'Erro ao salvar: $e');
+        setState(() => _isSaving = false);
+      }
+    }
+    // Logic for closing is handled in parent callback or we can do it here if we pass function differently
+    // The original onSave handled the finishSession call.
   }
 
   @override
@@ -811,43 +1265,134 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
           ),
           child: Padding(
             padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Treino Concluído! 🎉',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Como foi a intensidade?',
-                  style: TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 24),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    _buildEmojiOption(1, '😁', 'Muito Leve'),
-                    _buildEmojiOption(2, '🙂', 'Leve'),
-                    _buildEmojiOption(3, '😐', 'Moderado'),
-                    _buildEmojiOption(4, '😫', 'Difícil'),
-                    _buildEmojiOption(5, '🥵', 'Exaustão'),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: FilledButton(
-                    onPressed: _selectedRpe == null
-                        ? null
-                        : () => widget.onSave(_selectedRpe!),
-                    child: const Text('Salvar Treino'),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Treino Concluído! 🎉',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Como foi a intensidade?',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // RPE Selector
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      _buildEmojiOption(1, '😁', 'Muito Leve'),
+                      _buildEmojiOption(2, '🙂', 'Leve'),
+                      _buildEmojiOption(3, '😐', 'Moderado'),
+                      _buildEmojiOption(4, '😫', 'Difícil'),
+                      _buildEmojiOption(5, '🥵', 'Exaustão'),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Photos Section
+                  const Text(
+                    'Registrar Foto do Shape (Opcional)',
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Horizontal List of Photos + Add Button
+                  SizedBox(
+                    height: 100,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _tempImagePaths.length + 1,
+                      separatorBuilder: (ctx, i) => const SizedBox(width: 8),
+                      itemBuilder: (ctx, index) {
+                        if (index == _tempImagePaths.length) {
+                          // Add Button
+                          return Row(
+                            children: [
+                              _buildAddPhotoButton(
+                                Icons.camera_alt,
+                                "Câmera",
+                                ImageSource.camera,
+                              ),
+                              const SizedBox(width: 8),
+                              _buildAddPhotoButton(
+                                Icons.photo_library,
+                                "Galeria",
+                                ImageSource.gallery,
+                              ),
+                            ],
+                          );
+                        }
+
+                        // Photo Thumbnail
+                        final path = _tempImagePaths[index];
+                        return Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.file(
+                                File(path),
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _tempImagePaths.removeAt(index);
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: FilledButton(
+                      onPressed: _selectedRpe == null || _isSaving
+                          ? null
+                          : _handleSave,
+                      child: _isSaving
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text('Salvar e Copiar Relatório'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -870,6 +1415,36 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
     );
   }
 
+  Widget _buildAddPhotoButton(IconData icon, String label, ImageSource source) {
+    return InkWell(
+      onTap: () => _pickImage(source),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 80,
+        height: 100,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: Colors.grey.withValues(alpha: 0.5),
+            style: BorderStyle.solid,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: AppColors.primary, size: 28),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 10, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildEmojiOption(int value, String emoji, String label) {
     final isSelected = _selectedRpe == value;
     return GestureDetector(
@@ -884,12 +1459,12 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.primary.withOpacity(0.2)
+                  ? AppColors.primary.withValues(alpha: 0.2)
                   : Colors.transparent,
               border: Border.all(
                 color: isSelected
                     ? AppColors.primary
-                    : Colors.grey.withOpacity(0.3),
+                    : Colors.grey.withValues(alpha: 0.3),
                 width: 2,
               ),
               borderRadius: BorderRadius.circular(12),
@@ -913,11 +1488,9 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
 
 class _RestTimerDialog extends ConsumerWidget {
   const _RestTimerDialog();
-  // ... (Keep existing implementation)
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // ... Copy existing render logic to avoid breaking ...
-    // Since I'm replacing the whole file, I need to include this class fully.
     final state = ref.watch(sessionProvider);
     final remaining = state.restTimerRemaining;
     final progress = state.restTimerDuration > 0
@@ -972,7 +1545,7 @@ class _RestTimerDialog extends ConsumerWidget {
               children: [
                 TextButton(
                   onPressed: () {
-                    // +30s logic could be added here later
+                    ref.read(sessionProvider.notifier).addTime(30);
                   },
                   child: const Text('+30s'),
                 ),

@@ -7,7 +7,9 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/workout_provider.dart';
+import '../../domain/entities/exercise.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
+import '../../../../core/utils/snackbar_utils.dart';
 
 class ExerciseDetailsPage extends ConsumerWidget {
   final String workoutId;
@@ -139,25 +141,40 @@ class ExerciseDetailsPage extends ConsumerWidget {
                         ),
                         const Divider(),
                       ],
-                      _buildInfoRow(
-                        'Séries',
-                        '${exercise.sets}',
-                        helpText:
-                            'Número de vezes que o exercício será realizado',
-                      ),
-                      const Divider(),
-                      _buildInfoRow(
-                        'Repetições',
-                        '${exercise.reps}',
-                        helpText: 'Quantidade de movimentos por série',
-                      ),
-                      const Divider(),
-                      _buildInfoRow(
-                        'Carga',
-                        '${exercise.weight} kg',
-                        helpText: 'Peso utilizado no exercício (kg)',
-                      ),
-                      const Divider(),
+                      if (exercise.type == ExerciseTypeEntity.cardio) ...[
+                        _buildInfoRow(
+                          'Duração',
+                          '${exercise.cardioDurationMinutes?.toInt() ?? 0} min',
+                          helpText: 'Tempo total da atividade de cardio',
+                        ),
+                        const Divider(),
+                        _buildInfoRow(
+                          'Intensidade',
+                          exercise.cardioIntensity ?? 'Normal',
+                          helpText: 'Nível de esforço pretendido',
+                        ),
+                        const Divider(),
+                      ] else ...[
+                        _buildInfoRow(
+                          'Séries',
+                          '${exercise.sets}',
+                          helpText:
+                              'Número de vezes que o exercício será realizado',
+                        ),
+                        const Divider(),
+                        _buildInfoRow(
+                          'Repetições',
+                          '${exercise.reps}',
+                          helpText: 'Quantidade de movimentos por série',
+                        ),
+                        const Divider(),
+                        _buildInfoRow(
+                          'Carga',
+                          '${exercise.weight} kg',
+                          helpText: 'Peso utilizado no exercício (kg)',
+                        ),
+                        const Divider(),
+                      ],
                       _buildInfoRow(
                         'Descanso',
                         '${exercise.restTimeSeconds}s',
@@ -198,7 +215,7 @@ class ExerciseDetailsPage extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.red.withOpacity(0.4),
+                                color: Colors.red.withValues(alpha: 0.4),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -217,12 +234,9 @@ class ExerciseDetailsPage extends ConsumerWidget {
                                   );
                                 } else {
                                   if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Não foi possível abrir o link.',
-                                        ),
-                                      ),
+                                    SnackbarUtils.showError(
+                                      context,
+                                      'Não foi possível abrir o link.',
                                     );
                                   }
                                 }
@@ -283,34 +297,42 @@ class ExerciseDetailsPage extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              if (helpText != null) ...[
-                const SizedBox(width: 8),
-                Tooltip(
-                  message: helpText,
-                  triggerMode: TooltipTriggerMode.tap,
-                  showDuration: const Duration(seconds: 3),
-                  child: const Icon(
-                    Icons.info_outline,
-                    size: 20,
-                    color: Colors.grey,
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
+                if (helpText != null) ...[
+                  const SizedBox(width: 8),
+                  Tooltip(
+                    message: helpText,
+                    triggerMode: TooltipTriggerMode.tap,
+                    showDuration: const Duration(seconds: 3),
+                    child: const Icon(
+                      Icons.info_outline,
+                      size: 20,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),

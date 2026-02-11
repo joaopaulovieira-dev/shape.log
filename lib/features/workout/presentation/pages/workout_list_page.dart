@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../providers/workout_provider.dart';
 import '../../data/services/workout_import_service.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
+import '../../../../core/utils/snackbar_utils.dart';
+import '../../../../core/presentation/widgets/app_dialogs.dart';
+import '../../../../core/presentation/widgets/app_modals.dart';
 
 class WorkoutListPage extends ConsumerWidget {
   const WorkoutListPage({super.key});
@@ -83,42 +86,13 @@ class WorkoutListPage extends ConsumerWidget {
                       child: const Icon(Icons.delete, color: Colors.white),
                     ),
                     confirmDismiss: (_) async {
-                      return await showDialog<bool>(
+                      return await AppDialogs.showConfirmDialog<bool>(
                         context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            backgroundColor: AppColors.surface,
-                            title: const Text(
-                              'Excluir Treino?',
-                              style: TextStyle(color: AppColors.textPrimary),
-                            ),
-                            content: Text(
-                              'Tem certeza que deseja excluir "${routine.name}"? Esta ação não pode ser desfeita.',
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(false),
-                                child: const Text(
-                                  'Cancelar',
-                                  style: TextStyle(color: Colors.grey),
-                                ),
-                              ),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                  foregroundColor: Colors.white,
-                                ),
-                                onPressed: () =>
-                                    Navigator.of(context).pop(true),
-                                child: const Text('Excluir'),
-                              ),
-                            ],
-                          );
-                        },
+                        title: 'Excluir Treino?',
+                        description:
+                            'Tem certeza que deseja excluir "${routine.name}"? Esta ação não pode ser desfeita.',
+                        confirmText: 'EXCLUIR',
+                        isDestructive: true,
                       );
                     },
                     onDismissed: (_) async {
@@ -127,9 +101,7 @@ class WorkoutListPage extends ConsumerWidget {
                           .deleteRoutine(routine.id);
                       ref.invalidate(routineListProvider);
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Treino excluído')),
-                        );
+                        SnackbarUtils.showInfo(context, 'Treino excluído');
                       }
                     },
                     child: Card(
@@ -246,52 +218,47 @@ class WorkoutListPage extends ConsumerWidget {
   }
 
   void _showCreateOptions(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
+    AppModals.showAppModal(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[600],
-                borderRadius: BorderRadius.circular(2),
-              ),
+      title: 'Criar ou Importar',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.note_add_outlined, color: Colors.white),
+            title: const Text(
+              'Importar Arquivo (.json)',
+              style: TextStyle(color: Colors.white),
             ),
-            const SizedBox(height: 12),
-            ListTile(
-              leading: const Icon(Icons.note_add_outlined),
-              title: const Text('Importar Arquivo (.json)'),
-              onTap: () {
-                Navigator.pop(context);
-                _handleFileImport(context, ref);
-              },
+            onTap: () {
+              Navigator.pop(context);
+              _handleFileImport(context, ref);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.content_paste_go, color: Colors.white),
+            title: const Text(
+              'Colar Treino',
+              style: TextStyle(color: Colors.white),
             ),
-            ListTile(
-              leading: const Icon(Icons.content_paste_go),
-              title: const Text('Colar Treino'),
-              onTap: () {
-                Navigator.pop(context);
-                _showPasteJsonDialog(context, ref);
-              },
+            onTap: () {
+              Navigator.pop(context);
+              _showPasteJsonDialog(context, ref);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.add_circle_outline, color: Colors.white),
+            title: const Text(
+              'Criar Novo Treino',
+              style: TextStyle(color: Colors.white),
             ),
-            ListTile(
-              leading: const Icon(Icons.add_circle_outline),
-              title: const Text('Criar Novo Treino'),
-              onTap: () {
-                Navigator.pop(context);
-                context.go('/workouts/add');
-              },
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
+            onTap: () {
+              Navigator.pop(context);
+              context.go('/workouts/add');
+            },
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }
@@ -302,14 +269,15 @@ class WorkoutListPage extends ConsumerWidget {
           .read(workoutImportServiceProvider)
           .importFromFile(context);
       if (count != null && context.mounted) {
-        _showSuccessSnackBar(context, count);
+        SnackbarUtils.showSuccess(
+          context,
+          '$count ${count == 1 ? 'treino importado' : 'treinos importados'} com sucesso!',
+        );
       }
     } catch (e) {
+      debugPrint('Erro importação arquivo: $e');
       if (context.mounted) {
-        _showErrorSnackBar(
-          context,
-          'Erro ao importar arquivo: Formato inválido',
-        );
+        SnackbarUtils.showError(context, 'Erro ao importar arquivo: $e');
       }
     }
   }
@@ -319,21 +287,36 @@ class WorkoutListPage extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Colar Treino (JSON)'),
+        backgroundColor: const Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: Colors.white.withOpacity(0.05)),
+        ),
+        title: const Text(
+          'Colar Treino (JSON)',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         content: TextField(
           controller: controller,
           maxLines: 10,
-          decoration: const InputDecoration(
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
             hintText: 'Cole o JSON aqui...',
-            border: OutlineInputBorder(),
+            hintStyle: TextStyle(color: Colors.grey[600]),
+            filled: true,
+            fillColor: Colors.black26,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+            child: Text('Cancelar', style: TextStyle(color: Colors.grey[500])),
           ),
-          ElevatedButton(
+          FilledButton(
             onPressed: () async {
               final text = controller.text.trim();
               if (text.isEmpty) return;
@@ -344,38 +327,29 @@ class WorkoutListPage extends ConsumerWidget {
                     .read(workoutImportServiceProvider)
                     .importFromText(text);
                 if (count != null && context.mounted) {
-                  _showSuccessSnackBar(context, count);
+                  SnackbarUtils.showSuccess(
+                    context,
+                    '$count ${count == 1 ? 'treino importado' : 'treinos importados'} com sucesso!',
+                  );
                 }
               } catch (e) {
+                debugPrint('Erro ao colar JSON: $e');
                 if (context.mounted) {
-                  _showErrorSnackBar(
-                    context,
-                    'JSON inválido. Verifique a formatação.',
-                  );
+                  SnackbarUtils.showError(context, 'Erro: $e');
                 }
               }
             },
-            child: const Text('Processar'),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('PROCESSAR'),
           ),
         ],
       ),
-    );
-  }
-
-  void _showSuccessSnackBar(BuildContext context, int count) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$count ${count == 1 ? 'treino importado' : 'treinos importados'} com sucesso!',
-        ),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
-
-  void _showErrorSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.error),
     );
   }
 

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/router/app_router.dart';
-import 'core/theme/app_theme.dart';
 
 import 'package:hive_flutter/hive_flutter.dart';
 import 'features/workout/data/models/workout_hive_model.dart';
 import 'features/workout/data/models/workout_history_hive_model.dart';
 import 'features/workout/data/models/exercise_model.dart';
 import 'features/workout/data/models/workout_enums_adapter.dart';
+import 'features/workout/data/models/exercise_set_history_hive_model.dart';
 import 'features/body_tracker/data/models/body_measurement_hive_model.dart';
 import 'features/profile/data/models/user_profile_hive_model.dart';
 
@@ -25,6 +25,8 @@ void main() async {
   Hive.registerAdapter(WorkoutHistoryHiveModelAdapter());
   Hive.registerAdapter(BodyMeasurementHiveModelAdapter());
   Hive.registerAdapter(UserProfileHiveModelAdapter());
+  Hive.registerAdapter(ExerciseTypeAdapter());
+  Hive.registerAdapter(ExerciseSetHistoryHiveModelAdapter());
 
   // Open Box
   try {
@@ -67,13 +69,91 @@ class ShapeLogApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appTheme = ref.watch(themeProvider);
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
       title: 'Shape.log',
       debugShowCheckedModeBanner: false,
-      theme: appTheme.themeData,
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: Colors.black,
+        primaryColor: const Color(0xFFCCFF00),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFFCCFF00), // Neon Green
+          secondary: Color(0xFFCCFF00),
+          surface: Color(0xFF121212),
+          onPrimary: Colors.black, // Text on neon green
+          onSurface: Colors.white,
+        ),
+        cardTheme: CardThemeData(
+          color: const Color(0xFF121212),
+          elevation: 2,
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.black,
+          elevation: 0,
+          centerTitle: true,
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          iconTheme: IconThemeData(color: Color(0xFFCCFF00)),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFCCFF00),
+            foregroundColor: Colors.black, // Text color
+            minimumSize: const Size.fromHeight(56),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFF121212),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFCCFF00), width: 2),
+          ),
+          labelStyle: const TextStyle(color: Colors.grey),
+          hintStyle: TextStyle(color: Colors.grey.withOpacity(0.5)),
+        ),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: Colors.black,
+          selectedItemColor: Color(0xFFCCFF00),
+          unselectedItemColor: Colors.grey,
+          type: BottomNavigationBarType.fixed,
+          elevation: 8,
+        ),
+        snackBarTheme: const SnackBarThemeData(
+          backgroundColor: Color(0xFF121212),
+          contentTextStyle: TextStyle(color: Colors.white),
+          actionTextColor: Color(0xFFCCFF00),
+          behavior: SnackBarBehavior.floating,
+        ),
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          backgroundColor: Color(0xFFCCFF00),
+          foregroundColor: Colors.black,
+        ),
+      ),
       routerConfig: router,
     );
   }

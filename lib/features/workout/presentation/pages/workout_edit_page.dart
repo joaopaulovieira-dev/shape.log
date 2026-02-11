@@ -7,6 +7,8 @@ import '../../domain/entities/workout.dart';
 import '../../domain/entities/exercise.dart';
 import '../providers/workout_provider.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
+
+import '../../../../core/presentation/widgets/app_dialogs.dart';
 import 'exercise_form_page.dart';
 
 class WorkoutEditPage extends ConsumerStatefulWidget {
@@ -104,23 +106,12 @@ class _WorkoutEditPageState extends ConsumerState<WorkoutEditPage> {
   }
 
   Future<void> _delete() async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await AppDialogs.showConfirmDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Excluir Treino'),
-        content: const Text('Tem certeza que deseja excluir esta treino?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Excluir'),
-          ),
-        ],
-      ),
+      title: 'Excluir Treino',
+      description: 'Tem certeza que deseja excluir esta treino?',
+      confirmText: 'EXCLUIR',
+      isDestructive: true,
     );
 
     if (confirmed == true) {
@@ -299,7 +290,11 @@ class _WorkoutEditPageState extends ConsumerState<WorkoutEditPage> {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('${ex.sets} x ${ex.reps} - ${ex.weight}kg'),
+                      Text(
+                        ex.type == ExerciseTypeEntity.cardio
+                            ? '${ex.cardioDurationMinutes?.toInt() ?? 0} min • ${ex.cardioIntensity ?? "Normal"} • ${ex.restTimeSeconds}s desc'
+                            : '${ex.sets} x ${ex.reps} - ${ex.weight}kg',
+                      ),
                       if (ex.youtubeUrl != null)
                         Text(
                           'YouTube: Sim',

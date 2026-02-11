@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/bmi_utils.dart';
 
 class BMIGauge extends StatelessWidget {
   final double bmiValue;
@@ -7,28 +8,8 @@ class BMIGauge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String statusText;
-    Color statusColor;
-
-    if (bmiValue < 18.5) {
-      statusText = "Abaixo do Peso";
-      statusColor = Colors.blue;
-    } else if (bmiValue < 24.9) {
-      statusText = "Peso Normal";
-      statusColor = Colors.green;
-    } else if (bmiValue < 29.9) {
-      statusText = "Sobrepeso";
-      statusColor = Colors.yellow;
-    } else if (bmiValue < 34.9) {
-      statusText = "Obesidade I";
-      statusColor = Colors.orange;
-    } else if (bmiValue < 39.9) {
-      statusText = "Obesidade II";
-      statusColor = Colors.deepOrange;
-    } else {
-      statusText = "Obesidade III";
-      statusColor = Colors.red;
-    }
+    final statusText = BMIUtils.getBMIGrade(bmiValue);
+    final statusColor = BMIUtils.getBMIColor(bmiValue);
 
     return Column(
       children: [
@@ -69,13 +50,19 @@ class _BMIGaugePainter extends CustomPainter {
     final paint = Paint()
       ..shader = const LinearGradient(
         colors: [
-          Colors.blue,
-          Colors.green,
-          Colors.yellow,
-          Colors.orange,
-          Colors.red,
+          Color(0xFF00E5FF), // Blue (Underweight)
+          Color(0xFF00FF94), // Green (Normal)
+          Color(0xFFFFAA00), // Yellow/Orange (Overweight)
+          Color(0xFFFF5500), // Dark Orange (Obesity I)
+          Color(0xFFFF0055), // Red/Pink (Obesity II)
+          Color(0xFFCC0000), // Dark Red (Obesity III)
         ],
-        stops: [0.0, 0.25, 0.5, 0.75, 1.0],
+        // Range 15 to 40 (Total 25)
+        // 18.5 -> 0.14
+        // 25.0 -> 0.40
+        // 30.0 -> 0.60
+        // 35.0 -> 0.80
+        stops: [0.0, 0.14, 0.40, 0.60, 0.80, 1.0],
       ).createShader(rect)
       ..style = PaintingStyle.fill;
 
@@ -94,12 +81,8 @@ class _BMIGaugePainter extends CustomPainter {
     final indicatorPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
-    // Note: Paint does not have a direct shadows property in Flutter's Paint class wrappers in all context,
-    // but usually we use canvas.drawShadow or MaskFilter for shadows on shapes.
-    // For simplicity in this gauge, we'll omit the shadow or use MaskFilter.blur for a simple glowing effect if needed,
-    // but standard Paint doesn't support list of Shadows directly like BoxDecoration.
 
-    // Let's add a simple shadow using drawCircle with blur before the main circle
+    // Shadow
     final shadowPaint = Paint()
       ..color = Colors.black45
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
