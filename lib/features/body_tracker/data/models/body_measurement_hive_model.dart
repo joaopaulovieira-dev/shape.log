@@ -68,6 +68,42 @@ class BodyMeasurementHiveModel extends HiveObject {
   @HiveField(20)
   final String? reportUrl;
 
+  @HiveField(21)
+  final double? fatPercentage;
+
+  @HiveField(22)
+  final double? fatMassKg;
+
+  @HiveField(23)
+  final double? muscleMassKg;
+
+  @HiveField(24)
+  final int? visceralFat;
+
+  @HiveField(25)
+  final int? bmr;
+
+  @HiveField(26)
+  final double? waterPercentage;
+
+  @HiveField(27)
+  final int? bodyAge;
+
+  @HiveField(28)
+  final double? subcutaneousFat;
+
+  @HiveField(29)
+  final double? muscleLeftArm;
+
+  @HiveField(30)
+  final double? muscleRightArm;
+
+  @HiveField(31)
+  final double? muscleLeftLeg;
+
+  @HiveField(32)
+  final double? muscleRightLeg;
+
   BodyMeasurementHiveModel({
     required this.id,
     required this.date,
@@ -90,6 +126,18 @@ class BodyMeasurementHiveModel extends HiveObject {
     this.shoulders,
     this.imagePaths = const [],
     this.reportUrl,
+    this.fatPercentage,
+    this.fatMassKg,
+    this.muscleMassKg,
+    this.visceralFat,
+    this.bmr,
+    this.waterPercentage,
+    this.bodyAge,
+    this.subcutaneousFat,
+    this.muscleLeftArm,
+    this.muscleRightArm,
+    this.muscleLeftLeg,
+    this.muscleRightLeg,
   });
 
   factory BodyMeasurementHiveModel.fromEntity(BodyMeasurement entity) {
@@ -115,6 +163,18 @@ class BodyMeasurementHiveModel extends HiveObject {
       shoulders: entity.shoulders,
       imagePaths: entity.imagePaths,
       reportUrl: entity.reportUrl,
+      fatPercentage: entity.fatPercentage,
+      fatMassKg: entity.fatMassKg,
+      muscleMassKg: entity.muscleMassKg,
+      visceralFat: entity.visceralFat,
+      bmr: entity.bmr,
+      waterPercentage: entity.waterPercentage,
+      bodyAge: entity.bodyAge,
+      subcutaneousFat: entity.subcutaneousFat,
+      muscleLeftArm: entity.muscleLeftArm,
+      muscleRightArm: entity.muscleRightArm,
+      muscleLeftLeg: entity.muscleLeftLeg,
+      muscleRightLeg: entity.muscleRightLeg,
     );
   }
 
@@ -144,6 +204,18 @@ class BodyMeasurementHiveModel extends HiveObject {
       shoulders: shoulders,
       imagePaths: imagePaths,
       reportUrl: reportUrl,
+      fatPercentage: fatPercentage,
+      fatMassKg: fatMassKg,
+      muscleMassKg: muscleMassKg,
+      visceralFat: visceralFat,
+      bmr: bmr,
+      waterPercentage: waterPercentage,
+      bodyAge: bodyAge,
+      subcutaneousFat: subcutaneousFat,
+      muscleLeftArm: muscleLeftArm,
+      muscleRightArm: muscleRightArm,
+      muscleLeftLeg: muscleLeftLeg,
+      muscleRightLeg: muscleRightLeg,
     );
   }
 
@@ -170,6 +242,18 @@ class BodyMeasurementHiveModel extends HiveObject {
       'shoulders': shoulders,
       'imagePaths': imagePaths,
       'reportUrl': reportUrl,
+      'fatPercentage': fatPercentage,
+      'fatMassKg': fatMassKg,
+      'muscleMassKg': muscleMassKg,
+      'visceralFat': visceralFat,
+      'bmr': bmr,
+      'waterPercentage': waterPercentage,
+      'bodyAge': bodyAge,
+      'subcutaneousFat': subcutaneousFat,
+      'muscleLeftArm': muscleLeftArm,
+      'muscleRightArm': muscleRightArm,
+      'muscleLeftLeg': muscleLeftLeg,
+      'muscleRightLeg': muscleRightLeg,
     };
   }
 
@@ -196,6 +280,18 @@ class BodyMeasurementHiveModel extends HiveObject {
       shoulders: (map['shoulders'] as num?)?.toDouble(),
       imagePaths: List<String>.from(map['imagePaths'] ?? []),
       reportUrl: map['reportUrl'],
+      fatPercentage: (map['fatPercentage'] as num?)?.toDouble(),
+      fatMassKg: (map['fatMassKg'] as num?)?.toDouble(),
+      muscleMassKg: (map['muscleMassKg'] as num?)?.toDouble(),
+      visceralFat: map['visceralFat'] as int?,
+      bmr: map['bmr'] as int?,
+      waterPercentage: (map['waterPercentage'] as num?)?.toDouble(),
+      bodyAge: map['bodyAge'] as int?,
+      subcutaneousFat: (map['subcutaneousFat'] as num?)?.toDouble(),
+      muscleLeftArm: (map['muscleLeftArm'] as num?)?.toDouble(),
+      muscleRightArm: (map['muscleRightArm'] as num?)?.toDouble(),
+      muscleLeftLeg: (map['muscleLeftLeg'] as num?)?.toDouble(),
+      muscleRightLeg: (map['muscleRightLeg'] as num?)?.toDouble(),
     );
   }
 }

@@ -46,6 +46,22 @@ class _BodyMeasurementEntryPageState
   final _forearmRightController = TextEditingController();
   final _forearmLeftController = TextEditingController();
 
+  // Bioimpedance Core Controllers
+  final _fatPercentageController = TextEditingController();
+  final _fatMassKgController = TextEditingController();
+  final _muscleMassKgController = TextEditingController();
+  final _visceralFatController = TextEditingController();
+  final _bmrController = TextEditingController();
+  final _waterPercentageController = TextEditingController();
+  final _bodyAgeController = TextEditingController();
+
+  // Bioimpedance Segmented Controllers
+  final _subcutaneousFatController = TextEditingController();
+  final _muscleLeftArmController = TextEditingController();
+  final _muscleRightArmController = TextEditingController();
+  final _muscleLeftLegController = TextEditingController();
+  final _muscleRightLegController = TextEditingController();
+
   final _notesController = TextEditingController();
   final _reportUrlController = TextEditingController();
 
@@ -134,6 +150,26 @@ class _BodyMeasurementEntryPageState
         ? measurement.forearmLeft.toString()
         : '';
 
+    // Load Bioimpedance Core
+    _fatPercentageController.text = measurement.fatPercentage?.toString() ?? '';
+    _fatMassKgController.text = measurement.fatMassKg?.toString() ?? '';
+    _muscleMassKgController.text = measurement.muscleMassKg?.toString() ?? '';
+    _visceralFatController.text = measurement.visceralFat?.toString() ?? '';
+    _bmrController.text = measurement.bmr?.toString() ?? '';
+    _waterPercentageController.text =
+        measurement.waterPercentage?.toString() ?? '';
+    _bodyAgeController.text = measurement.bodyAge?.toString() ?? '';
+
+    // Load Bioimpedance Segmented
+    _subcutaneousFatController.text =
+        measurement.subcutaneousFat?.toString() ?? '';
+    _muscleLeftArmController.text = measurement.muscleLeftArm?.toString() ?? '';
+    _muscleRightArmController.text =
+        measurement.muscleRightArm?.toString() ?? '';
+    _muscleLeftLegController.text = measurement.muscleLeftLeg?.toString() ?? '';
+    _muscleRightLegController.text =
+        measurement.muscleRightLeg?.toString() ?? '';
+
     _notesController.text = measurement.notes;
     _reportUrlController.text = measurement.reportUrl ?? '';
     _imagePaths = List.from(measurement.imagePaths);
@@ -206,6 +242,18 @@ class _BodyMeasurementEntryPageState
     _forearmLeftController.dispose();
     _notesController.dispose();
     _reportUrlController.dispose();
+    _fatPercentageController.dispose();
+    _fatMassKgController.dispose();
+    _muscleMassKgController.dispose();
+    _visceralFatController.dispose();
+    _bmrController.dispose();
+    _waterPercentageController.dispose();
+    _bodyAgeController.dispose();
+    _subcutaneousFatController.dispose();
+    _muscleLeftArmController.dispose();
+    _muscleRightArmController.dispose();
+    _muscleLeftLegController.dispose();
+    _muscleRightLegController.dispose();
     super.dispose();
   }
 
@@ -390,28 +438,11 @@ class _BodyMeasurementEntryPageState
     );
   }
 
-  bool _areAllFieldsFilled() {
-    return _weightController.text.isNotEmpty &&
-        _waistController.text.isNotEmpty &&
-        _chestController.text.isNotEmpty &&
-        _bicepsRightController.text.isNotEmpty &&
-        _bicepsLeftController.text.isNotEmpty &&
-        _hipsController.text.isNotEmpty &&
-        _thighRightController.text.isNotEmpty &&
-        _thighLeftController.text.isNotEmpty &&
-        _calvesRightController.text.isNotEmpty &&
-        _calvesLeftController.text.isNotEmpty &&
-        _neckController.text.isNotEmpty &&
-        _shouldersController.text.isNotEmpty &&
-        _forearmRightController.text.isNotEmpty &&
-        _forearmLeftController.text.isNotEmpty;
-  }
-
   void _saveMeasurement() {
-    if (!_areAllFieldsFilled()) {
+    if (_weightController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Todos os campos (Peso e Medidas) são obrigatórios!'),
+          content: Text('O Peso é obrigatório!'),
           backgroundColor: Colors.red,
         ),
       );
@@ -460,6 +491,41 @@ class _BodyMeasurementEntryPageState
         ),
         forearmLeft: double.tryParse(
           _forearmLeftController.text.replaceAll(',', '.'),
+        ),
+        // Bioimpedance Core
+        fatPercentage: double.tryParse(
+          _fatPercentageController.text.replaceAll(',', '.'),
+        ),
+        fatMassKg: double.tryParse(
+          _fatMassKgController.text.replaceAll(',', '.'),
+        ),
+        muscleMassKg: double.tryParse(
+          _muscleMassKgController.text.replaceAll(',', '.'),
+        ),
+        visceralFat: int.tryParse(
+          _visceralFatController.text.replaceAll(',', '.'),
+        ),
+        bmr: int.tryParse(_bmrController.text.replaceAll(',', '.')),
+        waterPercentage: double.tryParse(
+          _waterPercentageController.text.replaceAll(',', '.'),
+        ),
+        bodyAge: int.tryParse(_bodyAgeController.text.replaceAll(',', '.')),
+
+        // Bioimpedance Segmented
+        subcutaneousFat: double.tryParse(
+          _subcutaneousFatController.text.replaceAll(',', '.'),
+        ),
+        muscleLeftArm: double.tryParse(
+          _muscleLeftArmController.text.replaceAll(',', '.'),
+        ),
+        muscleRightArm: double.tryParse(
+          _muscleRightArmController.text.replaceAll(',', '.'),
+        ),
+        muscleLeftLeg: double.tryParse(
+          _muscleLeftLegController.text.replaceAll(',', '.'),
+        ),
+        muscleRightLeg: double.tryParse(
+          _muscleRightLegController.text.replaceAll(',', '.'),
         ),
         notes: _notesController.text,
         reportUrl: _reportUrlController.text.isNotEmpty
@@ -625,10 +691,13 @@ class _BodyMeasurementEntryPageState
 
               ExpansionTile(
                 title: const Text(
-                  "Medidas Registradas",
-                  style: TextStyle(color: AppColors.primary),
+                  "Grupo 1: Medidas de Fita",
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                initiallyExpanded: true,
+                initiallyExpanded: false,
                 children: [
                   _buildSummaryLine(
                     "Peitoral",
@@ -694,6 +763,95 @@ class _BodyMeasurementEntryPageState
                     "Antebraço (Esq.)",
                     _forearmLeftController,
                     "Antebraço esquerdo (parte mais larga)",
+                  ),
+                ],
+              ),
+
+              ExpansionTile(
+                title: const Text(
+                  "Grupo 2: Bioimpedância (Core)",
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                initiallyExpanded: false,
+                children: [
+                  _buildSummaryLine(
+                    "Relação de gordura (%)",
+                    _fatPercentageController,
+                    "Percentual de gordura corporal",
+                  ),
+                  _buildSummaryLine(
+                    "Massa gorda (kg)",
+                    _fatMassKgController,
+                    "Peso total de gordura",
+                  ),
+                  _buildSummaryLine(
+                    "Massa muscular (kg)",
+                    _muscleMassKgController,
+                    "Peso total de massa muscular",
+                  ),
+                  _buildSummaryLine(
+                    "Gordura visceral",
+                    _visceralFatController,
+                    "Nível de gordura visceral",
+                    isInteger: true,
+                  ),
+                  _buildSummaryLine(
+                    "BMR (Kcal)",
+                    _bmrController,
+                    "Taxa Metabólica Basal",
+                    isInteger: true,
+                  ),
+                  _buildSummaryLine(
+                    "Relação água (%)",
+                    _waterPercentageController,
+                    "Percentual de água corporal",
+                  ),
+                  _buildSummaryLine(
+                    "Idade do corpo",
+                    _bodyAgeController,
+                    "Idade metabólica estimada",
+                    isInteger: true,
+                  ),
+                ],
+              ),
+
+              ExpansionTile(
+                title: const Text(
+                  "Grupo 3: Bioimpedância (Segmentada)",
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                initiallyExpanded: false,
+                children: [
+                  _buildSummaryLine(
+                    "Relação gordura subcutânea (%)",
+                    _subcutaneousFatController,
+                    "Gordura sob a pele",
+                  ),
+                  _buildSummaryLine(
+                    "Massa musc. Braço (Esq.)",
+                    _muscleLeftArmController,
+                    "Kg de músculo no braço esquerdo",
+                  ),
+                  _buildSummaryLine(
+                    "Massa musc. Braço (Dir.)",
+                    _muscleRightArmController,
+                    "Kg de músculo no braço direito",
+                  ),
+                  _buildSummaryLine(
+                    "Massa musc. Perna (Esq.)",
+                    _muscleLeftLegController,
+                    "Kg de músculo na perna esquerda",
+                  ),
+                  _buildSummaryLine(
+                    "Massa musc. Perna (Dir.)",
+                    _muscleRightLegController,
+                    "Kg de músculo na perna direita",
                   ),
                 ],
               ),
@@ -803,48 +961,58 @@ class _BodyMeasurementEntryPageState
   Widget _buildSummaryLine(
     String label,
     TextEditingController controller,
-    String helpText,
-  ) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) {
-        return ListTile(
-          dense: true,
-          leading: Icon(
-            controller.text.isNotEmpty
-                ? Icons.check_circle
-                : Icons.circle_outlined,
-            color: controller.text.isNotEmpty ? AppColors.primary : Colors.grey,
-            size: 20,
-          ),
-          title: Row(
-            children: [
-              Text(label, style: const TextStyle(color: Colors.grey)),
-              const SizedBox(width: 5),
-              Tooltip(
-                message: helpText,
-                triggerMode: TooltipTriggerMode.tap,
-                child: const Icon(
-                  Icons.info_outline,
-                  size: 16,
-                  color: Colors.grey,
+    String helpText, {
+    bool isInteger = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    label,
+                    style: const TextStyle(fontSize: 14, color: Colors.white70),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          trailing: Text(
-            controller.text.isNotEmpty ? "${controller.text} cm" : "-",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: controller.text.isNotEmpty
-                  ? Colors.white
-                  : Colors.grey.shade700,
+                const SizedBox(width: 4),
+                Tooltip(
+                  message: helpText,
+                  triggerMode: TooltipTriggerMode.tap,
+                  child: Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
             ),
           ),
-          onTap: () => _showMeasurementModal(label, controller, helpText),
-        );
-      },
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 1,
+            child: TextFormField(
+              controller: controller,
+              keyboardType: TextInputType.numberWithOptions(
+                decimal: !isInteger,
+              ),
+              textAlign: TextAlign.end,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+              decoration: const InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 8,
+                ),
+                border: UnderlineInputBorder(),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

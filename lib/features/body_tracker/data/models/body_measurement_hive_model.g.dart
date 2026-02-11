@@ -39,13 +39,25 @@ class BodyMeasurementHiveModelAdapter
       shoulders: fields[18] as double?,
       imagePaths: (fields[19] as List).cast<String>(),
       reportUrl: fields[20] as String?,
+      fatPercentage: fields[21] as double?,
+      fatMassKg: fields[22] as double?,
+      muscleMassKg: fields[23] as double?,
+      visceralFat: fields[24] as int?,
+      bmr: fields[25] as int?,
+      waterPercentage: fields[26] as double?,
+      bodyAge: fields[27] as int?,
+      subcutaneousFat: fields[28] as double?,
+      muscleLeftArm: fields[29] as double?,
+      muscleRightArm: fields[30] as double?,
+      muscleLeftLeg: fields[31] as double?,
+      muscleRightLeg: fields[32] as double?,
     );
   }
 
   @override
   void write(BinaryWriter writer, BodyMeasurementHiveModel obj) {
     writer
-      ..writeByte(21)
+      ..writeByte(33)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -87,7 +99,31 @@ class BodyMeasurementHiveModelAdapter
       ..writeByte(19)
       ..write(obj.imagePaths)
       ..writeByte(20)
-      ..write(obj.reportUrl);
+      ..write(obj.reportUrl)
+      ..writeByte(21)
+      ..write(obj.fatPercentage)
+      ..writeByte(22)
+      ..write(obj.fatMassKg)
+      ..writeByte(23)
+      ..write(obj.muscleMassKg)
+      ..writeByte(24)
+      ..write(obj.visceralFat)
+      ..writeByte(25)
+      ..write(obj.bmr)
+      ..writeByte(26)
+      ..write(obj.waterPercentage)
+      ..writeByte(27)
+      ..write(obj.bodyAge)
+      ..writeByte(28)
+      ..write(obj.subcutaneousFat)
+      ..writeByte(29)
+      ..write(obj.muscleLeftArm)
+      ..writeByte(30)
+      ..write(obj.muscleRightArm)
+      ..writeByte(31)
+      ..write(obj.muscleLeftLeg)
+      ..writeByte(32)
+      ..write(obj.muscleRightLeg);
   }
 
   @override
