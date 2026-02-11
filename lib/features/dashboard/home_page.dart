@@ -77,27 +77,55 @@ class _HomePageState extends ConsumerState<HomePage> {
     List<Workout> allWorkouts,
   ) {
     if (allWorkouts.isEmpty) return null;
-    if (history.isEmpty)
-      return allWorkouts.first; // Start with first if no history
+
+    final now = DateTime.now();
+    // 1. Check for a workout SCHEDULED for TODAY
+    final todayWorkout = allWorkouts
+        .where((w) => w.scheduledDays.contains(now.weekday))
+        .firstOrNull;
+
+    if (todayWorkout != null) {
+      // Check if ALREADY DONE today
+      final doneToday = history.any(
+        (h) =>
+            h.workoutId == todayWorkout.id &&
+            h.completedDate.year == now.year &&
+            h.completedDate.month == now.month &&
+            h.completedDate.day == now.day,
+      );
+
+      if (!doneToday) {
+        return todayWorkout; // Specific for today and not done!
+      }
+    }
+
+    // 2. Look for the NEXT scheduled workout (Tomorrow onwards)
+    for (int i = 1; i <= 7; i++) {
+      final nextDay = now.add(Duration(days: i));
+      final nextWeekday = nextDay.weekday;
+      final nextWorkout = allWorkouts
+          .where((w) => w.scheduledDays.contains(nextWeekday))
+          .firstOrNull;
+
+      if (nextWorkout != null) {
+        return nextWorkout;
+      }
+    }
+
+    // 3. Fallback: Rotation based on history
+    if (history.isEmpty) return allWorkouts.first;
 
     // Sort history by date desc
     final sortedHistory = List<WorkoutHistoryHiveModel>.from(history)
       ..sort((a, b) => b.completedDate.compareTo(a.completedDate));
 
     final lastWorkoutHistory = sortedHistory.first;
-
-    // Find index of last workout in the current list of routines
-    // We match by ID or Name (ID is safer)
     final lastIndex = allWorkouts.indexWhere(
       (w) => w.id == lastWorkoutHistory.workoutId,
     );
 
-    if (lastIndex == -1) {
-      // Last workout not found (maybe deleted), default to first
-      return allWorkouts.first;
-    }
+    if (lastIndex == -1) return allWorkouts.first;
 
-    // Cycle: (Index + 1) % length
     final nextIndex = (lastIndex + 1) % allWorkouts.length;
     return allWorkouts[nextIndex];
   }

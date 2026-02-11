@@ -218,7 +218,7 @@ class SmartActionCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   suggestedWorkout != null
-                      ? "${suggestedWorkout!.exercises.length} Exercícios • Foco em ${suggestedWorkout!.name.contains('A') ? 'Push' : (suggestedWorkout!.name.contains('B') ? 'Pull' : 'Força')}" // Simple logic, can be improved
+                      ? "${suggestedWorkout!.targetDurationMinutes} min • ${suggestedWorkout!.exercises.length} Exercícios • Foco em ${suggestedWorkout!.name.contains('A') ? 'Push' : (suggestedWorkout!.name.contains('B') ? 'Pull' : 'Força')}" // Simple logic, can be improved
                       : "Crie seu primeiro treino para começar",
                   style: TextStyle(fontSize: 14, color: Colors.grey[400]),
                 ),
@@ -342,31 +342,34 @@ class LastSessionRecap extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            "${lastSession!.durationMinutes} min • ${lastSession!.exercises.length} Ex • Carga: ???kg", // TODO: Calculate volume if possible
-                            style: TextStyle(
-                              color: hasImage
-                                  ? Colors.white70
-                                  : Colors.grey[400],
-                              fontSize: 13,
-                            ),
+                          Builder(
+                            builder: (context) {
+                              // Calculate Volume
+                              double volume = 0;
+                              for (var ex in lastSession!.exercises) {
+                                for (var s in ex.setsHistory) {
+                                  volume += (s.weight * s.reps);
+                                }
+                              }
+                              final volText = NumberFormat(
+                                '#,##0',
+                                'pt_BR',
+                              ).format(volume);
+
+                              return Text(
+                                "${lastSession!.durationMinutes} min • ${lastSession!.exercises.length} Ex • Carga: ${volText}kg",
+                                style: TextStyle(
+                                  color: hasImage
+                                      ? Colors.white70
+                                      : Colors.grey[400],
+                                  fontSize: 13,
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
                     ),
-                    if (hasImage)
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.photo_library,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                      ),
                   ],
                 ),
               ],
