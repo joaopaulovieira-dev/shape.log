@@ -406,7 +406,9 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                       ),
                     ),
                     subtitle: Text(
-                      '${ex.sets} séries x ${ex.reps} reps - ${ex.weight}kg',
+                      ex.type == ExerciseTypeEntity.cardio
+                          ? '${ex.cardioDurationMinutes?.toInt() ?? 0} min • ${ex.cardioIntensity ?? "Normal"} • ${ex.restTimeSeconds}s desc'
+                          : '${ex.sets} séries x ${ex.reps} reps • ${ex.weight}kg',
                     ),
                     onTap: () {
                       context.push('/workouts/${workout.id}/exercises/$index');

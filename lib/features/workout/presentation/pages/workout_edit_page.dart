@@ -290,7 +290,11 @@ class _WorkoutEditPageState extends ConsumerState<WorkoutEditPage> {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('${ex.sets} x ${ex.reps} - ${ex.weight}kg'),
+                      Text(
+                        ex.type == ExerciseTypeEntity.cardio
+                            ? '${ex.cardioDurationMinutes?.toInt() ?? 0} min • ${ex.cardioIntensity ?? "Normal"} • ${ex.restTimeSeconds}s desc'
+                            : '${ex.sets} x ${ex.reps} - ${ex.weight}kg',
+                      ),
                       if (ex.youtubeUrl != null)
                         Text(
                           'YouTube: Sim',
