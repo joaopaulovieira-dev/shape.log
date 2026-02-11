@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../image_library/presentation/image_source_sheet.dart';
 import '../../../../core/presentation/widgets/app_modals.dart';
 import '../../domain/entities/exercise.dart';
@@ -33,6 +34,9 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
   @override
   void initState() {
     super.initState();
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) _retrieveLostData();
+    });
     final ex = widget.initialExercise;
     _selectedType = ex?.type ?? ExerciseTypeEntity.weight;
     _nameController = TextEditingController(text: ex?.name ?? '');
@@ -57,6 +61,23 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
     _techniqueController = TextEditingController(text: ex?.technique ?? '');
     _restTime = ex?.restTimeSeconds ?? 60;
     _imagePaths = ex != null ? List.from(ex.imagePaths) : [];
+  }
+
+  Future<void> _retrieveLostData() async {
+    final LostDataResponse response = await ImageSourceSheet.picker
+        .retrieveLostData();
+    if (response.isEmpty) return;
+    if (response.file != null) {
+      setState(() {
+        _imagePaths.add(response.file!.path);
+      });
+    } else if (response.files != null) {
+      setState(() {
+        for (final file in response.files!) {
+          _imagePaths.add(file.path);
+        }
+      });
+    }
   }
 
   @override

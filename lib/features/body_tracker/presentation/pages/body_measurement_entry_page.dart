@@ -1,12 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../image_library/presentation/image_source_sheet.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
 import 'package:body_part_selector/body_part_selector.dart';
-import '../../../image_library/presentation/image_source_sheet.dart';
 import '../../domain/entities/body_measurement.dart';
 import '../providers/body_tracker_provider.dart';
 import '../widgets/bmi_gauge.dart';
@@ -100,6 +101,27 @@ class _BodyMeasurementEntryPageState
     _shouldersController.addListener(_updateFilledParts);
     _forearmRightController.addListener(_updateFilledParts);
     _forearmLeftController.addListener(_updateFilledParts);
+
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) _retrieveLostData();
+    });
+  }
+
+  Future<void> _retrieveLostData() async {
+    final LostDataResponse response = await ImageSourceSheet.picker
+        .retrieveLostData();
+    if (response.isEmpty) return;
+    if (response.file != null) {
+      setState(() {
+        _imagePaths.add(response.file!.path);
+      });
+    } else if (response.files != null) {
+      setState(() {
+        for (final file in response.files!) {
+          _imagePaths.add(file.path);
+        }
+      });
+    }
   }
 
   void _loadExistingMeasurement(BodyMeasurement measurement) {

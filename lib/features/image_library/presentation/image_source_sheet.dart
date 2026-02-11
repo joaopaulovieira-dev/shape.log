@@ -4,21 +4,37 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shape_log/features/image_library/presentation/library_picker_page.dart';
 
 class ImageSourceSheet extends StatelessWidget {
+  static final ImagePicker picker = ImagePicker();
   final bool showLibrary;
 
   const ImageSourceSheet({super.key, this.showLibrary = true});
 
   Future<void> _pickImage(BuildContext context, ImageSource source) async {
-    final picker = ImagePicker();
-    if (source == ImageSource.gallery) {
-      final List<XFile> images = await picker.pickMultiImage();
-      if (images.isNotEmpty && context.mounted) {
-        Navigator.pop(context, images.map((e) => File(e.path)).toList());
+    try {
+      if (source == ImageSource.gallery) {
+        final List<XFile> images = await picker.pickMultiImage(
+          maxWidth: 1080,
+          imageQuality: 60,
+        );
+        if (images.isNotEmpty && context.mounted) {
+          Navigator.pop(context, images.map((e) => File(e.path)).toList());
+        }
+      } else {
+        final pickedFile = await picker.pickImage(
+          source: source,
+          maxWidth: 1080,
+          maxHeight: 1920,
+          imageQuality: 60,
+        );
+        if (pickedFile != null && context.mounted) {
+          Navigator.pop(context, [File(pickedFile.path)]);
+        }
       }
-    } else {
-      final pickedFile = await picker.pickImage(source: source);
-      if (pickedFile != null && context.mounted) {
-        Navigator.pop(context, [File(pickedFile.path)]);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro ao acessar imagens: $e')));
       }
     }
   }

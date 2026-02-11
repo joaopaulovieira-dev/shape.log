@@ -13,6 +13,7 @@ import '../../../profile/presentation/providers/user_profile_provider.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/utils/snackbar_utils.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../image_library/presentation/image_source_sheet.dart';
 import '../../../common/services/image_storage_service.dart';
 import '../../../../core/presentation/widgets/app_dialogs.dart';
 import '../../../../core/presentation/widgets/app_modals.dart';
@@ -34,6 +35,8 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
   late TextEditingController _weightController;
   late TextEditingController _restController;
   late TextEditingController _equipmentController;
+
+  final List<String> _recoveredImages = [];
 
   // Cardio Controllers
   late TextEditingController _cardioDurationController;
@@ -65,6 +68,8 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
     _cardioDurationController = TextEditingController();
     _cardioIntensityController = TextEditingController();
 
+    _retrieveLostData();
+
     // Initialize session
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final sessionState = ref.read(sessionProvider);
@@ -90,6 +95,25 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
     _equipmentFocus.addListener(_onFocusChange);
     _cardioDurationFocus.addListener(_onFocusChange);
     _cardioIntensityFocus.addListener(_onFocusChange);
+  }
+
+  Future<void> _retrieveLostData() async {
+    final LostDataResponse response = await ImageSourceSheet.picker
+        .retrieveLostData();
+    if (response.isEmpty) return;
+    if (response.file != null) {
+      _recoveredImages.add(response.file!.path);
+    } else if (response.files != null) {
+      _recoveredImages.addAll(response.files!.map((f) => f.path));
+    }
+
+    if (_recoveredImages.isNotEmpty) {
+      // If we recovered images, it means the activity was killed while taking a photo.
+      // We should show the feedback dialog immediately so the user can save.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showFeedbackDialog();
+      });
+    }
   }
 
   void _onFocusChange() {
@@ -256,6 +280,7 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => _FeedbackDialog(
+        initialImagePaths: _recoveredImages,
         onSave: (rpe, imagePaths) async {
           // Logic moved from _FeedbackDialog to here (or kept there if it was cleaner, but let's follow the pattern)
           // Actually, in the previous implementation, the dialog handled the logic.
@@ -1147,8 +1172,12 @@ class _GlobalTimerWidgetState extends State<_GlobalTimerWidget> {
 
 class _FeedbackDialog extends ConsumerStatefulWidget {
   final Function(int, List<String>) onSave;
+  final List<String> initialImagePaths;
 
-  const _FeedbackDialog({required this.onSave});
+  const _FeedbackDialog({
+    required this.onSave,
+    this.initialImagePaths = const [],
+  });
 
   @override
   ConsumerState<_FeedbackDialog> createState() => _FeedbackDialogState();
@@ -1159,7 +1188,6 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
   int? _selectedRpe;
   bool _isSaving = false;
   final List<String> _tempImagePaths = [];
-  final ImagePicker _picker = ImagePicker();
   final ImageStorageService _imageService = ImageStorageService();
 
   @override
@@ -1169,6 +1197,7 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
       duration: const Duration(seconds: 3),
     );
     _confettiController.play();
+    _tempImagePaths.addAll(widget.initialImagePaths);
   }
 
   @override
@@ -1179,9 +1208,11 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final XFile? image = await _picker.pickImage(
+      final XFile? image = await ImageSourceSheet.picker.pickImage(
         source: source,
-        imageQuality: 80, // Optimization
+        maxWidth: 1080,
+        maxHeight: 1920,
+        imageQuality: 60,
       );
       if (image != null) {
         setState(() {
