@@ -383,6 +383,12 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
 
     // Sync PageController with State if needed
     ref.listen(sessionProvider, (prev, next) {
+      // Update controllers if workout data changes (e.g. history loaded)
+      // This fixes the issue where initial load was showing default values instead of history
+      if (prev?.activeWorkout != next.activeWorkout) {
+        _updateControllers();
+      }
+
       if (prev?.currentExerciseIndex != next.currentExerciseIndex) {
         if (_pageController.hasClients &&
             _pageController.page?.round() != next.currentExerciseIndex) {
@@ -392,11 +398,6 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
             curve: Curves.easeInOut,
           );
         }
-        _updateControllers();
-      }
-
-      // Initialize controllers when session starts (fixes empty fields bug)
-      if (prev?.activeWorkout == null && next.activeWorkout != null) {
         _updateControllers();
       }
 
@@ -484,6 +485,8 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                   final exercise = widget.workout.exercises[index];
                   final isCompleted = sessionState.completedExerciseNames
                       .contains(exercise.name);
+                  final lastHistory =
+                      sessionState.lastHistoryMap[exercise.name];
 
                   // Set logic (handled in bottom button)
                   // final setsRecords = sessionState.setsRecords[exercise.name] ?? [];
@@ -701,6 +704,9 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                       child: _buildInputCard(
                                         context,
                                         label: "CARGA (Kg)",
+                                        subtitle: lastHistory != null
+                                            ? "Último: ${lastHistory.weight}kg"
+                                            : null,
                                         controller: _weightController,
                                         focusNode: _weightFocus,
                                         showHistory: true,
@@ -947,6 +953,7 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
     bool isNumber = true,
     int? maxLines = 1,
     bool showSavedFeedback = false,
+    String? subtitle,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -954,13 +961,38 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 12,
-              ),
+            Row(
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
             Row(
               children: [

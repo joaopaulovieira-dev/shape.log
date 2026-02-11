@@ -22,7 +22,7 @@ class WorkoutSessionState {
   final int restTimerDuration;
   final int restTimerRemaining;
   final bool isSessionComplete;
-  final Map<String, String> lastHistoryMap;
+  final Map<String, ExerciseSetHistory> lastHistoryMap;
   final Set<String> completedExerciseNames; // For validation
   final bool showCompletionFeedback;
   final Map<String, List<ExerciseSetHistory>> setsRecords; // Track sets
@@ -49,7 +49,7 @@ class WorkoutSessionState {
     int? restTimerDuration,
     int? restTimerRemaining,
     bool? isSessionComplete,
-    Map<String, String>? lastHistoryMap,
+    Map<String, ExerciseSetHistory>? lastHistoryMap,
     Set<String>? completedExerciseNames,
     bool? showCompletionFeedback,
     Map<String, List<ExerciseSetHistory>>? setsRecords,
@@ -106,7 +106,7 @@ class SessionController extends Notifier<WorkoutSessionState> {
       completedExerciseNames: {},
     );
 
-    await _loadHistoryForWorkout(workout);
+    await _loadHistoryForWorkout(workout, applyToActiveWorkout: true);
     _saveSessionState();
   }
 
@@ -135,15 +135,18 @@ class SessionController extends Notifier<WorkoutSessionState> {
       lastHistoryMap: {}, // Will be loaded below
     );
 
-    await _loadHistoryForWorkout(workout);
+    await _loadHistoryForWorkout(workout, applyToActiveWorkout: true);
   }
 
-  Future<void> _loadHistoryForWorkout(Workout workout) async {
+  Future<void> _loadHistoryForWorkout(
+    Workout workout, {
+    bool applyToActiveWorkout = false,
+  }) async {
     try {
       final repository = ref.read(workoutRepositoryProvider);
       final historyList = await repository.getHistory();
 
-      final Map<String, String> newMap = {};
+      final Map<String, ExerciseSetHistory> newMap = {};
 
       for (final exercise in workout.exercises) {
         Exercise? lastPerformed;
@@ -158,13 +161,54 @@ class SessionController extends Notifier<WorkoutSessionState> {
             }
           }
         }
+
         if (lastPerformed != null) {
-          newMap[exercise.name] =
-              "${lastPerformed.weight}kg - ${lastPerformed.reps} reps";
+          // Get the heaviest set or the last set?
+          // Proposal: Last set usually indicates the final working weight.
+          // Or we can find the set with max weight.
+          // Let's stick to the simplest: THE LAST SET performed.
+          if (lastPerformed.setsHistory != null &&
+              lastPerformed.setsHistory!.isNotEmpty) {
+            newMap[exercise.name] = lastPerformed.setsHistory!.last;
+          } else {
+            // Fallback if setsHistory is missing for some reason (legacy data)
+            // We create a dummy one with proper values
+            newMap[exercise.name] = ExerciseSetHistory(
+              setNumber: 1,
+              weight: lastPerformed.weight,
+              reps: lastPerformed.reps,
+              isWarmup: false,
+            );
+          }
         }
       }
 
-      state = state.copyWith(lastHistoryMap: newMap);
+      var newState = state.copyWith(lastHistoryMap: newMap);
+
+      // Apply history values to the active workout session (Pre-fill)
+      if (applyToActiveWorkout && newState.activeWorkout != null) {
+        final updatedExercises = newState.activeWorkout!.exercises.map((
+          exercise,
+        ) {
+          final history = newMap[exercise.name];
+          if (history != null) {
+            // Overwrite with historical values
+            return exercise.copyWith(
+              weight: history.weight,
+              reps: history.reps,
+            );
+          }
+          return exercise;
+        }).toList();
+
+        newState = newState.copyWith(
+          activeWorkout: newState.activeWorkout!.copyWith(
+            exercises: updatedExercises,
+          ),
+        );
+      }
+
+      state = newState;
     } catch (e) {
       print("Error loading history: $e");
     }

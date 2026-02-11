@@ -535,23 +535,52 @@ class MeasurementCard extends StatelessWidget {
             mainAxisSpacing: 8,
             crossAxisSpacing: 16,
             children: [
-              if (measurement.waistCircumference > 0)
+              // 1. Pescoço
+              if ((measurement.neck ?? 0) > 0)
                 _buildGridItem(
-                  "Cintura",
-                  measurement.waistCircumference,
-                  previousMeasurement?.waistCircumference,
+                  "Pescoço",
+                  measurement.neck!,
+                  previousMeasurement?.neck,
+                  lowerIsBetter: false,
                 ),
-              if ((measurement.hipsCircumference ?? 0) > 0)
+              // 2. Ombros
+              if ((measurement.shoulders ?? 0) > 0)
                 _buildGridItem(
-                  "Quadril",
-                  measurement.hipsCircumference!,
-                  previousMeasurement?.hipsCircumference,
+                  "Ombros",
+                  measurement.shoulders!,
+                  previousMeasurement?.shoulders,
+                  lowerIsBetter: false,
                 ),
+              // 3. Peitoral
               if (measurement.chestCircumference > 0)
                 _buildGridItem(
                   "Peitoral",
                   measurement.chestCircumference,
                   previousMeasurement?.chestCircumference,
+                  lowerIsBetter: false,
+                ),
+              // 4. Cintura
+              if (measurement.waistCircumference > 0)
+                _buildGridItem(
+                  "Cintura",
+                  measurement.waistCircumference,
+                  previousMeasurement?.waistCircumference,
+                  lowerIsBetter: true,
+                ),
+              // 5. Quadril
+              if ((measurement.hipsCircumference ?? 0) > 0)
+                _buildGridItem(
+                  "Quadril",
+                  measurement.hipsCircumference!,
+                  previousMeasurement?.hipsCircumference,
+                  lowerIsBetter: true,
+                ),
+              // 6. Braços (Bíceps)
+              if (measurement.bicepsLeft > 0)
+                _buildGridItem(
+                  "Bíceps (Esq)",
+                  measurement.bicepsLeft,
+                  previousMeasurement?.bicepsLeft,
                   lowerIsBetter: false,
                 ),
               if (measurement.bicepsRight > 0)
@@ -561,11 +590,49 @@ class MeasurementCard extends StatelessWidget {
                   previousMeasurement?.bicepsRight,
                   lowerIsBetter: false,
                 ),
-              if (measurement.thighRight != null && measurement.thighRight! > 0)
+              // 7. Antebraços
+              if ((measurement.forearmLeft ?? 0) > 0)
+                _buildGridItem(
+                  "Antebraço (Esq)",
+                  measurement.forearmLeft!,
+                  previousMeasurement?.forearmLeft,
+                  lowerIsBetter: false,
+                ),
+              if ((measurement.forearmRight ?? 0) > 0)
+                _buildGridItem(
+                  "Antebraço (Dir)",
+                  measurement.forearmRight!,
+                  previousMeasurement?.forearmRight,
+                  lowerIsBetter: false,
+                ),
+              // 8. Coxas
+              if ((measurement.thighLeft ?? 0) > 0)
+                _buildGridItem(
+                  "Coxa (Esq)",
+                  measurement.thighLeft!,
+                  previousMeasurement?.thighLeft,
+                  lowerIsBetter: false,
+                ),
+              if ((measurement.thighRight ?? 0) > 0)
                 _buildGridItem(
                   "Coxa (Dir)",
                   measurement.thighRight!,
                   previousMeasurement?.thighRight,
+                  lowerIsBetter: false,
+                ),
+              // 9. Panturrilhas
+              if ((measurement.calvesLeft ?? 0) > 0)
+                _buildGridItem(
+                  "Panturrilha (Esq)",
+                  measurement.calvesLeft!,
+                  previousMeasurement?.calvesLeft,
+                  lowerIsBetter: false,
+                ),
+              if ((measurement.calvesRight ?? 0) > 0)
+                _buildGridItem(
+                  "Panturrilha (Dir)",
+                  measurement.calvesRight!,
+                  previousMeasurement?.calvesRight,
                   lowerIsBetter: false,
                 ),
             ],
