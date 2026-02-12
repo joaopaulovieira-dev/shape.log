@@ -18,6 +18,9 @@
 
 ### 2. Monitoramento de Medidas (Body Tracker)
 - **Cyber-Bio Scanner (Mapa Corporal Interativo)**: Interface visual 3D-like onde você toca na parte do corpo (ex: Bíceps, Coxa) para registrar a medida.
+- **Bioimpedância Integrada**: Campo para `reportUrl` que permite armazenar e abrir links de balanças de bioimpedância diretamente no navegador.
+- **Rastreamento de Circunferências**: Suporte completo para medidas de Pescoço, Ombros, Tórax, Cintura, Quadril, Bíceps, Antebraços, Coxas e Panturrilhas.
+- **Card de Medidas Expandível**: Visualize todas as circunferências e detalhes técnicos ao expandir os registros na lista.
 - **Seleção Multi-imagem**: Adicione múltiplas fotos de progresso simultaneamente via Galeria.
 - **Interface Unificada**: Fluxo de adição de fotos padronizado entre Treinos e Medidas.
 - **Animações Fluidas**: Feedback visual com animações de "scanning" ao selecionar áreas.
@@ -26,13 +29,17 @@
 
 ### 3. Perfil Biológico (Bio-Data Source of Truth)
 - **Perfil Centralizado**: Armazena dados imutáveis como Altura, Nível de Atividade e Peso Meta.
+- **Foto de Perfil Customizável**: Importe sua própria foto da galeria para personalizar a experiência do "scanner".
 - **Cálculo Automático de IMC**: O app utiliza a altura do seu perfil para recalcular automaticamente o IMC de todos os registros históricos, garantindo precisão sem retrabalho.
+- **Classificação OMS**: Monitoramento rigoroso do IMC seguindo padrões da Organização Mundial da Saúde (incluindo Obesidade I, II e III).
 - **Persistência Local**: Todos os dados são salvos localmente de forma segura e rápida.
 
 ### 4. Interface e Usabilidade
 - **Design Moderno**: Tema escuro com acentos em `Cyan` e `Purple`, seguindo padrões modernos de UI.
+- **Reatividade Ultra-fluida**: Interface que se auto-atualiza instantaneamente ao salvar novos dados (HIVE Listenables).
 - **Navegação Intuitiva**: Barra de navegação inferior persistente e rotas fluidas.
 - **Inputs Otimizados**: Uso de Sliders, Chips e Segmented Buttons para facilitar a entrada de dados.
+- **Diálogos Padronizados**: Sistema customizado de modais e diálogos para uma experiência visual coesa em todo o app.
 
 ### 5. Biblioteca de Ativos (Assets Library)
 - **Importação de Pacotes**: Importe arquivos `.zip` contendo centenas de imagens de equipamentos ou execução.
