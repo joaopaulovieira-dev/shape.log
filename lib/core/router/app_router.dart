@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:shape_log/core/constants/app_colors.dart';
 import '../../features/dashboard/home_page.dart';
 import '../../features/workout/presentation/pages/workout_list_page.dart';
 import '../../features/workout/presentation/pages/workout_edit_page.dart';
@@ -151,38 +153,56 @@ class ScaffoldWithBottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: child,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _calculateSelectedIndex(context),
-        onTap: (int idx) => _onItemTapped(idx, context),
-        type: BottomNavigationBarType
-            .fixed, // Ensure label visibility with 4 items
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
-            label: 'Home',
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: Colors.white.withOpacity(0.05), width: 1),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.fitness_center_outlined),
-            activeIcon: Icon(Icons.fitness_center),
-            label: 'Treinos',
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _calculateSelectedIndex(context),
+          onTap: (int idx) => _onItemTapped(idx, context),
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.black, // Dark background
+          selectedItemColor: AppColors.primary, // Neon Green
+          unselectedItemColor: Colors.grey[600],
+          selectedLabelStyle: GoogleFonts.outfit(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.monitor_weight_outlined),
-            activeIcon: Icon(Icons.monitor_weight),
-            label: 'Medidas',
+          unselectedLabelStyle: GoogleFonts.outfit(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assessment_outlined),
-            activeIcon: Icon(Icons.assessment),
-            label: 'Relatórios',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            activeIcon: Icon(Icons.settings),
-            label: 'Ajustes',
-          ),
-        ],
+          elevation: 0,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard_outlined),
+              activeIcon: Icon(Icons.dashboard),
+              label: 'Início', // Renamed from Home
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.fitness_center_outlined),
+              activeIcon: Icon(Icons.fitness_center),
+              label: 'Treinos',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.monitor_weight_outlined),
+              activeIcon: Icon(Icons.monitor_weight),
+              label: 'Medidas',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.assessment_outlined),
+              activeIcon: Icon(Icons.assessment),
+              label: 'Hub', // Renamed from Relatórios
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings_outlined),
+              activeIcon: Icon(Icons.settings),
+              label: 'Ajustes',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -195,11 +215,11 @@ class ScaffoldWithBottomNavBar extends StatelessWidget {
     if (location.startsWith('/body-tracker')) {
       return 2;
     }
-    if (location.startsWith('/settings')) {
-      return 4;
-    }
     if (location.startsWith('/reports')) {
       return 3;
+    }
+    if (location.startsWith('/settings')) {
+      return 4;
     }
     return 0;
   }

@@ -13,6 +13,7 @@ import '../providers/body_tracker_provider.dart';
 import '../widgets/bmi_gauge.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/presentation/widgets/app_modals.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class BodyMeasurementEntryPage extends ConsumerStatefulWidget {
   final BodyMeasurement? measurementToEdit;
@@ -414,46 +415,65 @@ class _BodyMeasurementEntryPageState
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: GoogleFonts.outfit(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: AppColors.primary,
                 ),
               ),
               const SizedBox(width: 8),
-              Tooltip(
-                message: helpText,
-                triggerMode: TooltipTriggerMode.tap,
-                child: Icon(
-                  Icons.info_outline,
-                  color: AppColors.primary.withValues(alpha: 0.7),
-                  size: 20,
+              if (helpText.isNotEmpty)
+                Tooltip(
+                  message: helpText,
+                  triggerMode: TooltipTriggerMode.tap,
+                  child: Icon(
+                    Icons.info_outline,
+                    color: AppColors.primary.withOpacity(0.7),
+                    size: 20,
+                  ),
                 ),
-              ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 20),
           TextField(
             controller: controller,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             autofocus: true,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-            decoration: const InputDecoration(
-              suffixText: "cm",
+            style: GoogleFonts.outfit(
+              fontSize: 36,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+            decoration: InputDecoration(
+              suffixText: label.contains('%') ? '%' : "cm",
+              suffixStyle: GoogleFonts.outfit(
+                color: Colors.grey[600],
+                fontSize: 18,
+              ),
               border: InputBorder.none,
               hintText: "0.0",
+              hintStyle: GoogleFonts.outfit(color: Colors.grey[800]),
             ),
           ),
-          const SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.black,
-              minimumSize: const Size(double.infinity, 50),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: Text(
+                "Confirmar",
+                style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+              ),
             ),
-            child: const Text("Confirmar"),
           ),
         ],
       ),
@@ -561,419 +581,536 @@ class _BodyMeasurementEntryPageState
     }
   }
 
+  Widget _buildFormCard({
+    required String title,
+    required List<Widget> children,
+    Widget? trailing,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title.toUpperCase(),
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[500],
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                if (trailing != null) trailing,
+              ],
+            ),
+            const SizedBox(height: 20),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _buildDecoration({
+    required String label,
+    required IconData icon,
+    String? hintText,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: GoogleFonts.outfit(color: Colors.grey[400], fontSize: 14),
+      hintText: hintText,
+      hintStyle: GoogleFonts.outfit(color: Colors.grey[700], fontSize: 13),
+      prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: Colors.black.withOpacity(0.2),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.white.withOpacity(0.02)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1),
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.measurementToEdit != null ? 'Editar Medidas' : 'Nova Medição',
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.check, color: AppColors.primary),
-            onPressed: _saveMeasurement,
+      backgroundColor: AppColors.background,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 120.0,
+            floating: true,
+            pinned: true,
+            backgroundColor: AppColors.background,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => context.pop(),
+            ),
+            flexibleSpace: FlexibleSpaceBar(
+              centerTitle: true,
+              titlePadding: const EdgeInsets.only(bottom: 16),
+              title: Text(
+                widget.measurementToEdit != null
+                    ? 'Editar Medidas'
+                    : 'Nova Medição',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary.withOpacity(0.15),
+                      AppColors.background,
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+              ),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.check, color: Colors.white),
+                onPressed: _saveMeasurement,
+                tooltip: 'Salvar',
+              ),
+            ],
+          ),
+          SliverToBoxAdapter(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  const SizedBox(height: 16),
+                  _buildFormCard(
+                    title: "Informações Básicas",
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => _selectDate(context),
+                              child: AbsorbPointer(
+                                child: TextFormField(
+                                  controller: _dateController,
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white,
+                                  ),
+                                  decoration: _buildDecoration(
+                                    label: 'Data',
+                                    icon: Icons.calendar_today,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _weightController,
+                              style: GoogleFonts.outfit(color: Colors.white),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              decoration: _buildDecoration(
+                                label: 'Peso (kg)',
+                                icon: Icons.scale_outlined,
+                              ),
+                              validator: (value) =>
+                                  value == null || value.isEmpty ? '?' : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _reportUrlController,
+                        style: GoogleFonts.outfit(color: Colors.white),
+                        decoration: _buildDecoration(
+                          label: 'Link do Relatório',
+                          icon: Icons.link,
+                          hintText: 'Bioimpedância...',
+                          suffixIcon: IconButton(
+                            icon: const Icon(
+                              Icons.paste,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
+                            onPressed: () async {
+                              final data = await Clipboard.getData(
+                                Clipboard.kTextPlain,
+                              );
+                              if (data?.text != null) {
+                                setState(() {
+                                  _reportUrlController.text = data!.text!;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                        keyboardType: TextInputType.url,
+                      ),
+                    ],
+                  ),
+
+                  if (_currentBMI > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _buildFormCard(
+                        title: "Índice de Massa Corporal",
+                        children: [BMIGauge(bmiValue: _currentBMI)],
+                      ),
+                    ),
+
+                  _buildFormCard(
+                    title: "Seleção Corporal",
+                    trailing: FloatingActionButton.small(
+                      elevation: 0,
+                      backgroundColor: Colors.white.withOpacity(0.05),
+                      child: Icon(
+                        _selectedSide == BodySide.front
+                            ? Icons.flip_camera_android
+                            : Icons.accessibility_new,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _selectedSide = _selectedSide == BodySide.front
+                              ? BodySide.back
+                              : BodySide.front;
+                        });
+                      },
+                    ),
+                    children: [
+                      SizedBox(
+                        height: 400,
+                        child: BodyPartSelector(
+                          bodyParts: _filledParts,
+                          onSelectionUpdated: _onBodyPartsSelected,
+                          side: _selectedSide,
+                          mirrored: false,
+                          selectedColor: AppColors.primary,
+                          unselectedColor: Colors.white.withOpacity(0.05),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  _buildExpansionCard("Grupo 1: Medidas de Fita", [
+                    _buildSummaryLine(
+                      "Peitoral",
+                      _chestController,
+                      "Medida na linha dos mamilos",
+                    ),
+                    _buildSummaryLine(
+                      "Cintura",
+                      _waistController,
+                      "Medida na altura do umbigo",
+                    ),
+                    _buildSummaryLine(
+                      "Quadril",
+                      _hipsController,
+                      "Maior circunferência dos glúteos",
+                    ),
+                    _buildSummaryLine(
+                      "Bíceps (Dir.)",
+                      _bicepsRightController,
+                      "Braço direito relaxado",
+                    ),
+                    _buildSummaryLine(
+                      "Bíceps (Esq.)",
+                      _bicepsLeftController,
+                      "Braço esquerdo relaxado",
+                    ),
+                    _buildSummaryLine(
+                      "Coxa (Dir.)",
+                      _thighRightController,
+                      "Coxa direita (parte mais larga)",
+                    ),
+                    _buildSummaryLine(
+                      "Coxa (Esq.)",
+                      _thighLeftController,
+                      "Coxa esquerda (parte mais larga)",
+                    ),
+                    _buildSummaryLine(
+                      "Panturrilha (Dir.)",
+                      _calvesRightController,
+                      "Panturrilha direita (maior círculo)",
+                    ),
+                    _buildSummaryLine(
+                      "Panturrilha (Esq.)",
+                      _calvesLeftController,
+                      "Panturrilha esquerda (maior círculo)",
+                    ),
+                    _buildSummaryLine(
+                      "Pescoço",
+                      _neckController,
+                      "Circunferência do pescoço (meio)",
+                    ),
+                    _buildSummaryLine(
+                      "Ombros",
+                      _shouldersController,
+                      "Circunferência total dos ombros",
+                    ),
+                    _buildSummaryLine(
+                      "Antebraço (Dir.)",
+                      _forearmRightController,
+                      "Antebraço direito (mais largo)",
+                    ),
+                    _buildSummaryLine(
+                      "Antebraço (Esq.)",
+                      _forearmLeftController,
+                      "Antebraço esquerdo (mais largo)",
+                    ),
+                  ]),
+
+                  _buildExpansionCard("Grupo 2: Bioimpedância (Core)", [
+                    _buildSummaryLine(
+                      "Relação de gordura (%)",
+                      _fatPercentageController,
+                      "Percentual de gordura corporal",
+                    ),
+                    _buildSummaryLine(
+                      "Massa gorda (kg)",
+                      _fatMassKgController,
+                      "Peso total de gordura",
+                    ),
+                    _buildSummaryLine(
+                      "Massa muscular (kg)",
+                      _muscleMassKgController,
+                      "Peso total de massa muscular",
+                    ),
+                    _buildSummaryLine(
+                      "Gordura visceral",
+                      _visceralFatController,
+                      "Nível de gordura visceral",
+                      isInteger: true,
+                    ),
+                    _buildSummaryLine(
+                      "BMR (Kcal)",
+                      _bmrController,
+                      "Taxa Metabólica Basal",
+                      isInteger: true,
+                    ),
+                    _buildSummaryLine(
+                      "Relação água (%)",
+                      _waterPercentageController,
+                      "Percentual de água corporal",
+                    ),
+                    _buildSummaryLine(
+                      "Idade do corpo",
+                      _bodyAgeController,
+                      "Idade metabólica estimada",
+                      isInteger: true,
+                    ),
+                  ]),
+
+                  _buildExpansionCard("Grupo 3: Bioimpedância (Segmentada)", [
+                    _buildSummaryLine(
+                      "Relação gordura subcutânea (%)",
+                      _subcutaneousFatController,
+                      "Gordura sob a pele",
+                    ),
+                    _buildSummaryLine(
+                      "Massa musc. Braço (Esq.)",
+                      _muscleLeftArmController,
+                      "Kg de músculo no braço esquerdo",
+                    ),
+                    _buildSummaryLine(
+                      "Massa musc. Braço (Dir.)",
+                      _muscleRightArmController,
+                      "Kg de músculo no braço direito",
+                    ),
+                    _buildSummaryLine(
+                      "Massa musc. Perna (Esq.)",
+                      _muscleLeftLegController,
+                      "Kg de músculo na perna esquerda",
+                    ),
+                    _buildSummaryLine(
+                      "Massa musc. Perna (Dir.)",
+                      _muscleRightLegController,
+                      "Kg de músculo na perna direita",
+                    ),
+                  ]),
+
+                  _buildFormCard(
+                    title: "Notas e Imagens",
+                    children: [
+                      TextFormField(
+                        controller: _notesController,
+                        style: GoogleFonts.outfit(color: Colors.white),
+                        decoration: _buildDecoration(
+                          label: 'Notas / Observações',
+                          icon: Icons.note_alt_outlined,
+                        ),
+                        maxLines: 3,
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'GALERIA DE IMAGENS',
+                        style: GoogleFonts.outfit(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[500],
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (_imagePaths.isNotEmpty)
+                        Container(
+                          height: 120,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _imagePaths.length,
+                            separatorBuilder: (ctx, i) =>
+                                const SizedBox(width: 12),
+                            itemBuilder: (context, index) {
+                              return Stack(
+                                children: [
+                                  Container(
+                                    width: 120,
+                                    height: 120,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: Colors.white.withOpacity(0.05),
+                                      ),
+                                      image: DecorationImage(
+                                        image: FileImage(
+                                          File(_imagePaths[index]),
+                                        ),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 6,
+                                    right: 6,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _imagePaths.removeAt(index);
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.red,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                          size: 14,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            await AppModals.showAppModal(
+                              context: context,
+                              title: 'Selecionar Imagem',
+                              child: const ImageSourceSheet(showLibrary: false),
+                            ).then((files) {
+                              if (files != null && files is List<File>) {
+                                setState(() {
+                                  _imagePaths.addAll(files.map((e) => e.path));
+                                });
+                              }
+                            });
+                          },
+                          icon: const Icon(Icons.add_a_photo_outlined),
+                          label: Text(
+                            'ADICIONAR FOTO',
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            foregroundColor: AppColors.primary,
+                            side: BorderSide(
+                              color: AppColors.primary.withOpacity(0.3),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => _selectDate(context),
-                        child: AbsorbPointer(
-                          child: TextFormField(
-                            controller: _dateController,
-                            decoration: const InputDecoration(
-                              labelText: 'Data',
-                              prefixIcon: Icon(
-                                Icons.calendar_today,
-                                color: AppColors.primary,
-                              ),
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _weightController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        decoration: const InputDecoration(
-                          labelText: 'Peso (kg)',
-                          prefixIcon: Icon(
-                            Icons.fitness_center,
-                            color: AppColors.primary,
-                          ),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) =>
-                            value == null || value.isEmpty ? '?' : null,
-                      ),
-                    ),
-                  ],
-                ),
+    );
+  }
+
+  Widget _buildExpansionCard(String title, List<Widget> children) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
+        ),
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            title: Text(
+              title.toUpperCase(),
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+                letterSpacing: 1.2,
               ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
-                ),
-                child: TextFormField(
-                  controller: _reportUrlController,
-                  decoration: InputDecoration(
-                    labelText: 'Link do Relatório (Bioimpedância)',
-                    hintText: 'Cole o link...',
-                    prefixIcon: const Icon(
-                      Icons.link,
-                      color: AppColors.primary,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.paste, color: AppColors.primary),
-                      onPressed: () async {
-                        final data = await Clipboard.getData(
-                          Clipboard.kTextPlain,
-                        );
-                        if (data?.text != null) {
-                          setState(() {
-                            _reportUrlController.text = data!.text!;
-                          });
-                        }
-                      },
-                      tooltip: 'Colar Link',
-                    ),
-                    border: const OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.url,
-                ),
-              ),
-
-              if (_currentBMI > 0)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: BMIGauge(bmiValue: _currentBMI),
-                ),
-
-              const SizedBox(height: 20),
-
-              // Body Selector Area
-              SizedBox(
-                height: 500,
-                width: double.infinity,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: BodyPartSelector(
-                        bodyParts: _filledParts,
-                        onSelectionUpdated: _onBodyPartsSelected,
-                        side: _selectedSide,
-                        mirrored: false,
-                        selectedColor: AppColors.primary,
-                        unselectedColor: Colors.grey.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    Positioned(
-                      right: 20,
-                      bottom: 20,
-                      child: FloatingActionButton.small(
-                        backgroundColor: Colors.grey.shade800,
-                        child: Icon(
-                          _selectedSide == BodySide.front
-                              ? Icons.flip_camera_android
-                              : Icons.accessibility_new,
-                          color: AppColors.primary,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _selectedSide = _selectedSide == BodySide.front
-                                ? BodySide.back
-                                : BodySide.front;
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              ExpansionTile(
-                title: const Text(
-                  "Grupo 1: Medidas de Fita",
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                initiallyExpanded: false,
-                children: [
-                  _buildSummaryLine(
-                    "Peitoral",
-                    _chestController,
-                    "Medida na linha dos mamilos",
-                  ),
-                  _buildSummaryLine(
-                    "Cintura",
-                    _waistController,
-                    "Medida na altura do umbigo",
-                  ),
-                  _buildSummaryLine(
-                    "Quadril",
-                    _hipsController,
-                    "Maior circunferência dos glúteos",
-                  ),
-                  _buildSummaryLine(
-                    "Bíceps (Dir.)",
-                    _bicepsRightController,
-                    "Braço direito relaxado",
-                  ),
-                  _buildSummaryLine(
-                    "Bíceps (Esq.)",
-                    _bicepsLeftController,
-                    "Braço esquerdo relaxado",
-                  ),
-                  _buildSummaryLine(
-                    "Coxa (Dir.)",
-                    _thighRightController,
-                    "Coxa direita (parte mais larga)",
-                  ),
-                  _buildSummaryLine(
-                    "Coxa (Esq.)",
-                    _thighLeftController,
-                    "Coxa esquerda (parte mais larga)",
-                  ),
-                  _buildSummaryLine(
-                    "Panturrilha (Dir.)",
-                    _calvesRightController,
-                    "Panturrilha direita (maior circunferência)",
-                  ),
-                  _buildSummaryLine(
-                    "Panturrilha (Esq.)",
-                    _calvesLeftController,
-                    "Panturrilha esquerda (maior circunferência)",
-                  ),
-                  _buildSummaryLine(
-                    "Pescoço",
-                    _neckController,
-                    "Circunferência do pescoço (meio)",
-                  ),
-                  _buildSummaryLine(
-                    "Ombros",
-                    _shouldersController,
-                    "Circunferência total dos ombros",
-                  ),
-                  _buildSummaryLine(
-                    "Antebraço (Dir.)",
-                    _forearmRightController,
-                    "Antebraço direito (parte mais larga)",
-                  ),
-                  _buildSummaryLine(
-                    "Antebraço (Esq.)",
-                    _forearmLeftController,
-                    "Antebraço esquerdo (parte mais larga)",
-                  ),
-                ],
-              ),
-
-              ExpansionTile(
-                title: const Text(
-                  "Grupo 2: Bioimpedância (Core)",
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                initiallyExpanded: false,
-                children: [
-                  _buildSummaryLine(
-                    "Relação de gordura (%)",
-                    _fatPercentageController,
-                    "Percentual de gordura corporal",
-                  ),
-                  _buildSummaryLine(
-                    "Massa gorda (kg)",
-                    _fatMassKgController,
-                    "Peso total de gordura",
-                  ),
-                  _buildSummaryLine(
-                    "Massa muscular (kg)",
-                    _muscleMassKgController,
-                    "Peso total de massa muscular",
-                  ),
-                  _buildSummaryLine(
-                    "Gordura visceral",
-                    _visceralFatController,
-                    "Nível de gordura visceral",
-                    isInteger: true,
-                  ),
-                  _buildSummaryLine(
-                    "BMR (Kcal)",
-                    _bmrController,
-                    "Taxa Metabólica Basal",
-                    isInteger: true,
-                  ),
-                  _buildSummaryLine(
-                    "Relação água (%)",
-                    _waterPercentageController,
-                    "Percentual de água corporal",
-                  ),
-                  _buildSummaryLine(
-                    "Idade do corpo",
-                    _bodyAgeController,
-                    "Idade metabólica estimada",
-                    isInteger: true,
-                  ),
-                ],
-              ),
-
-              ExpansionTile(
-                title: const Text(
-                  "Grupo 3: Bioimpedância (Segmentada)",
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                initiallyExpanded: false,
-                children: [
-                  _buildSummaryLine(
-                    "Relação gordura subcutânea (%)",
-                    _subcutaneousFatController,
-                    "Gordura sob a pele",
-                  ),
-                  _buildSummaryLine(
-                    "Massa musc. Braço (Esq.)",
-                    _muscleLeftArmController,
-                    "Kg de músculo no braço esquerdo",
-                  ),
-                  _buildSummaryLine(
-                    "Massa musc. Braço (Dir.)",
-                    _muscleRightArmController,
-                    "Kg de músculo no braço direito",
-                  ),
-                  _buildSummaryLine(
-                    "Massa musc. Perna (Esq.)",
-                    _muscleLeftLegController,
-                    "Kg de músculo na perna esquerda",
-                  ),
-                  _buildSummaryLine(
-                    "Massa musc. Perna (Dir.)",
-                    _muscleRightLegController,
-                    "Kg de músculo na perna direita",
-                  ),
-                ],
-              ),
-
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: TextFormField(
-                  controller: _notesController,
-                  decoration: const InputDecoration(
-                    labelText: 'Notas / Observações',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 2,
-                ),
-              ),
-
-              const SizedBox(height: 24),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  children: [
-                    Text(
-                      'Imagens',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              const SizedBox(height: 8),
-              if (_imagePaths.isNotEmpty)
-                SizedBox(
-                  height: 120,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _imagePaths.length,
-                    itemBuilder: (context, index) {
-                      return Stack(
-                        alignment: Alignment.topRight,
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.only(right: 8),
-                            width: 120,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              image: DecorationImage(
-                                image: FileImage(File(_imagePaths[index])),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.remove_circle,
-                              color: Colors.red,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _imagePaths.removeAt(index);
-                              });
-                            },
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              const SizedBox(height: 8),
-              Center(
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    await AppModals.showAppModal(
-                      context: context,
-                      title: 'Selecionar Imagem',
-                      child: const ImageSourceSheet(showLibrary: false),
-                    ).then((files) {
-                      if (files != null && files is List<File>) {
-                        setState(() {
-                          _imagePaths.addAll(files.map((e) => e.path));
-                        });
-                      }
-                    });
-                  },
-                  icon: const Icon(Icons.add_a_photo),
-                  label: const Text('Adicionar Foto'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 32,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 40),
-            ],
+            ),
+            iconColor: AppColors.primary,
+            collapsedIconColor: Colors.grey[500],
+            childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            children: children,
           ),
         ),
       ),
@@ -987,49 +1124,76 @@ class _BodyMeasurementEntryPageState
     bool isInteger = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
           Expanded(
-            flex: 2,
-            child: Row(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    label,
-                    style: const TextStyle(fontSize: 14, color: Colors.white70),
+                Text(
+                  label,
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(width: 4),
-                Tooltip(
-                  message: helpText,
-                  triggerMode: TooltipTriggerMode.tap,
-                  child: Icon(
-                    Icons.info_outline,
-                    size: 16,
-                    color: Colors.grey.shade600,
+                if (helpText.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      helpText,
+                      style: GoogleFonts.outfit(
+                        fontSize: 11,
+                        color: Colors.grey[500],
+                      ),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
           const SizedBox(width: 16),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: TextFormField(
               controller: controller,
+              style: GoogleFonts.outfit(
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
               keyboardType: TextInputType.numberWithOptions(
                 decimal: !isInteger,
               ),
               textAlign: TextAlign.end,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 8,
+                hintText: '0.0',
+                hintStyle: GoogleFonts.outfit(color: Colors.grey[800]),
+                suffixText: label.contains('%') ? '%' : (isInteger ? '' : 'kg'),
+                suffixStyle: GoogleFonts.outfit(
+                  color: Colors.grey[600],
+                  fontSize: 12,
                 ),
-                border: UnderlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 12,
+                ),
+                filled: true,
+                fillColor: Colors.black.withOpacity(0.3),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: AppColors.primary,
+                    width: 1,
+                  ),
+                ),
               ),
             ),
           ),

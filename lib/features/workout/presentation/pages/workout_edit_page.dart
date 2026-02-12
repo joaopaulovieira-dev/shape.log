@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../domain/entities/workout.dart';
@@ -155,194 +156,489 @@ class _WorkoutEditPageState extends ConsumerState<WorkoutEditPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.workoutId == null ? 'Novo Treino' : 'Editar Treino'),
-        actions: [
-          if (widget.workoutId != null)
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: _delete,
-            ),
-          IconButton(icon: const Icon(Icons.check), onPressed: _save),
-        ],
-      ),
+      backgroundColor: Colors.black,
       body: Form(
         key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Card(
+        child: CustomScrollView(
+          slivers: [
+            // 1. Premium Header
+            SliverAppBar(
+              expandedHeight: 120.0,
+              floating: true,
+              pinned: true,
+              backgroundColor: AppColors.background,
+              iconTheme: const IconThemeData(color: Colors.white),
+              flexibleSpace: FlexibleSpaceBar(
+                centerTitle: true,
+                titlePadding: const EdgeInsets.only(bottom: 16),
+                title: Text(
+                  widget.workoutId == null ? 'Novo Treino' : 'Editar Treino',
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                background: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primary.withOpacity(0.1),
+                        AppColors.background,
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                ),
+              ),
+              actions: [
+                if (widget.workoutId != null)
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    onPressed: _delete,
+                  ),
+                IconButton(
+                  icon: const Icon(Icons.check, color: Colors.white),
+                  onPressed: _save,
+                ),
+              ],
+            ),
+
+            // 2. Base Info Section
+            SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nome do Treino (ex: Treino A - Peito)',
-                        border: OutlineInputBorder(),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E1E1E),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.05),
+                        ),
                       ),
-                      validator: (v) => v!.isEmpty ? 'Informe um nome' : null,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _durationController,
-                      decoration: const InputDecoration(
-                        labelText: 'Meta de Duração (min)',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Dias Agendados:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: List.generate(7, (index) {
-                        final dayNum = index + 1;
-                        final isSelected = _scheduledDays.contains(dayNum);
-                        // Using a fixed date to get weekday names
-                        final dayName = DateFormat.E('pt_BR').format(
-                          DateTime(2024, 1, 1).add(Duration(days: index)),
-                        );
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "IDENTIFICAÇÃO",
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[500],
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _nameController,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              labelText: 'Nome do Treino (ex: Treino A)',
+                              labelStyle: TextStyle(color: Colors.grey[400]),
+                              hintText: 'Digite o nome do treino...',
+                              hintStyle: TextStyle(color: Colors.grey[700]),
+                              prefixIcon: const Icon(
+                                Icons.edit_note,
+                                color: AppColors.primary,
+                              ),
+                              filled: true,
+                              fillColor: Colors.black26,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: const BorderSide(
+                                  color: AppColors.primary,
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                            validator: (v) =>
+                                v!.isEmpty ? 'Informe um nome' : null,
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _durationController,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              labelText: 'Meta de Duração (minutos)',
+                              labelStyle: TextStyle(color: Colors.grey[400]),
+                              prefixIcon: const Icon(
+                                Icons.timer_outlined,
+                                color: AppColors.primary,
+                              ),
+                              filled: true,
+                              fillColor: Colors.black26,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                          const SizedBox(height: 24),
+                          Text(
+                            "AGENDAMENTO",
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[500],
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: List.generate(7, (index) {
+                              final dayNum = index + 1;
+                              final isSelected = _scheduledDays.contains(
+                                dayNum,
+                              );
+                              final dayName = DateFormat.E('pt_BR').format(
+                                DateTime(2024, 1, 1).add(Duration(days: index)),
+                              );
 
-                        return FilterChip(
-                          label: Text(dayName),
-                          selected: isSelected,
-                          onSelected: (selected) {
-                            setState(() {
-                              if (selected) {
-                                _scheduledDays.add(dayNum);
-                              } else {
-                                _scheduledDays.remove(dayNum);
+                              return FilterChip(
+                                label: Text(dayName),
+                                selected: isSelected,
+                                selectedColor: AppColors.primary,
+                                checkmarkColor: Colors.black,
+                                labelStyle: TextStyle(
+                                  color: isSelected
+                                      ? Colors.black
+                                      : Colors.white70,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
+                                backgroundColor: Colors.white.withOpacity(0.05),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : Colors.white.withOpacity(0.1),
+                                  ),
+                                ),
+                                onSelected: (selected) {
+                                  setState(() {
+                                    if (selected) {
+                                      _scheduledDays.add(dayNum);
+                                    } else {
+                                      _scheduledDays.remove(dayNum);
+                                    }
+                                  });
+                                },
+                              );
+                            }),
+                          ),
+                          const SizedBox(height: 16),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.event_available,
+                                color: AppColors.primary,
+                                size: 20,
+                              ),
+                            ),
+                            title: const Text(
+                              'Validade do Treino',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              _expiryDate == null
+                                  ? 'Não definida'
+                                  : DateFormat(
+                                      'dd/MM/yyyy',
+                                    ).format(_expiryDate!),
+                              style: TextStyle(color: Colors.grey[400]),
+                            ),
+                            trailing: Icon(
+                              Icons.calendar_today_outlined,
+                              size: 18,
+                              color: Colors.grey[600],
+                            ),
+                            onTap: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: _expiryDate ?? DateTime.now(),
+                                firstDate: DateTime(2000),
+                                lastDate: DateTime(2100),
+                                builder: (context, child) {
+                                  return Theme(
+                                    data: Theme.of(context).copyWith(
+                                      colorScheme: const ColorScheme.dark(
+                                        primary: AppColors.primary,
+                                        onPrimary: Colors.black,
+                                        surface: Color(0xFF1E1E1E),
+                                      ),
+                                    ),
+                                    child: child!,
+                                  );
+                                },
+                              );
+                              if (picked != null) {
+                                setState(() {
+                                  _expiryDate = picked;
+                                });
                               }
-                            });
-                          },
-                        );
-                      }),
-                    ),
-                    const Divider(),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.event_available),
-                      title: const Text('Data de Validade'),
-                      subtitle: Text(
-                        _expiryDate == null
-                            ? 'Não definida'
-                            : DateFormat('dd/MM/yyyy').format(_expiryDate!),
+                            },
+                          ),
+                        ],
                       ),
-                      trailing: const Icon(Icons.calendar_today, size: 20),
-                      onTap: () async {
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: _expiryDate ?? DateTime.now(),
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime(2100),
-                        );
-                        if (picked != null) {
-                          setState(() {
-                            _expiryDate = picked;
-                          });
-                        }
-                      },
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'Exercícios',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            if (_exercises.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Center(child: Text('Nenhum exercício adicionado.')),
+
+            // 3. Exercises Section Header
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "EXERCÍCIOS (${_exercises.length})",
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[500],
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: _addExercise,
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text("ADICIONAR"),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ..._exercises.asMap().entries.map((entry) {
-              final i = entry.key;
-              final ex = entry.value;
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  title: Text.rich(
-                    TextSpan(
+            ),
+
+            // 4. Exercise List
+            if (_exercises.isEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Container(
+                    padding: const EdgeInsets.all(32),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E1E),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Colors.white.withOpacity(0.05)),
+                    ),
+                    child: Column(
                       children: [
-                        if (ex.equipmentNumber != null &&
-                            ex.equipmentNumber!.isNotEmpty)
-                          TextSpan(
-                            text: '#${ex.equipmentNumber} ',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        TextSpan(text: ex.name),
+                        Icon(
+                          Icons.fitness_center_outlined,
+                          size: 48,
+                          color: Colors.grey[800],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          "Nenhum exercício ainda.\nToque em ADICIONAR para começar.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
                       ],
                     ),
                   ),
-                  subtitle: Column(
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final ex = _exercises[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E1E1E),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.05),
+                        ),
+                      ),
+                      child: ListTile(
+                        onTap: () => _editExercise(index),
+                        contentPadding: const EdgeInsets.all(16),
+                        title: Text.rich(
+                          TextSpan(
+                            children: [
+                              if (ex.equipmentNumber != null &&
+                                  ex.equipmentNumber!.isNotEmpty)
+                                TextSpan(
+                                  text: '#${ex.equipmentNumber} ',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              TextSpan(
+                                text: ex.name,
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.repeat,
+                                    size: 14,
+                                    color: Colors.grey[500],
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      ex.type == ExerciseTypeEntity.cardio
+                                          ? '${ex.cardioDurationMinutes?.toInt() ?? 0} min • ${ex.cardioIntensity ?? "Médio"}'
+                                          : '${ex.sets} séries x ${ex.reps} reps',
+                                      style: TextStyle(color: Colors.grey[400]),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  if (ex.type != ExerciseTypeEntity.cardio) ...[
+                                    Icon(
+                                      Icons.fitness_center,
+                                      size: 14,
+                                      color: Colors.grey[500],
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${ex.weight} kg',
+                                      style: TextStyle(color: Colors.grey[400]),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              if (ex.technique != null &&
+                                  ex.technique!.isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    ex.technique!,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(
+                            Icons.remove_circle_outline,
+                            color: Colors.redAccent,
+                            size: 20,
+                          ),
+                          onPressed: () =>
+                              setState(() => _exercises.removeAt(index)),
+                        ),
+                      ),
+                    );
+                  }, childCount: _exercises.length),
+                ),
+              ),
+
+            // 5. Notes Section
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E1E1E),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.white.withOpacity(0.05)),
+                  ),
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        ex.type == ExerciseTypeEntity.cardio
-                            ? '${ex.cardioDurationMinutes?.toInt() ?? 0} min • ${ex.cardioIntensity ?? "Normal"} • ${ex.restTimeSeconds}s desc'
-                            : '${ex.sets} x ${ex.reps} - ${ex.weight}kg',
+                        "OBSERVAÇÕES",
+                        style: GoogleFonts.outfit(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[500],
+                          letterSpacing: 1.2,
+                        ),
                       ),
-                      if (ex.youtubeUrl != null)
-                        Text(
-                          'YouTube: Sim',
-                          style: TextStyle(
-                            color: Colors.red[700],
-                            fontSize: 12,
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _notesController,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                        maxLines: 4,
+                        decoration: InputDecoration(
+                          hintText: 'Digite observações adicionais ou foco...',
+                          hintStyle: TextStyle(
+                            color: Colors.grey[700],
+                            fontSize: 14,
+                          ),
+                          filled: true,
+                          fillColor: Colors.black26,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
                           ),
                         ),
-                      if (ex.imagePaths.isNotEmpty)
-                        Text(
-                          'Imagens: ${ex.imagePaths.length}',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      if (ex.technique != null && ex.technique!.isNotEmpty)
-                        Text(
-                          'Técnica: ${ex.technique}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontStyle: FontStyle.italic,
-                            color: AppColors.primary,
-                          ),
-                        ),
+                      ),
                     ],
                   ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.close, color: Colors.red),
-                    onPressed: () => setState(() => _exercises.removeAt(i)),
-                  ),
-                  onTap: () => _editExercise(i),
                 ),
-              );
-            }),
-            ElevatedButton.icon(
-              onPressed: _addExercise,
-              icon: const Icon(Icons.add),
-              label: const Text('Adicionar Exercício'),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _notesController,
-              decoration: const InputDecoration(
-                labelText: 'Observações (opcional)',
-                border: OutlineInputBorder(),
               ),
-              maxLines: 3,
             ),
+
+            // Bottom Spacing
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
           ],
         ),
       ),

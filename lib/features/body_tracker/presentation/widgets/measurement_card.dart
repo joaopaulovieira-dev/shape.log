@@ -4,13 +4,13 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../common/presentation/widgets/full_screen_image_viewer.dart';
-import '../../../common/presentation/widgets/glass_container.dart';
 import '../../domain/entities/body_measurement.dart';
 import '../utils/bmi_utils.dart';
 import 'bmi_gauge_bar.dart';
 import 'trend_badge.dart';
 import 'package:flutter/services.dart';
 import '../utils/body_tracker_formatter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class MeasurementCard extends StatelessWidget {
   final BodyMeasurement measurement;
@@ -42,29 +42,29 @@ class MeasurementCard extends StatelessWidget {
       bmi = measurement.bmi;
     }
 
-    return GlassContainer(
+    return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(0), // Inner padding handled by contents
-      color: AppColors.surface.withOpacity(0.8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          // 1. Radar/Status Line (Projected)
+          // 1. Radar/Status Line (Subtle Gradient Header)
           _buildRadarHeader(),
 
           // 2. Main Content (Summary)
           InkWell(
             onTap: onExpand,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
-            ),
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(20.0),
               child: Column(
                 children: [
                   // Date & Options
                   _buildDateAndOptionsRow(context),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
                   // Split View: Weight | BMI
                   Row(
@@ -74,42 +74,43 @@ class MeasurementCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               "PESO",
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
+                              style: GoogleFonts.outfit(
+                                color: Colors.grey[500],
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
+                                letterSpacing: 1.2,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 8),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
                                   measurement.weight.toStringAsFixed(1),
-                                  style: const TextStyle(
-                                    fontSize: 32,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 34,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                     height: 1,
                                   ),
                                 ),
                                 const SizedBox(width: 4),
-                                const Padding(
-                                  padding: EdgeInsets.only(bottom: 4),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 4),
                                   child: Text(
                                     "kg",
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary,
+                                    style: GoogleFonts.outfit(
+                                      color: Colors.grey[600],
                                       fontSize: 14,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 8),
                             TrendBadge(
                               value: measurement.weight,
                               previousValue: previousMeasurement?.weight,
@@ -124,44 +125,44 @@ class MeasurementCard extends StatelessWidget {
                       Container(
                         width: 1,
                         height: 50,
-                        color: Colors.white.withOpacity(0.1),
+                        margin: const EdgeInsets.symmetric(horizontal: 20),
+                        color: Colors.white.withOpacity(0.05),
                       ),
-                      const SizedBox(width: 16),
 
                       // BMI Side
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               "IMC",
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
+                              style: GoogleFonts.outfit(
+                                color: Colors.grey[500],
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
+                                letterSpacing: 1.2,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 8),
                             if (bmi != null) ...[
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
                                     bmi.toStringAsFixed(1),
-                                    style: const TextStyle(
-                                      fontSize: 24,
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 26,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                       height: 1,
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(width: 6),
                                   Padding(
                                     padding: const EdgeInsets.only(bottom: 2),
                                     child: Text(
                                       BMIUtils.getBMIGrade(bmi),
-                                      style: TextStyle(
+                                      style: GoogleFonts.outfit(
                                         color: BMIUtils.getBMIColor(bmi),
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
@@ -170,13 +171,13 @@ class MeasurementCard extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 12),
                               BmiGaugeBar(bmi: bmi),
                             ] else
-                              const Text(
+                              Text(
                                 "-",
-                                style: TextStyle(
-                                  color: Colors.white,
+                                style: GoogleFonts.outfit(
+                                  color: Colors.grey[800],
                                   fontSize: 24,
                                 ),
                               ),
@@ -194,23 +195,18 @@ class MeasurementCard extends StatelessWidget {
           if (isExpanded) _buildExpandedDetails(context),
 
           // Expand Toggle Indicator
-          GestureDetector(
+          InkWell(
             onTap: onExpand,
             child: Container(
               width: double.infinity,
-              height: 24,
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.2),
-                border: const Border(
-                  top: BorderSide(color: Colors.transparent),
-                ), // Clean look
-              ),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(color: Colors.white.withOpacity(0.02)),
               child: Icon(
                 isExpanded
                     ? Icons.keyboard_arrow_up
                     : Icons.keyboard_arrow_down,
-                color: Colors.white.withOpacity(0.3),
-                size: 16,
+                color: Colors.grey[700],
+                size: 20,
               ),
             ),
           ),
@@ -224,14 +220,14 @@ class MeasurementCard extends StatelessWidget {
     // Logic: Fat (Left), Muscle (Center), Weight (Right) status.
     // For now, static gradient or simple logic.
     return Container(
-      height: 4,
+      height: 3,
       width: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Colors.blue, // Fat
-            AppColors.primary, // Muscle
-            Colors.orange, // Weight
+            AppColors.primary.withOpacity(0.5),
+            AppColors.primary,
+            AppColors.primary.withOpacity(0.5),
           ],
         ),
       ),
@@ -245,19 +241,20 @@ class MeasurementCard extends StatelessWidget {
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(4),
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 DateFormat(
                   'dd MMM yyyy',
                 ).format(measurement.date).toUpperCase(),
-                style: const TextStyle(
+                style: GoogleFonts.outfit(
                   color: AppColors.primary,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
                 ),
               ),
             ),
@@ -289,7 +286,7 @@ class MeasurementCard extends StatelessWidget {
                       width: 1,
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
                       Icon(
                         Icons
@@ -300,10 +297,11 @@ class MeasurementCard extends StatelessWidget {
                       SizedBox(width: 4),
                       Text(
                         "VER EXAME",
-                        style: TextStyle(
+                        style: GoogleFonts.outfit(
                           color: AppColors.neonBlue,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ],
@@ -357,7 +355,7 @@ class MeasurementCard extends StatelessWidget {
                 value: 'delete',
                 child: Text(
                   "Excluir",
-                  style: TextStyle(color: AppColors.error),
+                  style: TextStyle(color: Colors.redAccent),
                 ),
               ),
             ],
@@ -369,8 +367,8 @@ class MeasurementCard extends StatelessWidget {
 
   Widget _buildExpandedDetails(BuildContext context) {
     return Container(
-      color: Colors.black.withOpacity(0.2),
-      padding: const EdgeInsets.all(16),
+      color: Colors.black.withOpacity(0.35),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -422,13 +420,16 @@ class MeasurementCard extends StatelessWidget {
               measurement.muscleMassKg != null) ...[
             _buildSectionTitle("BIOIMPEDÂNCIA (CORE)", Icons.flash_on),
             const SizedBox(height: 12),
-            GlassContainer(
-              color: AppColors.neonBlue.withOpacity(0.05),
-              border: Border.all(color: AppColors.neonBlue.withOpacity(0.2)),
-              padding: const EdgeInsets.all(12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.25),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.neonBlue.withOpacity(0.1)),
+              ),
               child: Wrap(
                 spacing: 24,
-                runSpacing: 16,
+                runSpacing: 20,
                 children: [
                   if (measurement.fatPercentage != null)
                     _buildDetailItem(
@@ -643,20 +644,23 @@ class MeasurementCard extends StatelessWidget {
   }
 
   Widget _buildSectionTitle(String title, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: AppColors.primary),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(
-            color: AppColors.primary,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: AppColors.primary),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: GoogleFonts.outfit(
+              color: AppColors.primary,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -678,10 +682,7 @@ class MeasurementCard extends StatelessWidget {
           children: [
             Text(
               label,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-              ),
+              style: GoogleFonts.outfit(color: Colors.grey[500], fontSize: 11),
             ),
             if (isHighlighted)
               const Padding(
@@ -690,20 +691,20 @@ class MeasurementCard extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 4),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               displayValue,
-              style: TextStyle(
+              style: GoogleFonts.outfit(
                 color: Colors.white,
-                fontSize: 16,
-                fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w500,
+                fontSize: 17,
+                fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w600,
               ),
             ),
             if (prev != null) ...[
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               TrendBadge(
                 value: value,
                 previousValue: prev,
@@ -721,12 +722,17 @@ class MeasurementCard extends StatelessWidget {
     if (value == null) return const SizedBox.shrink();
     return Column(
       children: [
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 10)),
+        Text(
+          label,
+          style: GoogleFonts.outfit(color: Colors.grey[600], fontSize: 10),
+        ),
+        const SizedBox(height: 2),
         Text(
           "${value.toStringAsFixed(1)} kg",
-          style: const TextStyle(
+          style: GoogleFonts.outfit(
             color: Colors.white,
             fontWeight: FontWeight.bold,
+            fontSize: 14,
           ),
         ),
         TrendBadge(value: value, previousValue: prev, lowerIsBetter: false),
@@ -741,26 +747,38 @@ class MeasurementCard extends StatelessWidget {
     bool lowerIsBetter = true,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.white.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.02)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 10)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: GoogleFonts.outfit(color: Colors.grey[600], fontSize: 10),
+            ),
+          ),
           const SizedBox(height: 2),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                "${value.toStringAsFixed(1)} cm",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    "${value.toStringAsFixed(1)} cm",
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
               TrendBadge(

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
 import 'package:shape_log/features/profile/domain/entities/user_profile.dart';
+import 'package:shape_log/features/profile/domain/enums/gender.dart';
 import 'dart:io';
 
 // 1. Profile Hero Card
@@ -102,16 +103,30 @@ class ProfileHeroCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      userProfile != null
-                          ? "${userProfile!.age} ANOS • ${userProfile!.height}m"
-                          : "CONFIGURE SEU PERFIL",
-                      style: GoogleFonts.robotoMono(
-                        color: Colors.grey[400],
-                        fontSize: 12,
-                        letterSpacing: 1.0,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          userProfile != null
+                              ? "${userProfile!.age} ANOS • ${userProfile!.height}m"
+                              : "CONFIGURE SEU PERFIL",
+                          style: GoogleFonts.robotoMono(
+                            color: Colors.grey[400],
+                            fontSize: 12,
+                            letterSpacing: 1.0,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        if (userProfile != null) ...[
+                          const SizedBox(width: 6),
+                          Icon(
+                            userProfile!.gender == Gender.male
+                                ? Icons.male
+                                : Icons.female,
+                            color: AppColors.primary.withValues(alpha: 0.7),
+                            size: 14,
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 8),
                     // Badge Chip

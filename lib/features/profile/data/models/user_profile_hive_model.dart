@@ -2,6 +2,7 @@ import 'package:hive/hive.dart';
 import '../../domain/entities/user_profile.dart';
 import '../../domain/enums/activity_level.dart';
 import '../../domain/enums/diet_type.dart';
+import '../../domain/enums/gender.dart';
 
 part 'user_profile_hive_model.g.dart';
 
@@ -31,6 +32,9 @@ class UserProfileHiveModel extends HiveObject {
   @HiveField(7)
   final String? profilePicturePath;
 
+  @HiveField(8)
+  final String gender; // male, female
+
   UserProfileHiveModel({
     required this.name,
     required this.age,
@@ -39,6 +43,7 @@ class UserProfileHiveModel extends HiveObject {
     required this.activityLevel,
     required this.limitations,
     required this.dietType,
+    required this.gender,
     this.profilePicturePath,
   });
 
@@ -52,6 +57,7 @@ class UserProfileHiveModel extends HiveObject {
       activityLevel: entity.activityLevel.name,
       limitations: entity.limitations,
       dietType: entity.dietType.name,
+      gender: entity.gender.name,
       profilePicturePath: entity.profilePicturePath,
     );
   }
@@ -72,6 +78,10 @@ class UserProfileHiveModel extends HiveObject {
         (e) => e.name == dietType,
         orElse: () => DietType.maintenance,
       ),
+      gender: Gender.values.firstWhere(
+        (e) => e.name == gender,
+        orElse: () => Gender.male,
+      ),
       profilePicturePath: profilePicturePath,
     );
   }
@@ -85,6 +95,7 @@ class UserProfileHiveModel extends HiveObject {
       'activityLevel': activityLevel,
       'limitations': limitations,
       'dietType': dietType,
+      'gender': gender,
       'profilePicturePath': profilePicturePath,
     };
   }
@@ -98,6 +109,7 @@ class UserProfileHiveModel extends HiveObject {
       activityLevel: map['activityLevel'] ?? 'moderate',
       limitations: List<String>.from(map['limitations'] ?? []),
       dietType: map['dietType'] ?? 'maintenance',
+      gender: map['gender'] ?? 'male',
       profilePicturePath: map['profilePicturePath'],
     );
   }

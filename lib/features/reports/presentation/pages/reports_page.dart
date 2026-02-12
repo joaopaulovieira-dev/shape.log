@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/utils/snackbar_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,6 +22,8 @@ import '../../../common/presentation/widgets/full_screen_image_viewer.dart';
 import '../../../common/services/image_storage_service.dart';
 import '../../../../core/presentation/widgets/app_modals.dart';
 
+enum HubMode { analytics, logs }
+
 class ReportsPage extends ConsumerStatefulWidget {
   const ReportsPage({super.key});
 
@@ -28,62 +31,176 @@ class ReportsPage extends ConsumerStatefulWidget {
   ConsumerState<ReportsPage> createState() => _ReportsPageState();
 }
 
-class _ReportsPageState extends ConsumerState<ReportsPage>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _ReportsPageState extends ConsumerState<ReportsPage> {
+  HubMode _currentMode = HubMode.analytics;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Intelligence Hub'),
-        centerTitle: true,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: AppColors.primary,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: Colors.grey,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-          indicatorWeight: 3,
-          tabs: const [
-            Tab(icon: Icon(Icons.show_chart), text: 'Analytics'),
-            Tab(icon: Icon(Icons.history_edu), text: 'Logs & IA'),
-          ],
-        ),
-      ),
       body: ValueListenableBuilder<Box<WorkoutHistoryHiveModel>>(
         valueListenable: Hive.box<WorkoutHistoryHiveModel>(
           'history_log',
         ).listenable(),
         builder: (context, box, _) {
-          // Convert Hive models to Domain entities
           final historyList = box.values.map((e) => e.toEntity()).toList();
-
-          // Sort by date descending (newest first)
           historyList.sort(
             (a, b) => b.completedDate.compareTo(a.completedDate),
           );
 
-          return TabBarView(
-            controller: _tabController,
-            children: [
-              _AnalyticsTab(history: historyList),
-              _HistoryTab(history: historyList),
-            ],
+          return NestedScrollView(
+            headerSliverBuilder: (context, innerBoxIsScrolled) {
+              return [
+                SliverAppBar(
+                  expandedHeight: 120.0,
+                  floating: true,
+                  pinned: true,
+                  backgroundColor: AppColors.background,
+                  flexibleSpace: FlexibleSpaceBar(
+                    centerTitle: true,
+                    titlePadding: const EdgeInsets.only(bottom: 16),
+                    title: Text(
+                      'Intelligence Hub',
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    background: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primary.withValues(alpha: 0.1),
+                            AppColors.background,
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 8,
+                    ),
+                    child: _buildHubSelector(),
+                  ),
+                ),
+              ];
+            },
+            body: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: ScaleTransition(
+                    scale: Tween<double>(
+                      begin: 0.98,
+                      end: 1.0,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: _currentMode == HubMode.analytics
+                  ? _AnalyticsTab(
+                      key: const ValueKey('analytics'),
+                      history: historyList,
+                    )
+                  : _HistoryTab(
+                      key: const ValueKey('logs'),
+                      history: historyList,
+                    ),
+            ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildHubSelector() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Row(
+        children: [
+          _buildSelectorOption(
+            mode: HubMode.analytics,
+            label: 'ANALYTICS',
+            icon: Icons.auto_graph_rounded,
+          ),
+          _buildSelectorOption(
+            mode: HubMode.logs,
+            label: 'LOGS & IA',
+            icon: Icons.history_edu_rounded,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelectorOption({
+    required HubMode mode,
+    required String label,
+    required IconData icon,
+  }) {
+    final isSelected = _currentMode == mode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _currentMode = mode),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.2),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 16,
+                color: isSelected ? Colors.black : Colors.grey[600],
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                  color: isSelected ? Colors.black : Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -92,7 +209,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage>
 class _AnalyticsTab extends StatefulWidget {
   final List<WorkoutHistory> history;
 
-  const _AnalyticsTab({required this.history});
+  const _AnalyticsTab({super.key, required this.history});
 
   @override
   State<_AnalyticsTab> createState() => _AnalyticsTabState();
@@ -114,14 +231,20 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
     final filteredHistory = history.where((h) {
       if (_filterMode == 'all') return true;
       final diff = DateTime.now().difference(h.completedDate).inDays;
-      return diff <= 30;
+      if (_filterMode == '7_days') return diff <= 7;
+      if (_filterMode == '30_days') return diff <= 30;
+      if (_filterMode == '90_days') return diff <= 90;
+      return true;
     }).toList();
 
     if (filteredHistory.isEmpty && _filterMode != 'all') {
+      final label = _filterMode == '30_days'
+          ? '30 dias'
+          : (_filterMode == '90_days' ? '90 dias' : '7 dias');
       return Center(
         child: Text(
-          'Sem dados nos últimos 30 dias.',
-          style: TextStyle(color: Colors.grey),
+          'Sem dados nos últimos $label.',
+          style: const TextStyle(color: Colors.grey),
         ),
       );
     }
@@ -132,45 +255,73 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Filter Toggle
-          Center(
-            child: SegmentedButton<String>(
-              segments: const [
-                ButtonSegment<String>(
-                  value: '30_days',
-                  label: Text('30 Dias'),
-                  icon: Icon(Icons.calendar_view_month),
+          // Filter - Mirrored from Body Tracker
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
                 ),
-                ButtonSegment<String>(
-                  value: 'all',
-                  label: Text('Todo o Período'),
-                  icon: Icon(Icons.all_inclusive),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
                 ),
-              ],
-              selected: {_filterMode},
-              onSelectionChanged: (Set<String> newSelection) {
-                setState(() {
-                  _filterMode = newSelection.first;
-                });
-              },
-              style: ButtonStyle(
-                backgroundColor: WidgetStateProperty.resolveWith<Color>((
-                  Set<WidgetState> states,
-                ) {
-                  if (states.contains(WidgetState.selected)) {
-                    return AppColors.primary;
-                  }
-                  return AppColors.surface;
-                }),
-                foregroundColor: WidgetStateProperty.resolveWith<Color>((
-                  Set<WidgetState> states,
-                ) {
-                  if (states.contains(WidgetState.selected)) {
-                    return Colors.black;
-                  }
-                  return Colors.white;
-                }),
+                child: PopupMenuButton<String>(
+                  initialValue: _filterMode,
+                  onSelected: (value) => setState(() => _filterMode = value),
+                  offset: const Offset(0, 40),
+                  color: const Color(0xFF1E1E1E),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.filter_list,
+                        color: Colors.grey,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _filterMode == 'all'
+                            ? "Tudo"
+                            : (_filterMode == '30_days'
+                                  ? "30 Dias"
+                                  : (_filterMode == '90_days'
+                                        ? "90 Dias"
+                                        : "7 Dias")),
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.arrow_drop_down,
+                        color: Colors.grey,
+                        size: 16,
+                      ),
+                    ],
+                  ),
+                  itemBuilder: (context) => [
+                    _buildPopupItem('all', 'Tudo'),
+                    _buildPopupItem('90_days', 'Últimos 90 dias'),
+                    _buildPopupItem('30_days', 'Últimos 30 dias'),
+                    _buildPopupItem('7_days', 'Últimos 7 dias'),
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
           const SizedBox(height: 24),
 
@@ -184,6 +335,16 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
           BalancePieChart(history: filteredHistory),
           const SizedBox(height: 32),
         ],
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _buildPopupItem(String value, String label) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Text(
+        label,
+        style: GoogleFonts.outfit(color: Colors.white, fontSize: 14),
       ),
     );
   }
@@ -217,12 +378,10 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
 class _HistoryTab extends ConsumerWidget {
   final List<WorkoutHistory> history;
 
-  const _HistoryTab({required this.history});
+  const _HistoryTab({super.key, required this.history});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // No longer watching provider here, using passed history
-
     return Column(
       children: [
         Padding(
@@ -233,7 +392,6 @@ class _HistoryTab extends ConsumerWidget {
             child: FilledButton.icon(
               onPressed: () async {
                 try {
-                  // We can use the passed history directly
                   final measurements = ref.read(bodyTrackerProvider);
                   final user = await ref.read(userProfileProvider.future);
 
@@ -261,31 +419,50 @@ class _HistoryTab extends ConsumerWidget {
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary, // Neon Green
-                foregroundColor: Colors.black, // High Contrast
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.black,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                elevation: 4,
-                shadowColor: AppColors.primary.withValues(alpha: 0.4),
+                elevation: 0,
               ),
             ),
           ),
         ),
         Expanded(
           child: history.isEmpty
-              ? const Center(child: Text("Sem histórico."))
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.history, size: 64, color: Colors.grey[800]),
+                      const SizedBox(height: 16),
+                      Text(
+                        "Sem histórico de treinos.",
+                        style: GoogleFonts.outfit(
+                          color: Colors.grey[600],
+                          fontSize: 18,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
               : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   itemCount: history.length,
                   itemBuilder: (context, index) {
                     final h = history[index];
-                    return Card(
-                      elevation: 0, // Flat look on dark theme
-                      color: AppColors.surface,
+                    return Container(
                       margin: const EdgeInsets.only(bottom: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.05),
+                        ),
                       ),
                       child: InkWell(
                         onTap: () async {
@@ -297,15 +474,16 @@ class _HistoryTab extends ConsumerWidget {
                             ),
                           );
                         },
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(20),
                         child: Padding(
-                          padding: const EdgeInsets.all(12.0),
+                          padding: const EdgeInsets.all(20.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  // Workout Info
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
@@ -313,101 +491,142 @@ class _HistoryTab extends ConsumerWidget {
                                       children: [
                                         Text(
                                           h.workoutName,
-                                          style: const TextStyle(
+                                          style: GoogleFonts.outfit(
                                             fontWeight: FontWeight.bold,
                                             color: Colors.white,
-                                            fontSize: 16,
+                                            fontSize: 18,
                                           ),
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          '${DateFormat('dd/MM - HH:mm').format(h.completedDate)} • ${h.durationMinutes} min',
-                                          style: TextStyle(
-                                            color: Colors.grey[400],
-                                          ),
+                                        const SizedBox(height: 6),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.calendar_today,
+                                              size: 14,
+                                              color: Colors.grey[500],
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              DateFormat(
+                                                'dd/MM • HH:mm',
+                                              ).format(h.completedDate),
+                                              style: GoogleFonts.robotoMono(
+                                                color: Colors.grey[400],
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Icon(
+                                              Icons.timer_outlined,
+                                              size: 14,
+                                              color: Colors.grey[500],
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${h.durationMinutes} min',
+                                              style: GoogleFonts.robotoMono(
+                                                color: Colors.grey[400],
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
                                   ),
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.attach_file,
-                                          color: AppColors.primary,
-                                        ),
-                                        tooltip: 'Gerenciar Fotos',
-                                        onPressed: () {
-                                          AppModals.showAppModal(
-                                            context: context,
-                                            title: 'Galeria do Treino',
-                                            child: _PhotoManagerDialog(
-                                              history: h,
-                                            ),
-                                          );
-                                        },
+                                  // RPE Badge
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.white.withOpacity(0.1),
                                       ),
-                                      Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black,
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          _getRpeEmoji(h.rpe),
-                                          style: const TextStyle(fontSize: 20),
-                                        ),
-                                      ),
-                                      // Delete button REMOVED
-                                    ],
+                                    ),
+                                    child: Text(
+                                      _getRpeEmoji(h.rpe),
+                                      style: const TextStyle(fontSize: 20),
+                                    ),
                                   ),
                                 ],
                               ),
 
-                              // Thumbnails
-                              if (h.imagePaths.isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                SizedBox(
-                                  height: 60,
-                                  child: ListView.separated(
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount: h.imagePaths.length,
-                                    separatorBuilder: (c, i) =>
-                                        const SizedBox(width: 6),
-                                    itemBuilder: (c, i) {
-                                      return InkWell(
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  FullScreenImageViewer(
-                                                    imagePaths: h.imagePaths,
-                                                    initialIndex: i,
-                                                  ),
-                                            ),
-                                          );
-                                        },
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                          child: Image.file(
-                                            File(h.imagePaths[i]),
-                                            width: 60,
-                                            height: 60,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
+                              // Actions / Thumbnails
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  // Photo Manager Button
+                                  InkWell(
+                                    onTap: () {
+                                      AppModals.showAppModal(
+                                        context: context,
+                                        title: 'Galeria do Treino',
+                                        child: _PhotoManagerDialog(history: h),
                                       );
                                     },
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary.withOpacity(
+                                          0.1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        color: AppColors.primary,
+                                        size: 20,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 12),
+                                  // Thumbnails List
+                                  if (h.imagePaths.isNotEmpty)
+                                    Expanded(
+                                      child: SizedBox(
+                                        height: 40,
+                                        child: ListView.separated(
+                                          scrollDirection: Axis.horizontal,
+                                          itemCount: h.imagePaths.length,
+                                          separatorBuilder: (c, i) =>
+                                              const SizedBox(width: 8),
+                                          itemBuilder: (c, i) {
+                                            return InkWell(
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        FullScreenImageViewer(
+                                                          imagePaths:
+                                                              h.imagePaths,
+                                                          initialIndex: i,
+                                                        ),
+                                                  ),
+                                                );
+                                              },
+                                              child: ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                child: Image.file(
+                                                  File(h.imagePaths[i]),
+                                                  width: 40,
+                                                  height: 40,
+                                                  fit: BoxFit.cover,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ],
                           ),
                         ),

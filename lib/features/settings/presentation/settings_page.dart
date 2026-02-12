@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart'; // Add this import
 import '../../profile/presentation/providers/user_profile_provider.dart';
 import '../../body_tracker/presentation/providers/body_tracker_provider.dart';
 import '../../workout/presentation/providers/workout_provider.dart';
@@ -9,6 +10,7 @@ import '../data/services/backup_service.dart';
 import '../data/repositories/settings_repository.dart';
 import '../../image_library/presentation/image_library_settings_page.dart';
 import '../../../../core/utils/snackbar_utils.dart';
+import '../../../../core/constants/app_colors.dart'; // Add this import
 import 'widgets/settings_widgets.dart';
 import '../../../../core/presentation/widgets/app_dialogs.dart';
 
@@ -31,66 +33,109 @@ class SettingsPage extends ConsumerWidget {
     final lastBackup = settingsRepo.getLastBackupDate();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Central de Ajustes')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // 1. Profile Hero (ID Badge)
-          ProfileHeroCard(
-            userProfile: userProfile,
-            totalWorkouts: historyCount, // Badge based on experience (history)
-            onEditTap: () => context.push('/profile/edit'),
-          ),
-          const SizedBox(height: 24),
-
-          // 2. System Health (Stats)
-          SystemHealthCard(
-            workoutCount: workoutCount,
-            historyCount: historyCount,
-            measurementCount: measurementCount,
-          ),
-          const SizedBox(height: 24),
-
-          // 3. Data Vault (Backup)
-          DataVaultCard(
-            lastBackupDate: lastBackup,
-            onBackup: () => _handleBackup(context, ref),
-            onRestore: () => _handleRestore(context, ref),
-          ),
-          const SizedBox(height: 24),
-
-          // 4. General Settings Grid/List
-          const Text(
-            "PREFERÊNCIAS & SISTEMA",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-              fontSize: 12,
-              letterSpacing: 1.2,
+      backgroundColor: Colors.black, // Ensure background matches other screens
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 120.0,
+            floating: true,
+            pinned: true,
+            backgroundColor: AppColors.background,
+            flexibleSpace: FlexibleSpaceBar(
+              centerTitle: true,
+              titlePadding: const EdgeInsets.only(bottom: 16),
+              title: Text(
+                'Central de Ajustes',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary.withOpacity(0.1),
+                      AppColors.background,
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 12),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. Profile Hero (ID Badge)
+                  ProfileHeroCard(
+                    userProfile: userProfile,
+                    totalWorkouts:
+                        historyCount, // Badge based on experience (history)
+                    onEditTap: () => context.push('/profile/edit'),
+                  ),
+                  const SizedBox(height: 24),
 
-          SettingsMenuItem(
-            icon: Icons.photo_library,
-            title: 'Biblioteca de Ativos',
-            subtitle: 'Gerenciar imagens de equipamentos',
-            iconColor: Colors.purpleAccent,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ImageLibrarySettingsPage(),
-                ),
-              );
-            },
-          ),
-          SettingsMenuItem(
-            icon: Icons.info_outline,
-            title: 'Sobre',
-            subtitle: 'Versão 1.0.0 • Shape.log',
-            iconColor: Colors.tealAccent,
-            onTap: () => _showAboutDialog(context),
+                  // 2. System Health (Stats)
+                  SystemHealthCard(
+                    workoutCount: workoutCount,
+                    historyCount: historyCount,
+                    measurementCount: measurementCount,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // 3. Data Vault (Backup)
+                  DataVaultCard(
+                    lastBackupDate: lastBackup,
+                    onBackup: () => _handleBackup(context, ref),
+                    onRestore: () => _handleRestore(context, ref),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // 4. General Settings Grid/List
+                  const Text(
+                    "PREFERÊNCIAS & SISTEMA",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                      fontSize: 12,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  SettingsMenuItem(
+                    icon: Icons.photo_library,
+                    title: 'Biblioteca de Ativos',
+                    subtitle: 'Gerenciar imagens de equipamentos',
+                    iconColor: Colors.purpleAccent,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const ImageLibrarySettingsPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  SettingsMenuItem(
+                    icon: Icons.info_outline,
+                    title: 'Sobre',
+                    subtitle: 'Versão 1.0.0 • Shape.log',
+                    iconColor: Colors.tealAccent,
+                    onTap: () => _showAboutDialog(context),
+                  ),
+
+                  // Bottom padding for scrolling
+                  const SizedBox(height: 80),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -98,7 +143,6 @@ class SettingsPage extends ConsumerWidget {
   }
 
   Future<void> _handleBackup(BuildContext context, WidgetRef ref) async {
-    // Show loading using root navigator to avoid GoRouter conflicts
     // Show loading using root navigator to avoid GoRouter conflicts
     AppDialogs.showLoadingDialog(context);
 
@@ -136,7 +180,6 @@ class SettingsPage extends ConsumerWidget {
 
       if (!context.mounted) return;
 
-      // 2. Show Detailed Confirmation
       // 2. Show Detailed Confirmation
       final confirmed = await AppDialogs.showConfirmDialog<bool>(
         context: context,

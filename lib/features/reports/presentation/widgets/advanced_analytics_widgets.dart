@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../workout/domain/entities/workout_history.dart';
 import '../../../workout/domain/entities/exercise.dart';
@@ -69,105 +70,113 @@ class VolumeLoadChart extends StatelessWidget {
       return FlSpot(e.key.toDouble(), e.value.value);
     }).toList();
 
-    return Card(
-      color: const Color(0xFF1E1E1E),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Volume de Carga (kg)',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.show_chart, size: 16, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Text(
+                'VOLUME DE CARGA',
+                style: GoogleFonts.outfit(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  letterSpacing: 1.5,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 200,
-              child: LineChart(
-                LineChartData(
-                  gridData: const FlGridData(show: false),
-                  titlesData: const FlTitlesData(
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    rightTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            height: 200,
+            child: LineChart(
+              LineChartData(
+                gridData: const FlGridData(show: false),
+                titlesData: const FlTitlesData(
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
                   ),
-                  borderData: FlBorderData(show: false),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: spots,
-                      isCurved: true,
-                      color: AppColors.primary,
-                      barWidth: 3,
-                      isStrokeCapRound: true,
-                      dotData: FlDotData(
-                        show: true,
-                        getDotPainter: (spot, percent, barData, index) {
-                          return FlDotCirclePainter(
-                            radius: 4,
-                            color: AppColors.primary,
-                            strokeWidth: 2,
-                            strokeColor: Colors.black,
-                          );
-                        },
-                      ),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.primary.withValues(alpha: 0.3),
-                            Colors.transparent,
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                      ),
-                    ),
-                  ],
-                  lineTouchData: LineTouchData(
-                    touchTooltipData: LineTouchTooltipData(
-                      getTooltipColor: (touchedSpot) => Colors.black,
-                      getTooltipItems: (touchedSpots) {
-                        return touchedSpots.map((spot) {
-                          final val = spot.y.toStringAsFixed(0);
-                          // Try to find date
-                          final index = spot.x.toInt();
-                          String dateStr = '';
-                          if (index >= 0 && index < sortedEntries.length) {
-                            dateStr = DateFormat(
-                              'dd/MM',
-                            ).format(sortedEntries[index].key);
-                          }
-
-                          return LineTooltipItem(
-                            '$dateStr\n$val kg',
-                            const TextStyle(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          );
-                        }).toList();
+                  topTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: spots,
+                    isCurved: true,
+                    color: AppColors.primary,
+                    barWidth: 3,
+                    isStrokeCapRound: true,
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) {
+                        return FlDotCirclePainter(
+                          radius: 4,
+                          color: AppColors.primary,
+                          strokeWidth: 2,
+                          strokeColor: Colors.black,
+                        );
                       },
                     ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primary.withValues(alpha: 0.3),
+                          Colors.transparent,
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                ],
+                lineTouchData: LineTouchData(
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipColor: (_) => Colors.black,
+                    getTooltipItems: (touchedSpots) {
+                      return touchedSpots.map((spot) {
+                        final val = spot.y.toStringAsFixed(0);
+                        // Try to find date
+                        final index = spot.x.toInt();
+                        String dateStr = '';
+                        if (index >= 0 && index < sortedEntries.length) {
+                          dateStr = DateFormat(
+                            'dd/MM',
+                          ).format(sortedEntries[index].key);
+                        }
+
+                        return LineTooltipItem(
+                          '$dateStr\n$val kg',
+                          GoogleFonts.outfit(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        );
+                      }).toList();
+                    },
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -184,18 +193,13 @@ class ConsistencyHeatmap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // 1. Setup Grid 7 rows (Sun-Sat) x 12 Cols (Last 12 weeks)
-    // We want roughly 3 months of data.
     final now = DateTime.now();
-    // Normalize to end of current week
-    // find next Saturday relative to now (or today if Saturday)
     final endOfWeek = now.add(
       Duration(days: (DateTime.saturday - now.weekday + 7) % 7),
     );
-    // Start date = endOfWeek - 12 weeks
     final startDate = endOfWeek.subtract(const Duration(days: 7 * 12 - 1));
 
-    // Fill map with data
-    final Map<DateTime, int> intensityMap = {}; // Date -> Duration Minutes
+    final Map<DateTime, int> intensityMap = {};
 
     for (final h in history) {
       final date = DateTime(
@@ -209,94 +213,95 @@ class ConsistencyHeatmap extends StatelessWidget {
       }
     }
 
-    return Card(
-      color: const Color(0xFF1E1E1E),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Consistência (Últimas 12 Semanas)',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.grid_on_rounded,
+                size: 16,
+                color: AppColors.primary,
               ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 140, // 7 rows * ~18px + spacing
-              child: Row(
-                children: List.generate(12, (colIndex) {
-                  // Week Column
-                  return Expanded(
-                    child: Column(
-                      children: List.generate(7, (rowIndex) {
-                        // Day Cell
-                        // Calculate actual date for this cell
-                        // Col 0 is the oldest week.
-                        // visualColIndex 0 -> startDate
-                        // The grid fills left to right.
-                        // Let's iterate day by day from startDate.
-                        final dayOffset = (colIndex * 7) + rowIndex;
-                        final cellDate = startDate.add(
-                          Duration(days: dayOffset),
-                        );
+              const SizedBox(width: 8),
+              Text(
+                'CONSISTÊNCIA',
+                style: GoogleFonts.outfit(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            height: 140,
+            child: Row(
+              children: List.generate(12, (colIndex) {
+                return Expanded(
+                  child: Column(
+                    children: List.generate(7, (rowIndex) {
+                      final dayOffset = (colIndex * 7) + rowIndex;
+                      final cellDate = startDate.add(Duration(days: dayOffset));
+                      final minutes =
+                          intensityMap[DateTime(
+                            cellDate.year,
+                            cellDate.month,
+                            cellDate.day,
+                          )] ??
+                          0;
 
-                        // Look up intensity
-                        final minutes =
-                            intensityMap[DateTime(
-                              cellDate.year,
-                              cellDate.month,
-                              cellDate.day,
-                            )] ??
-                            0;
+                      Color cellColor;
+                      if (minutes == 0) {
+                        cellColor = Colors.grey.withValues(alpha: 0.1);
+                      } else if (minutes < 30) {
+                        cellColor = AppColors.primary.withValues(alpha: 0.5);
+                      } else {
+                        cellColor = AppColors.primary;
+                      }
 
-                        Color cellColor;
-                        if (minutes == 0) {
-                          cellColor = Colors.grey.withValues(alpha: 0.1);
-                        } else if (minutes < 30) {
-                          cellColor = AppColors.primary.withValues(alpha: 0.5);
-                        } else {
-                          cellColor = AppColors.primary;
-                        }
-
-                        return Expanded(
-                          child: Container(
-                            margin: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: cellColor,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
+                      return Expanded(
+                        child: Container(
+                          margin: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: cellColor,
+                            borderRadius: BorderRadius.circular(4),
                           ),
-                        );
-                      }),
-                    ),
-                  );
-                }),
+                        ),
+                      );
+                    }),
+                  ),
+                );
+              }),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              _buildLegendItem(
+                Colors.grey.withValues(alpha: 0.1),
+                'Sem treino',
               ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                _buildLegendItem(
-                  Colors.grey.withValues(alpha: 0.1),
-                  'Sem treino',
-                ),
-                const SizedBox(width: 8),
-                _buildLegendItem(
-                  AppColors.primary.withValues(alpha: 0.5),
-                  '< 30min',
-                ),
-                const SizedBox(width: 8),
-                _buildLegendItem(AppColors.primary, '> 30min'),
-              ],
-            ),
-          ],
-        ),
+              const SizedBox(width: 8),
+              _buildLegendItem(
+                AppColors.primary.withValues(alpha: 0.5),
+                '< 30min',
+              ),
+              const SizedBox(width: 8),
+              _buildLegendItem(AppColors.primary, '> 30min'),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -313,7 +318,14 @@ class ConsistencyHeatmap extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 4),
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 10)),
+        Text(
+          label,
+          style: GoogleFonts.outfit(
+            color: Colors.grey[500],
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }
@@ -370,83 +382,95 @@ class BalancePieChart extends StatelessWidget {
     final totalMinutes = totalCardioMinutes + totalStrengthMinutes;
     final totalHours = (totalMinutes / 60).toStringAsFixed(1);
 
-    return Card(
-      color: const Color(0xFF1E1E1E),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Distribuição de Treino',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.pie_chart_rounded,
+                size: 16,
+                color: AppColors.primary,
               ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 200,
-              child: Stack(
-                children: [
-                  PieChart(
-                    PieChartData(
-                      sectionsSpace: 0,
-                      centerSpaceRadius: 40,
-                      sections: [
-                        PieChartSectionData(
-                          color: AppColors.primary,
-                          value: totalStrengthMinutes,
-                          title:
-                              '${(totalStrengthMinutes / totalMinutes * 100).toStringAsFixed(0)}%',
-                          radius: 50,
-                          titleStyle: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        PieChartSectionData(
-                          color: Colors.cyanAccent,
-                          value: totalCardioMinutes,
-                          title:
-                              '${(totalCardioMinutes / totalMinutes * 100).toStringAsFixed(0)}%',
-                          radius: 50,
-                          titleStyle: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Center(
-                    child: Text(
-                      '${totalHours}h\nTotal',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
+              const SizedBox(width: 8),
+              Text(
+                'DISTRIBUIÇÃO DE TREINO',
+                style: GoogleFonts.outfit(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  letterSpacing: 1.5,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            ],
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            height: 200,
+            child: Stack(
               children: [
-                _buildLegend(AppColors.primary, 'Força'),
-                const SizedBox(width: 16),
-                _buildLegend(Colors.cyanAccent, 'Cardio'),
+                PieChart(
+                  PieChartData(
+                    sectionsSpace: 0,
+                    centerSpaceRadius: 40,
+                    sections: [
+                      PieChartSectionData(
+                        color: AppColors.primary,
+                        value: totalStrengthMinutes,
+                        title:
+                            '${(totalStrengthMinutes / totalMinutes * 100).toStringAsFixed(0)}%',
+                        radius: 50,
+                        titleStyle: GoogleFonts.outfit(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      PieChartSectionData(
+                        color: Colors.cyanAccent,
+                        value: totalCardioMinutes,
+                        title:
+                            '${(totalCardioMinutes / totalMinutes * 100).toStringAsFixed(0)}%',
+                        radius: 50,
+                        titleStyle: GoogleFonts.outfit(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Center(
+                  child: Text(
+                    '${totalHours}h\nTotal',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildLegend(AppColors.primary, 'Força'),
+              const SizedBox(width: 24),
+              _buildLegend(Colors.cyanAccent, 'Cardio'),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -459,8 +483,15 @@ class BalancePieChart extends StatelessWidget {
           height: 12,
           decoration: BoxDecoration(shape: BoxShape.circle, color: color),
         ),
-        const SizedBox(width: 4),
-        Text(label, style: const TextStyle(color: Colors.white)),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ],
     );
   }
