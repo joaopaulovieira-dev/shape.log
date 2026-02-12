@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shape.log | O Hardware da sua IA</title>
+    <meta name="description"
+        content="A interface física para sua IA de treino. Gere protocolos, execute com precisão e alimente o algoritmo com dados reais.">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/img/logo.png">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://joaopaulovieira.github.io/shape.log/">
+    <meta property="og:title" content="Shape.log | O Hardware da sua IA">
+    <meta property="og:description"
+        content="A interface física para sua IA de treino. Gere protocolos, execute com precisão e alimente o algoritmo com dados reais.">
+    <meta property="og:image" content="https://joaopaulovieira.github.io/shape.log/docs/assets/img/logo.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://joaopaulovieira.github.io/shape.log/">
+    <meta property="twitter:title" content="Shape.log | O Hardware da sua IA">
+    <meta property="twitter:description"
+        content="A interface física para sua IA de treino. Gere protocolos, execute com precisão e alimente o algoritmo com dados reais.">
+    <meta property="twitter:image" content="https://joaopaulovieira.github.io/shape.log/docs/assets/img/logo.png">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;700;800&family=Fira+Code:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#CCFF00', // Neon Green
+                        surface: '#111111',
+                        background: '#050505',
+                        glass: 'rgba(20, 20, 20, 0.7)',
+                        'neon-blue': '#00E5FF',
+                        'neon-purple': '#D500F9',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                        mono: ['Fira Code', 'myspace'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #050505;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            background-image:
+                radial-gradient(circle at 50% 0%, rgba(204, 255, 0, 0.05) 0%, transparent 50%),
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+        }
+
+        .cyber-text {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .glass-panel {
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .hero-bg {
+            background-image: linear-gradient(to bottom, rgba(5, 5, 5, 0.2), rgba(5, 5, 5, 1)), url('assets/img/hero-bg.png');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Scanline effect */
+        .scanline {
+            width: 100%;
+            height: 100px;
+            z-index: 10;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(204, 255, 0, 0.1) 50%, rgba(0, 0, 0, 0) 100%);
+            opacity: 0.1;
+            background-size: 100% 4px;
+            animation: scanline 10s linear infinite;
+            pointer-events: none;
+            position: fixed;
+            top: 0;
+        }
+
+        @keyframes scanline {
+            0% {
+                transform: translateY(-100%);
+            }
+
+            100% {
+                transform: translateY(100vh);
+            }
+        }
+
+        /* Syntax Highlighting overrides */
+        .json-key {
+            color: #CCFF00;
+        }
+
+        .json-string {
+            color: #E6DB74;
+        }
+
+        .json-number {
+            color: #AE81FF;
+        }
+
+        .json-boolean {
+            color: #AE81FF;
+        }
+
+        /* Dash Animation */
+        @keyframes dash {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        /* Carousel Styles */
+        .carousel-track {
+            display: flex;
+            gap: 2rem;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding-bottom: 2rem;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .carousel-track::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col overflow-x-hidden">
+
+    <div class="scanline"></div>
+
+    <!-- Header -->
+    <header class="fixed w-full z-50 glass-panel border-b border-white/5 top-0 transition-all duration-300">
+        <div class="container mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3 group cursor-pointer">
+                <div class="relative">
+                    <div
+                        class="absolute inset-0 bg-primary/20 blur-md rounded-full group-hover:bg-primary/40 transition-all">
+                    </div>
+                    <img src="assets/img/logo.png" alt="Shape.log Logo" class="h-10 w-10 relative z-10">
+                </div>
+                <div class="flex flex-col">
+                    <span class="cyber-text font-bold text-2xl tracking-wider text-white leading-none">SHAPE<span
+                            class="text-primary">.LOG</span></span>
+                    <span class="text-[10px] text-gray-500 font-mono tracking-[0.2em] uppercase">TREINO
+                        INTELIGENTE</span>
+                </div>
+            </div>
+
+            <!-- Desktop Nav -->
+            <nav class="hidden md:flex gap-10 text-sm font-medium text-gray-400">
+                <a href="agents.html" class="hover:text-primary transition-colors flex items-center gap-2">
+                    <i data-lucide="users" class="w-4 h-4"></i> AGENTES DE IA
+                </a>
+                <a href="#cycle" class="hover:text-white transition-colors flex items-center gap-2">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> CICLO DO APP
+                </a>
+                <a href="#features" class="hover:text-white transition-colors flex items-center gap-2">
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i> FUNCIONALIDADES
+                </a>
+                <a href="readme.html" class="hover:text-primary transition-colors flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-4 h-4"></i> README.md
+                </a>
+            </nav>
+
+            <!-- Buttons -->
+            <div class="hidden md:flex items-center gap-4">
+                <a href="assets/shape-log.apk" download
+                    class="group relative px-6 py-2 overflow-hidden rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/10">
+                    <div
+                        class="absolute inset-0 w-0 bg-gradient-to-r from-primary/20 to-transparent transition-all duration-[250ms] ease-out group-hover:w-full">
+                    </div>
+                    <span
+                        class="relative font-bold text-sm text-primary group-hover:text-white transition-colors flex items-center gap-2">
+                        <i data-lucide="download" class="w-4 h-4"></i> BAIXAR APP
+                    </span>
+                </a>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-btn" class="md:hidden text-white p-2">
+                <i data-lucide="menu" class="w-8 h-8"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu"
+            class="hidden md:hidden absolute top-20 left-0 w-full bg-black/95 border-b border-white/10 backdrop-blur-xl">
+            <div class="container mx-auto px-6 py-6 flex flex-col gap-6">
+                <a href="agents.html"
+                    class="text-gray-400 hover:text-primary transition-colors py-2 flex items-center gap-3 border-b border-white/5">
+                    <i data-lucide="users" class="w-5 h-5"></i> AGENTES IA
+                </a>
+                <a href="#cycle"
+                    class="text-gray-400 hover:text-white transition-colors py-2 flex items-center gap-3 border-b border-white/5">
+                    <i data-lucide="refresh-cw" class="w-5 h-5"></i> CICLO IA
+                </a>
+                <a href="#features"
+                    class="text-gray-400 hover:text-white transition-colors py-2 flex items-center gap-3 border-b border-white/5">
+                    <i data-lucide="layout-grid" class="w-5 h-5"></i> FUNCIONALIDADES
+                </a>
+                <a href="readme.html"
+                    class="text-gray-400 hover:text-primary transition-colors py-2 flex items-center gap-3 border-b border-white/5 font-bold">
+                    <i data-lucide="file-text" class="w-5 h-5"></i> README.md
+                </a>
+                <a href="assets/shape-log.apk" download
+                    class="bg-primary/20 text-primary py-4 rounded-lg flex items-center justify-center gap-2 font-bold">
+                    <i data-lucide="download" class="w-5 h-5"></i> BAIXAR APP
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex items-center justify-center pt-24 pb-12 hero-bg">
+        <div class="container mx-auto px-6 text-center relative z-20">
+
+            <!-- Status Badge -->
+            <div
+                class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-bold mb-8 tracking-widest cyber-text uppercase animate-in fade-in zoom-in duration-700">
+                <span class="relative flex h-2 w-2">
+                    <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                </span>
+                CONEXÃO COM IA ESTABELECIDA
+            </div>
+
+            <h1 class="cyber-text text-5xl md:text-8xl font-black mb-8 leading-tight tracking-tight">
+                A INTELIGÊNCIA CRIA.<br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500">VOCÊ
+                    EXECUTA.</span>
+            </h1>
+
+            <p class="text-gray-400 text-lg md:text-xl max-w-4xl mx-auto mb-12 leading-relaxed font-light">
+                O app desenhado para trabalhar junto com sua IA. Transforme as dicas do Gemini, ChatGPT, Cloude ou de
+                outras IAs em um sistema
+                de treino profissional com timer inteligente, memória de cargas e análise corporal avançada.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                <a href="assets/shape-log.apk" download
+                    class="bg-primary hover:bg-[#b8e600] text-black px-10 py-5 rounded-full font-bold text-lg hover:shadow-[0_0_40px_rgba(204,255,0,0.3)] transition-all transform hover:-translate-y-1 flex items-center gap-3 w-full sm:w-auto justify-center uppercase tracking-widest shadow-[0_0_20px_rgba(204,255,0,0.4)]">
+                    <i data-lucide="smartphone-charging" class="w-6 h-6"></i>
+                    BAIXE AGORA O APP GRATUITAMENTE
+                </a>
+            </div>
+
+            <!-- Visual Tech Specs -->
+            <div class="mt-20 flex flex-wrap justify-center gap-8 md:gap-16 opacity-70">
+                <div class="flex flex-col items-center gap-2 w-24">
+                    <i data-lucide="cpu" class="text-gray-500 w-6 h-6"></i>
+                    <span class="text-xs font-mono text-gray-500 uppercase tracking-widest">Protocolo JSON</span>
+                </div>
+                <div class="flex flex-col items-center gap-2 w-24">
+                    <i data-lucide="database" class="text-gray-500 w-6 h-6"></i>
+                    <span class="text-xs font-mono text-gray-500 uppercase tracking-widest">Hive DB Local</span>
+                </div>
+                <div class="flex flex-col items-center gap-2 w-24">
+                    <i data-lucide="wifi-off" class="text-gray-500 w-6 h-6"></i>
+                    <span class="text-xs font-mono text-gray-500 uppercase tracking-widest">100% Offline</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Intelligence Loop -->
+    <section id="cycle" class="py-32 bg-[#080808] relative border-y border-white/5">
+        <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="text-center mb-20">
+                <h2 class="cyber-text text-3xl md:text-5xl font-bold mb-4">O CICLO DE <span
+                        class="text-primary">INTELIGÊNCIA</span></h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">Um fluxo de dados contínuo entre sua IA favorita (ChatGPT,
+                    Claude, Gemini) e sua execução física.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Step 1: Generate -->
+                <div
+                    class="glass-panel p-8 rounded-2xl border-t-2 border-t-white/10 hover:border-t-primary transition-all group relative overflow-hidden">
+                    <div
+                        class="absolute -right-4 -top-4 text-8xl font-black text-white/5 group-hover:text-primary/10 transition-colors">
+                        01</div>
+                    <div
+                        class="w-14 h-14 bg-white/5 rounded-xl flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
+                        <i data-lucide="bot" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="font-mono text-lg text-primary mb-2">ENTRADA</h3>
+                    <h4 class="text-2xl font-bold text-white mb-4">Gerar</h4>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Peça à IA um treino periodizado. Ela gera um JSON estruturado com exercícios, cargas, descanso e
+                        técnicas avançadas.
+                    </p>
+                </div>
+
+                <!-- Step 2: Import -->
+                <div
+                    class="glass-panel p-8 rounded-2xl border-t-2 border-t-white/10 hover:border-t-neon-blue transition-all group relative overflow-hidden">
+                    <div
+                        class="absolute -right-4 -top-4 text-8xl font-black text-white/5 group-hover:text-neon-blue/10 transition-colors">
+                        02</div>
+                    <div
+                        class="w-14 h-14 bg-white/5 rounded-xl flex items-center justify-center mb-6 text-neon-blue group-hover:scale-110 transition-transform">
+                        <i data-lucide="arrow-down-to-line" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="font-mono text-lg text-neon-blue mb-2">PROCESSAR</h3>
+                    <h4 class="text-2xl font-bold text-white mb-4">Importar</h4>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Copie o JSON e cole no Shape.log. O app sanitiza, organiza a agenda e baixa assets visuais
+                        automaticamente.
+                    </p>
+                </div>
+
+                <!-- Step 3: Execute -->
+                <div
+                    class="glass-panel p-8 rounded-2xl border-t-2 border-t-white/10 hover:border-t-neon-purple transition-all group relative overflow-hidden">
+                    <div
+                        class="absolute -right-4 -top-4 text-8xl font-black text-white/5 group-hover:text-neon-purple/10 transition-colors">
+                        03</div>
+                    <div
+                        class="w-14 h-14 bg-white/5 rounded-xl flex items-center justify-center mb-6 text-neon-purple group-hover:scale-110 transition-transform">
+                        <i data-lucide="play" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="font-mono text-lg text-neon-purple mb-2">AÇÃO</h3>
+                    <h4 class="text-2xl font-bold text-white mb-4">Executar</h4>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Entre no <b>Modo Foco</b>. Respeite o timer, registre a carga real e a falha concêntrica sem
+                        distrações.
+                    </p>
+                </div>
+
+                <!-- Step 4: Report -->
+                <div
+                    class="glass-panel p-8 rounded-2xl border-t-2 border-t-white/10 hover:border-t-green-400 transition-all group relative overflow-hidden">
+                    <div
+                        class="absolute -right-4 -top-4 text-8xl font-black text-white/5 group-hover:text-green-400/10 transition-colors">
+                        04</div>
+                    <div
+                        class="w-14 h-14 bg-white/5 rounded-xl flex items-center justify-center mb-6 text-green-400 group-hover:scale-110 transition-transform">
+                        <i data-lucide="clipboard-check" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="font-mono text-lg text-green-400 mb-2">FEEDBACK</h3>
+                    <h4 class="text-2xl font-bold text-white mb-4">Relatar</h4>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Ao fim, copie o relatório técnico gerado pelo app e devolva à IA: <i>"Baseado nisso, ajuste a
+                            carga para a próxima semana."</i>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NEW: Detailed Features by Menu -->
+    <section id="features" class="py-24 relative overflow-hidden">
+        <!-- Background Glows -->
+        <div class="absolute top-1/2 left-0 w-96 h-96 bg-primary/10 rounded-full blur-[120px] pointer-events-none">
+        </div>
+        <div
+            class="absolute bottom-0 right-0 w-96 h-96 bg-neon-purple/10 rounded-full blur-[120px] pointer-events-none">
+        </div>
+
+        <div class="container mx-auto px-6 space-y-32">
+            <div class="text-center mb-16">
+                <span
+                    class="text-xs font-mono text-primary uppercase tracking-widest border border-primary/30 px-3 py-1 rounded">Explorador
+                    de Funcionalidades</span>
+                <h2 class="cyber-text text-4xl md:text-5xl font-bold mt-6">DENTRO DO <span
+                        class="text-white">SISTEMA</span></h2>
+            </div>
+
+            <!-- 1. Menu: TREINOS -->
+            <div class="feature-block flex flex-col lg:flex-row items-center gap-16 border-b border-white/5 pb-20">
+                <div class="lg:w-1/2">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center">
+                            <i data-lucide="dumbbell" class="text-orange-500 w-6 h-6"></i>
+                        </div>
+                        <h3 class="cyber-text text-3xl font-bold text-white">TREINO</h3>
+                    </div>
+
+                    <p class="text-gray-400 text-lg mb-8 leading-relaxed">
+                        O coração do app. Aqui você importa, gerencia e executa seus protocolos. Projetado para eliminar
+                        qualquer atrito entre você e o peso.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div
+                            class="glass-panel p-4 rounded-xl border border-white/5 hover:border-orange-500/30 transition-colors">
+                            <h4 class="text-white font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="file-json" class="w-4 h-4 text-orange-500"></i> Importação IA
+                            </h4>
+                            <p class="text-sm text-gray-400">Cole o JSON de seu agente de IA e veja seu treino ser
+                                montado
+                                instantaneamente com fotos e vídeos.</p>
+                        </div>
+                        <div
+                            class="glass-panel p-4 rounded-xl border border-white/5 hover:border-orange-500/30 transition-colors">
+                            <h4 class="text-white font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="zap" class="w-4 h-4 text-orange-500"></i> Modo Foco
+                            </h4>
+                            <p class="text-sm text-gray-400">Interface imersiva. Timer com vibração haptica. Memória de
+                                carga anterior na tela.</p>
+                        </div>
+                        <div
+                            class="glass-panel p-4 rounded-xl border border-white/5 hover:border-orange-500/30 transition-colors">
+                            <h4 class="text-white font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="repeat" class="w-4 h-4 text-orange-500"></i> Editor Rápido
+                            </h4>
+                            <p class="text-sm text-gray-400">Ajuste séries, reps e ordem dos exercícios em segundos, sem
+                                burocracia.</p>
+                        </div>
+                        <div
+                            class="glass-panel p-4 rounded-xl border border-white/5 hover:border-orange-500/30 transition-colors">
+                            <h4 class="text-white font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="youtube" class="w-4 h-4 text-orange-500"></i> Links de Execução
+                            </h4>
+                            <p class="text-sm text-gray-400">Adicione URLs do YouTube para consultar a técnica perfeita
+                                antes de levantar.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:w-1/2 w-full flex justify-center">
+                    <div class="relative group w-full max-w-[300px] lg:max-w-full h-full mx-auto">
+                        <div
+                            class="absolute -inset-1 bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000">
+                        </div>
+                        <!-- Enforcing Phone Aspect Ratio (9/19) -->
+                        <div
+                            class="glass-panel rounded-2xl p-8 relative aspect-[9/19] lg:aspect-video flex items-center justify-center overflow-hidden w-full">
+
+                            <!-- CSS Art: Reactive Core -->
+                            <div class="relative w-full h-full max-w-xs max-h-xs flex items-center justify-center">
+                                <!-- Outer Pulse -->
+                                <div
+                                    class="absolute inset-0 border border-orange-500/30 rounded-full animate-[ping_3s_linear_infinite]">
+                                </div>
+                                <div
+                                    class="absolute inset-4 border border-orange-500/50 rounded-full animate-[spin_10s_linear_infinite]">
+                                </div>
+
+                                <!-- Core Bars -->
+                                <div class="flex items-end gap-2 h-32 z-10">
+                                    <div
+                                        class="w-4 bg-orange-500 rounded-sm animate-[pulse_1s_ease-in-out_infinite] h-12">
+                                    </div>
+                                    <div
+                                        class="w-4 bg-orange-500 rounded-sm animate-[pulse_1.5s_ease-in-out_infinite] h-24">
+                                    </div>
+                                    <div
+                                        class="w-4 bg-white rounded-sm animate-[pulse_0.8s_ease-in-out_infinite] h-32 shadow-[0_0_15px_rgba(255,165,0,0.8)]">
+                                    </div>
+                                    <div
+                                        class="w-4 bg-orange-500 rounded-sm animate-[pulse_1.2s_ease-in-out_infinite] h-20">
+                                    </div>
+                                    <div
+                                        class="w-4 bg-orange-500 rounded-sm animate-[pulse_1.8s_ease-in-out_infinite] h-16">
+                                    </div>
+                                </div>
+
+                                <!-- Background Grid -->
+                                <div
+                                    class="absolute inset-0 bg-[linear-gradient(rgba(255,165,0,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,165,0,0.1)_1px,transparent_1px)] bg-[size:20px_20px] opacity-30">
+                                </div>
+                            </div>
+
+                            <div class="absolute bottom-6 left-0 right-0 text-center">
+                                <span
+                                    class="text-xs font-mono text-orange-500 tracking-[0.3em] uppercase animate-pulse">Sistema
+                                    de Carga Reativa</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Menu: MEDIDAS -->
+            <div
+                class="feature-block flex flex-col lg:flex-row-reverse items-center gap-16 border-b border-white/5 pb-20">
+                <div class="lg:w-1/2">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-neon-purple/10 border border-neon-purple/30 flex items-center justify-center">
+                            <i data-lucide="ruler" class="text-neon-purple w-6 h-6"></i>
+                        </div>
+                        <h3 class="cyber-text text-3xl font-bold text-white">MEDIDAS</h3>
+                    </div>
+
+                    <p class="text-gray-400 text-lg mb-8 leading-relaxed">
+                        Acompanhamento biométrico profissional. Registre cada centímetro ganho e cada percentual de
+                        gordura perdido com precisão médica.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div
+                            class="glass-panel p-4 rounded-xl border border-white/5 hover:border-neon-purple/30 transition-colors">
+                            <h4 class="text-white font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="scan-face" class="w-4 h-4 text-neon-purple"></i> Scanner Corporal
+                            </h4>
+                            <p class="text-sm text-gray-400">Interaja com um modelo 3D. Toque no músculo para inserir a
+                                medida rapidamente.</p>
+                        </div>
+                        <div
+                            class="glass-panel p-4 rounded-xl border border-white/5 hover:border-neon-purple/30 transition-colors">
+                            <h4 class="text-white font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="file-check" class="w-4 h-4 text-neon-purple"></i> Integração Bio
+                            </h4>
+                            <p class="text-sm text-gray-400">Salve links e PDFs de seus exames de bioimpedância
+                                diretamente no histórico.</p>
+                        </div>
+                        <div
+                            class="glass-panel p-4 rounded-xl border border-white/5 hover:border-neon-purple/30 transition-colors">
+                            <h4 class="text-white font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="camera" class="w-4 h-4 text-neon-purple"></i> Comparador de Fotos
+                            </h4>
+                            <p class="text-sm text-gray-400">Galeria privada para comparar fotos de "Antes e Depois" com
+                                datas automáticas.</p>
+                        </div>
+                        <div
+                            class="glass-panel p-4 rounded-xl border border-white/5 hover:border-neon-purple/30 transition-colors">
+                            <h4 class="text-white font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="heart-pulse" class="w-4 h-4 text-neon-purple"></i> Padrão OMS
+                            </h4>
+                            <p class="text-sm text-gray-400">Classificação automática de IMC e risco de saúde baseada em
+                                diretrizes globais.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:w-1/2 w-full flex justify-center">
+                    <div class="relative group w-full max-w-[300px] lg:max-w-full h-full mx-auto">
+                        <div
+                            class="absolute -inset-1 bg-gradient-to-br from-neon-purple to-pink-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000">
+                        </div>
+                        <!-- Enforcing Phone Aspect Ratio (9/19) -->
+                        <div
+                            class="glass-panel rounded-2xl p-8 relative aspect-[9/19] lg:aspect-video flex items-center justify-center overflow-hidden w-full">
+
+                            <!-- CSS Art: Bio Scanner -->
+                            <div class="relative w-full h-full max-w-xs max-h-xs flex items-center justify-center">
+                                <!-- Radar Sweep -->
+                                <div
+                                    class="absolute inset-0 rounded-full border border-neon-purple/20 overflow-hidden w-[80%] h-[80%] m-auto">
+                                    <div
+                                        class="w-full h-1/2 bg-gradient-to-b from-transparent to-neon-purple/20 border-b border-neon-purple/50 animate-[spin_4s_linear_infinite] origin-bottom">
+                                    </div>
+                                </div>
+
+                                <!-- Silhouette -->
+                                <div class="absolute inset-0 flex items-center justify-center opacity-80">
+                                    <i data-lucide="user" class="w-32 h-32 md:w-48 md:h-48 text-neon-purple/20"></i>
+                                </div>
+
+                                <!-- Target Points -->
+                                <div
+                                    class="absolute top-1/3 left-1/3 w-2 h-2 bg-white rounded-full shadow-[0_0_10px_#D500F9] animate-ping">
+                                </div>
+                                <div
+                                    class="absolute bottom-1/3 right-1/3 w-2 h-2 bg-white rounded-full shadow-[0_0_10px_#D500F9] animate-ping animation-delay-1000">
+                                </div>
+
+                                <!-- Floating Data -->
+                                <div
+                                    class="absolute top-10 right-4 bg-black/50 border border-neon-purple/30 px-2 py-1 rounded text-[10px] font-mono text-neon-purple">
+                                    BF: 12.4%
+                                </div>
+                                <div
+                                    class="absolute bottom-10 left-4 bg-black/50 border border-neon-purple/30 px-2 py-1 rounded text-[10px] font-mono text-neon-purple">
+                                    IMC: 24.1
+                                </div>
+                            </div>
+
+                            <div class="absolute bottom-6 left-0 right-0 text-center">
+                                <span
+                                    class="text-xs font-mono text-neon-purple tracking-[0.3em] uppercase animate-pulse">Scanner
+                                    Biométrico Ativo</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Menu: HUB -->
+            <div class="feature-block flex flex-col lg:flex-row items-center gap-16 border-b border-white/5 pb-20">
+                <div class="lg:w-1/2">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-neon-blue/10 border border-neon-blue/30 flex items-center justify-center">
+                            <i data-lucide="network" class="text-neon-blue w-6 h-6"></i>
+                        </div>
+                        <h3 class="cyber-text text-3xl font-bold text-white">HUB INTELIGÊNCIA</h3>
+                    </div>
+
+                    <p class="text-gray-400 text-lg mb-8 leading-relaxed">
+                        O centro de dados da sua performance. Transforme suor em números e descubra padrões que estão
+                        acelerando ou freando seus ganhos.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div
+                            class="glass-panel p-4 rounded-xl border border-white/5 hover:border-neon-blue/30 transition-colors">
+                            <h4 class="text-white font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="layout-dashboard" class="w-4 h-4 text-neon-blue"></i> Dashboard
+                            </h4>
+                            <p class="text-sm text-gray-400">Visão geral da semana. Treinos realizados, volume total e
+                                frequência cardíaca média.</p>
+                        </div>
+                        <div
+                            class="glass-panel p-4 rounded-xl border border-white/5 hover:border-neon-blue/30 transition-colors">
+                            <h4 class="text-white font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="calendar-check" class="w-4 h-4 text-neon-blue"></i> Mapa de Calor
+                            </h4>
+                            <p class="text-sm text-gray-400">Calendário de consistência. Visualize seus dias de treino
+                                como commits no GitHub.</p>
+                        </div>
+                        <div
+                            class="glass-panel p-4 rounded-xl border border-white/5 hover:border-neon-blue/30 transition-colors">
+                            <h4 class="text-white font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="trending-up" class="w-4 h-4 text-neon-blue"></i> Analytics
+                            </h4>
+                            <p class="text-sm text-gray-400">Gráficos detalhados de progressão de carga por exercício e
+                                grupo muscular.</p>
+                        </div>
+                        <div
+                            class="glass-panel p-4 rounded-xl border border-white/5 hover:border-neon-blue/30 transition-colors">
+                            <h4 class="text-white font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="list-video" class="w-4 h-4 text-neon-blue"></i> Logs Detalhados
+                            </h4>
+                            <p class="text-sm text-gray-400">Histórico linha a linha de cada repetição. Nada é perdido.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:w-1/2 w-full flex justify-center">
+                    <div class="relative group w-full max-w-[300px] lg:max-w-full h-full mx-auto">
+                        <div
+                            class="absolute -inset-1 bg-gradient-to-br from-neon-blue to-cyan-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000">
+                        </div>
+                        <!-- Enforcing Phone Aspect Ratio (9/19) -->
+                        <div
+                            class="glass-panel rounded-2xl p-8 relative aspect-[9/19] lg:aspect-video flex items-center justify-center overflow-hidden w-full">
+
+                            <!-- CSS Art: Neural Grid -->
+                            <div class="w-full max-w-sm grid grid-cols-4 gap-4 opacity-80">
+                                <!-- Nodes -->
+                                <div
+                                    class="aspect-square rounded-lg bg-neon-blue/10 border border-neon-blue/30 flex items-center justify-center">
+                                    <div class="w-1 h-1 bg-neon-blue rounded-full"></div>
+                                </div>
+                                <div
+                                    class="aspect-square rounded-lg bg-neon-blue/20 border border-neon-blue/50 flex items-center justify-center">
+                                    <div class="w-2 h-2 bg-neon-blue rounded-full animate-pulse"></div>
+                                </div>
+                                <div class="aspect-square rounded-lg bg-neon-blue/5 border border-neon-blue/20"></div>
+                                <div
+                                    class="aspect-square rounded-lg bg-neon-blue/10 border border-neon-blue/30 flex items-center justify-center">
+                                    <div class="w-1 h-1 bg-neon-blue rounded-full"></div>
+                                </div>
+
+                                <div class="aspect-square rounded-lg bg-neon-blue/5 border border-neon-blue/20"></div>
+                                <div
+                                    class="col-span-2 row-span-2 rounded-xl bg-neon-blue/10 border border-neon-blue/30 flex items-center justify-center relative overflow-hidden">
+                                    <!-- Graph Line -->
+                                    <svg viewBox="0 0 100 50"
+                                        class="w-full h-full absolute stroke-neon-blue fill-none stroke-2 opacity-50">
+                                        <path d="M0 40 Q 25 40, 35 20 T 70 30 T 100 10" stroke-dasharray="100"
+                                            stroke-dashoffset="100" class="animate-[dash_3s_linear_infinite]" />
+                                    </svg>
+                                    <span class="text-2xl font-bold text-neon-blue">98%</span>
+                                </div>
+                                <div
+                                    class="aspect-square rounded-lg bg-neon-blue/30 border border-neon-blue/60 flex items-center justify-center">
+                                    <div class="w-2 h-2 bg-white rounded-full animate-ping"></div>
+                                </div>
+
+                                <div class="aspect-square rounded-lg bg-neon-blue/10 border border-neon-blue/30"></div>
+                                <div class="aspect-square rounded-lg bg-neon-blue/5 border border-neon-blue/20"></div>
+                                <div
+                                    class="aspect-square rounded-lg bg-neon-blue/10 border border-neon-blue/30 flex items-center justify-center">
+                                    <div class="w-1 h-1 bg-neon-blue rounded-full"></div>
+                                </div>
+                            </div>
+
+                            <!-- Connection Lines (CSS Gradients) -->
+                            <div
+                                class="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_50%,rgba(0,229,255,0.1)_100%)]">
+                            </div>
+
+                            <div class="absolute bottom-6 left-0 right-0 text-center">
+                                <span
+                                    class="text-xs font-mono text-neon-blue tracking-[0.3em] uppercase animate-pulse">Processamento
+                                    Neural</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Menu: AJUSTES -->
+            <div
+                class="feature-block flex flex-col lg:flex-row-reverse items-center gap-16 border-b border-white/5 pb-20">
+                <div class="lg:w-1/2">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-gray-500/10 border border-gray-500/30 flex items-center justify-center">
+                            <i data-lucide="settings" class="text-gray-400 w-6 h-6"></i>
+                        </div>
+                        <h3 class="cyber-text text-3xl font-bold text-white">AJUSTES</h3>
+                    </div>
+
+                    <p class="text-gray-400 text-lg mb-8 leading-relaxed">
+                        Controle total sobre sua experiência e seus dados. Privacidade não é opcional, é a base da nossa
+                        arquitetura.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div
+                            class="glass-panel p-4 rounded-xl border border-white/5 hover:border-gray-500/30 transition-colors">
+                            <h4 class="text-white font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="database-backup" class="w-4 h-4 text-gray-400"></i> Backup Hive
+                            </h4>
+                            <p class="text-sm text-gray-400">Exporte seu banco de dados completo. Seus dados são seus,
+                                não nossos.</p>
+                        </div>
+                        <div
+                            class="glass-panel p-4 rounded-xl border border-white/5 hover:border-gray-500/30 transition-colors">
+                            <h4 class="text-white font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="moon" class="w-4 h-4 text-gray-400"></i> OLED Black
+                            </h4>
+                            <p class="text-sm text-gray-400">Tema escuro real para telas AMOLED. Estilo cyberpunk e
+                                economia extrema de bateria.</p>
+                        </div>
+                        <div
+                            class="glass-panel p-4 rounded-xl border border-white/5 hover:border-gray-500/30 transition-colors">
+                            <h4 class="text-white font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="shield" class="w-4 h-4 text-gray-400"></i> Offline 100%
+                            </h4>
+                            <p class="text-sm text-gray-400">O app nunca conecta à internet se você não quiser.
+                                Segurança de nível militar.</p>
+                        </div>
+                        <div
+                            class="glass-panel p-4 rounded-xl border border-white/5 hover:border-gray-500/30 transition-colors">
+                            <h4 class="text-white font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="book-open" class="w-4 h-4 text-gray-400"></i> Glossário
+                            </h4>
+                            <p class="text-sm text-gray-400">Acesse definições rápidas de termos de treino e nutrição
+                                dentro do app.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:w-1/2 w-full flex justify-center">
+                    <div class="relative group w-full max-w-[300px] lg:max-w-full h-full mx-auto">
+                        <div
+                            class="absolute -inset-1 bg-gradient-to-br from-gray-700 to-gray-900 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000">
+                        </div>
+                        <!-- Enforcing Phone Aspect Ratio (9/19) -->
+                        <div
+                            class="glass-panel rounded-2xl p-8 relative aspect-[9/19] lg:aspect-video flex items-center justify-center overflow-hidden w-full">
+
+                            <!-- CSS Art: Cipher Shield -->
+                            <div class="relative w-full h-full max-w-xs max-h-xs flex items-center justify-center">
+                                <!-- Rings -->
+                                <div
+                                    class="absolute inset-0 border-2 border-dashed border-gray-600 rounded-full animate-[spin_20s_linear_infinite] w-[80%] h-[80%] m-auto">
+                                </div>
+                                <div
+                                    class="absolute inset-8 border border-gray-600 rounded-full w-[60%] h-[60%] m-auto">
+                                </div>
+                                <div
+                                    class="absolute inset-12 border-4 border-dotted border-gray-700 rounded-full animate-[spin_15s_linear_infinite_reverse] w-[40%] h-[40%] m-auto">
+                                </div>
+
+                                <!-- Shield Icon -->
+                                <div
+                                    class="relative z-10 w-24 h-24 bg-surface rounded-xl flex items-center justify-center border border-gray-500 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+                                    <i data-lucide="lock" class="w-12 h-12 text-white"></i>
+                                </div>
+
+                                <!-- Lock beams -->
+                                <div class="absolute top-1/2 left-0 right-0 h-[1px] bg-gray-600"></div>
+                                <div class="absolute top-0 bottom-0 left-1/2 w-[1px] bg-gray-600"></div>
+                            </div>
+
+                            <div class="absolute bottom-6 left-0 right-0 text-center">
+                                <span
+                                    class="text-xs font-mono text-gray-400 tracking-[0.3em] uppercase animate-pulse">Criptografia
+                                    Local Hive</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- NEW: Screenshots Carousel -->
+    <section class="py-16 bg-surface/50 border-y border-white/5">
+        <div class="container mx-auto px-6">
+            <h2 class="cyber-text text-2xl font-bold mb-8 text-center text-gray-400">GALERIA DO SISTEMA</h2>
+
+            <div class="carousel-track snap-x overflow-x-auto gap-4 md:gap-8 px-4 py-8 no-scrollbar"
+                style="scroll-behavior: auto;">
+                <!-- Auto-generated 18 images -->
+                <script>
+                    const carouselTrack = document.querySelector('.carousel-track');
+                    carouselTrack.innerHTML = ''; // Clear default content
+
+                    // Create more copies for smoother infinite scroll illusion
+                    const totalImages = 18;
+                    const loops = 2; // Duplicate content 2 times
+
+                    for (let l = 0; l < loops; l++) {
+                        for (let i = 1; i <= totalImages; i++) {
+                            const div = document.createElement('div');
+                            div.className = 'snap-center shrink-0 w-[240px] md:w-[280px] aspect-[9/19] rounded-xl overflow-hidden glass-panel border border-white/10 hover:border-primary/50 transition-colors relative group';
+                            div.innerHTML = `
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-end justify-center pb-4">
+                                    <span class="text-xs font-mono text-primary font-bold">SCREEN_${i.toString().padStart(2, '0')}</span>
+                                </div>
+                                <img src="assets/img/prints/${i}.jpg"
+                                    class="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity duration-300 transform group-hover:scale-105"
+                                    loading="lazy"
+                                    alt="Screen ${i}"
+                                    onerror="this.parentElement.style.display='none'">
+                            `;
+                            carouselTrack.appendChild(div);
+                        }
+                    }
+
+                    // Auto-scroll logic
+                    let scrollAmount = 0;
+                    const speed = 1.5; // Fast speed
+                    let isHovered = false;
+
+                    carouselTrack.addEventListener('mouseenter', () => isHovered = true);
+                    carouselTrack.addEventListener('mouseleave', () => isHovered = false);
+                    carouselTrack.addEventListener('touchstart', () => isHovered = true);
+                    carouselTrack.addEventListener('touchend', () => isHovered = false);
+
+                    function autoScroll() {
+                        if (!isHovered) {
+                            scrollAmount += speed;
+                            carouselTrack.scrollLeft = scrollAmount;
+
+                            // Reset logic for infinite loop illusion
+                            if (scrollAmount >= (carouselTrack.scrollWidth / 2)) {
+                                scrollAmount = 0;
+                                carouselTrack.scrollLeft = 0;
+                            }
+                        } else {
+                            // Update scrollAmount to current scroll position if user manually displaces
+                            scrollAmount = carouselTrack.scrollLeft;
+                        }
+                        requestAnimationFrame(autoScroll);
+                    }
+
+                    autoScroll();
+                </script>
+            </div>
+            <p class="text-center text-xs text-gray-600 mt-4">Arraste para os lados para ver mais</p>
+        </div>
+    </section>
+
+    <!-- NEW JSON Protocol Section -->
+    <section id="protocol" class="py-24 bg-surface border-t border-white/5">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col lg:flex-row items-start gap-12">
+                <div class="lg:w-1/3">
+                    <h2 class="cyber-text text-3xl font-bold mb-6">PROTOCOLO <span class="text-primary">JSON</span></h2>
+                    <p class="text-gray-400 mb-6 font-light">
+                        Este é a estrutura que sua IA deve gerar. Copie este modelo e forneça como "system prompt" para
+                        o ChatGPT ou Gemini.
+                    </p>
+                    <div
+                        class="p-6 rounded-xl bg-white/5 text-sm space-y-4 font-mono text-gray-400 border border-white/10">
+                        <h3 class="text-white font-bold mb-4 font-sans text-lg">Especificações Técnicas:</h3>
+                        <ul class="space-y-3 list-disc pl-4 marker:text-primary">
+                            <li><strong class="text-primary">type</strong>: "strength" (padrão) ou "cardio".</li>
+                            <li><strong class="text-primary">scheduledDays</strong>: Lista de números de 1 (Segunda) a 7
+                                (Domingo).</li>
+                            <li><strong class="text-primary">expiryDate</strong>: Validade do treino
+                                <code>YYYY-MM-DD</code> (Opcional).
+                            </li>
+                            <li><strong class="text-primary">reps</strong>: (Strength) Números (<code>12</code>) ou
+                                intervalos (<code>"10-12"</code>).</li>
+                            <li><strong class="text-primary">weight</strong>: (Strength) Peso em kg (float).</li>
+                            <li><strong class="text-primary">durationMinutes</strong>: (Cardio) Tempo em minutos.</li>
+                            <li><strong class="text-primary">intensity</strong>: (Cardio) Descrição livre (ex: "Zona
+                                2").</li>
+                            <li><strong class="text-primary">restTime</strong>: Descanso em segundos. Padrão: 60s.</li>
+                            <li><strong class="text-primary">youtubeUrl</strong>: Link tutorial do YouTube (Opcional).
+                            </li>
+                            <li class="pt-2 border-t border-white/10"><strong class="text-white">Nota</strong>: Campos
+                                <code>id</code> e <code>activeStartTime</code> são automáticos.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="lg:w-2/3 w-full">
+                    <div class="glass-panel rounded-xl overflow-hidden shadow-2xl">
+                        <div class="bg-black/50 px-4 py-3 flex items-center justify-between border-b border-white/5">
+                            <span class="text-xs font-mono text-gray-500">tabela_de_treino_exemplo.json</span>
+                            <div class="flex gap-2">
+                                <div class="w-3 h-3 rounded-full bg-red-500/20"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500/20"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500/20"></div>
+                            </div>
+                        </div>
+                        <div class="p-6 bg-[#0a0a0a] overflow-x-auto">
+                            <pre class="font-mono text-sm leading-relaxed text-gray-300">
+{
+  <span class="json-key">"workouts"</span>: [
+    {
+      <span class="json-key">"name"</span>: <span class="json-string">"Treino Híbrido (Peito + Cardio)"</span>,
+      <span class="json-key">"scheduledDays"</span>: [<span class="json-number">1</span>, <span class="json-number">3</span>, <span class="json-number">5</span>],
+      <span class="json-key">"targetDurationMinutes"</span>: <span class="json-number">60</span>,
+      <span class="json-key">"expiryDate"</span>: <span class="json-string">"2024-12-31"</span>,
+      <span class="json-key">"notes"</span>: <span class="json-string">"Foco em progressão de carga e resistência"</span>,
+      <span class="json-key">"exercises"</span>: [
+        {
+          <span class="json-key">"name"</span>: <span class="json-string">"Supino Reto"</span>,
+          <span class="json-key">"type"</span>: <span class="json-string">"strength"</span>,
+          <span class="json-key">"sets"</span>: <span class="json-number">4</span>,
+          <span class="json-key">"reps"</span>: <span class="json-string">"8-10"</span>,
+          <span class="json-key">"weight"</span>: <span class="json-number">30.0</span>,
+          <span class="json-key">"restTime"</span>: <span class="json-number">90</span>,
+          <span class="json-key">"technique"</span>: <span class="json-string">"Cadência 3-0-1"</span>,
+          <span class="json-key">"equipmentNumber"</span>: <span class="json-string">"12"</span>,
+          <span class="json-key">"youtubeUrl"</span>: <span class="json-string">"https://www.youtube.com/watch?v=video_id"</span>
+        },
+        {
+          <span class="json-key">"name"</span>: <span class="json-string">"Corrida na Esteira"</span>,
+          <span class="json-key">"type"</span>: <span class="json-string">"cardio"</span>,
+          <span class="json-key">"sets"</span>: <span class="json-number">1</span>,
+          <span class="json-key">"durationMinutes"</span>: <span class="json-number">30</span>,
+          <span class="json-key">"intensity"</span>: <span class="json-string">"Velocidade 8-10km/h"</span>,
+          <span class="json-key">"technique"</span>: <span class="json-string">"Manter postura ereta"</span>,
+          <span class="json-key">"restTime"</span>: <span class="json-number">60</span>
+        }
+      ]
+    }
+  ]
+}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Footer -->
+    <footer id="download" class="pt-24 pb-12 border-t border-white/5 bg-[#030303]">
+        <div class="container mx-auto px-6 text-center">
+
+            <h2 class="cyber-text text-4xl font-bold mb-8">INICIE O PROTOCOLO</h2>
+            <p class="text-gray-500 mb-10 max-w-lg mx-auto">
+                Download direto. Sem anúncios. Dados 100% locais.
+                <br><span class="text-xs font-mono text-gray-700">VERSÃO: ESTÁVEL 1.0.0</span>
+            </p>
+
+            <a href="assets/shape-log.apk" download
+                class="inline-flex items-center gap-3 bg-white text-black px-10 py-5 rounded-xl font-bold text-xl hover:bg-gray-200 transition-colors mb-16 shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                <i data-lucide="smartphone"></i>
+                BAIXAR APP AGORA
+            </a>
+
+            <div
+                class="grid grid-cols-1 md:grid-cols-3 gap-8 py-10 border-t border-white/5 text-left text-sm text-gray-500">
+                <div>
+                    <h5 class="text-white font-bold mb-4 font-mono">STACK</h5>
+                    <ul class="space-y-2">
+                        <li>Flutter (Dart)</li>
+                        <li>Riverpod 2.0</li>
+                        <li>Hive NoSQL</li>
+                        <li>Clean Architecture</li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="text-white font-bold mb-4 font-mono">RECURSOS</h5>
+                    <ul class="space-y-2">
+                        <li><a href="#protocol" class="hover:text-primary">Documentação JSON</a></li>
+                        <li><a href="#" class="hover:text-primary">Guia de Prompts</a></li>
+                        <li><a href="#" class="hover:text-primary">Reportar Bug</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="text-white font-bold mb-4 font-mono">SOBRE</h5>
+                    <p class="leading-relaxed mb-4">
+                        Shape.log é um projeto open-source focado em privacidade e performance.
+                    </p>
+                    <div class="flex flex-col gap-2">
+                        <a href="https://github.com/joaopaulovieira-dev/shape.log" target="_blank"
+                            class="flex items-center gap-2 hover:text-white transition-colors">
+                            <i data-lucide="github" class="w-4 h-4"></i> GitHub Repo
+                        </a>
+                        <a href="https://www.linkedin.com/in/joaopaulovieirapereira/" target="_blank"
+                            class="flex items-center gap-2 hover:text-white transition-colors">
+                            <i data-lucide="linkedin" class="w-4 h-4"></i> João Paulo Vieira
+                        </a>
+                    </div>
+                    <p class="mt-4 opacity-50">&copy; 2026 João Paulo Vieira.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Initialize Icons & Menu Script -->
+    <script>
+        lucide.createIcons();
+
+        // Mobile Menu Toggle
+        const menuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        if (menuBtn && mobileMenu) {
+            menuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+    </script>
+</body>
+
+</html>
