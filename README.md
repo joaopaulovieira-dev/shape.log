@@ -12,6 +12,7 @@
 - **Timer de Descanso**: Configure o tempo de descanso individual por exercício (padrão 60s), com slider e chips de seleção rápida.
 - **Notificações Sensoriais**: Alerta de fim de descanso com **Som Embutido** (que não interrompe sua música) e **Feedback Tátil** (vibração), garantindo que você nunca perca o início da próxima série.
 - **Histórico de Execução**: Marque treinos como concluídos e acompanhe logs passados.
+- **Ordenação Automática**: Seus treinos são organizados automaticamente em ordem alfabética para fácil acesso.
 - **Interface Polida**: Títulos de treinos longos utilizam efeito *Marquee* (texto deslizante) para visibilidade completa.
 - **Genius Focus Mode**: Interface de execução imersiva com grade compacta, histórico de carga (`📈`) acessível e persistência em tempo real.
 - **Smart Timer**: Lógica inteligente que avança exercícios automaticamente e detecta o fim do treino.
@@ -54,7 +55,8 @@
 ### 7. Detalhes de Exercício Premium
 - **Informação Rica**: Visualização clara de Séries, Repetições, Carga e **Descanso**.
 - **Ajuda Interativa**: Ícones de informação com Tooltips explicativos para cada campo.
-- **Integração YouTube**: Card premium com gradiente para "Assistir Tutorial", incentivando a execução correta.
+- **Integração YouTube**: Card premium com gradiente para "Assistir Tutorial" na tela de detalhes.
+- **YouTube Quick-Play**: No modo de execução (Focus Mode), um botão 'Play' vermelho permite abrir o vídeo tutorial instantaneamente no app do YouTube.
 
 ---
 
@@ -81,7 +83,9 @@ Para que o sistema de importação funcione corretamente (via arquivo ou texto),
           "weight": 30.0,
           "restTime": 90,
           "technique": "Cadência 3-0-1",
-          "equipmentNumber": "12"
+          "technique": "Cadência 3-0-1",
+          "equipmentNumber": "12",
+          "youtubeUrl": "https://www.youtube.com/watch?v=video_id"
         },
         {
           "name": "Corrida na Esteira",
@@ -107,6 +111,7 @@ Para que o sistema de importação funcione corretamente (via arquivo ou texto),
 - **`durationMinutes`**: (Cardio) Tempo em minutos.
 - **`intensity`**: (Cardio) String livre para descrever velocidade/zona (ex: "Zona 2").
 - **`restTime`** (ou `restSeconds`): Tempo de descanso em segundos (ex: `60`, `90`). Padrão: 60s.
+- **`youtubeUrl`**: Link completo do vídeo tutorial no YouTube (Opcional).
 - **Sanitização Automática**: Os campos `id`, `imagePaths` e `activeStartTime` são gerados ou resetados pelo app.
 
 ---

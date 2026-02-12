@@ -22,7 +22,9 @@ final workoutRepositoryProvider = Provider<WorkoutRepository>((ref) {
 // State Management
 final routineListProvider = FutureProvider<List<Workout>>((ref) async {
   final repository = ref.watch(workoutRepositoryProvider);
-  return repository.getRoutines();
+  final routines = await repository.getRoutines();
+  routines.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  return routines;
 });
 
 final historyListProvider = FutureProvider<List<WorkoutHistory>>((ref) async {

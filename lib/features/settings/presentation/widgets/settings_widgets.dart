@@ -28,9 +28,7 @@ class ProfileHeroCard extends StatelessWidget {
   }
 
   Color _getBadgeColor(int count) {
-    if (count > 50) return Colors.amber; // Gold
-    if (count > 10) return Colors.cyanAccent; // Silver/Platina
-    return Colors.brown[300]!; // Bronze/Wood
+    return AppColors.primary; // Enforce Neon Green for all badges
   }
 
   @override
@@ -38,21 +36,15 @@ class ProfileHeroCard extends StatelessWidget {
     final badge = _getBadge(totalWorkouts);
     final badgeColor = _getBadgeColor(totalWorkouts);
     final hasPhoto = userProfile?.profilePicturePath != null;
+    final neonGreen = AppColors.primary;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withOpacity(0.2),
-            AppColors.primary.withOpacity(0.05),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: const Color(0xFF1E1E1E), // Standard Card Background
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
       ),
       child: Column(
         children: [
@@ -64,15 +56,12 @@ class ProfileHeroCard extends StatelessWidget {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: neonGreen.withOpacity(0.1),
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.5),
-                      blurRadius: 10,
-                    ),
-                  ],
+                  border: Border.all(
+                    color: neonGreen.withOpacity(0.5),
+                    width: 2,
+                  ),
                   image: hasPhoto
                       ? DecorationImage(
                           image: FileImage(
@@ -88,10 +77,10 @@ class ProfileHeroCard extends StatelessWidget {
                           userProfile?.name.isNotEmpty == true
                               ? userProfile!.name[0].toUpperCase()
                               : "U",
-                          style: const TextStyle(
+                          style: GoogleFonts.outfit(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: neonGreen,
                           ),
                         ),
                       )
@@ -106,37 +95,49 @@ class ProfileHeroCard extends StatelessWidget {
                     Text(
                       userProfile?.name ?? "Usuário",
                       style: GoogleFonts.outfit(
-                        fontSize: 24,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
+                        letterSpacing: 0.5,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       userProfile != null
-                          ? "${userProfile!.age} anos • ${userProfile!.height}m"
-                          : "Configure seu perfil",
-                      style: TextStyle(color: Colors.grey[400]),
+                          ? "${userProfile!.age} ANOS • ${userProfile!.height}m"
+                          : "CONFIGURE SEU PERFIL",
+                      style: GoogleFonts.robotoMono(
+                        color: Colors.grey[400],
+                        fontSize: 12,
+                        letterSpacing: 1.0,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     // Badge Chip
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
+                        horizontal: 12,
+                        vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: badgeColor.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: badgeColor.withOpacity(0.5)),
+                        color: badgeColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: badgeColor.withOpacity(0.6)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: badgeColor.withOpacity(0.1),
+                            blurRadius: 8,
+                          ),
+                        ],
                       ),
                       child: Text(
                         badge.toUpperCase(),
-                        style: TextStyle(
+                        style: GoogleFonts.outfit(
                           color: badgeColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.0,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
                         ),
                       ),
                     ),
@@ -144,11 +145,20 @@ class ProfileHeroCard extends StatelessWidget {
                 ),
               ),
               // Edit Button
-              IconButton(
-                onPressed: onEditTap,
-                icon: const Icon(Icons.edit, color: Colors.white70),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.white.withOpacity(0.1),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[900],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[800]!),
+                ),
+                child: IconButton(
+                  onPressed: onEditTap,
+                  icon: Icon(
+                    Icons.edit,
+                    color: neonGreen.withOpacity(0.8),
+                    size: 20,
+                  ),
+                  tooltip: 'Editar Perfil',
                 ),
               ),
             ],

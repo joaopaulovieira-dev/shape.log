@@ -11,6 +11,7 @@ import 'package:confetti/confetti.dart';
 import '../../domain/services/workout_report_service.dart';
 import '../../../profile/presentation/providers/user_profile_provider.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/utils/snackbar_utils.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../image_library/presentation/image_source_sheet.dart';
@@ -661,6 +662,32 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                   );
                                 },
                               ),
+                              if (exercise.youtubeUrl != null &&
+                                  exercise.youtubeUrl!.isNotEmpty)
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons
+                                        .play_circle_filled, // More interactive/branded
+                                    size: 24,
+                                    color: Colors.red, // YouTube brand color
+                                  ),
+                                  onPressed: () async {
+                                    final url = Uri.parse(exercise.youtubeUrl!);
+                                    if (await canLaunchUrl(url)) {
+                                      await launchUrl(
+                                        url,
+                                        mode: LaunchMode.externalApplication,
+                                      );
+                                    } else {
+                                      if (context.mounted) {
+                                        SnackbarUtils.showError(
+                                          context,
+                                          'Não foi possível abrir o link.',
+                                        );
+                                      }
+                                    }
+                                  },
+                                ),
                             ],
                           ),
                         ),
