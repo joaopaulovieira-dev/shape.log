@@ -176,4 +176,4 @@ lib/
 
 ---
 
-Desenvolvido com 💙 por **João Vieira**.
+Desenvolvido com 💙 por **João Paulo**.

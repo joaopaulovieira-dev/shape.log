@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shape.log | Agentes de IA</title>
+    <meta name="description"
+        content="Selecione seu treinador virtual. Prompts otimizados para gerar treinos compatíveis com o Shape.log.">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/img/logo.png">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://joaopaulovieira.github.io/shape.log/agents.html">
+    <meta property="og:title" content="Shape.log | Agentes de IA">
+    <meta property="og:description"
+        content="Selecione seu treinador virtual. Prompts otimizados para gerar treinos compatíveis com o Shape.log.">
+    <meta property="og:image" content="https://joaopaulovieira.github.io/shape.log/docs/assets/img/logo.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://joaopaulovieira.github.io/shape.log/agents.html">
+    <meta property="twitter:title" content="Shape.log | Agentes de IA">
+    <meta property="twitter:description"
+        content="Selecione seu treinador virtual. Prompts otimizados para gerar treinos compatíveis com o Shape.log.">
+    <meta property="twitter:image" content="https://joaopaulovieira.github.io/shape.log/docs/assets/img/logo.png">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;700;800&family=Fira+Code:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#CCFF00',
+                        surface: '#111111',
+                        background: '#050505',
+                        glass: 'rgba(20, 20, 20, 0.7)',
+                        'neon-blue': '#00E5FF',
+                        'neon-purple': '#D500F9',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                        mono: ['Fira Code', 'myspace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #050505;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            background-image:
+                radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.05) 0%, transparent 50%),
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+        }
+
+        .cyber-text {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .glass-panel {
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="fixed w-full z-50 glass-panel border-b border-white/5 top-0 transition-all duration-300">
+        <div class="container mx-auto px-6 h-20 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-3 group cursor-pointer">
+                <div class="relative">
+                    <div
+                        class="absolute inset-0 bg-primary/20 blur-md rounded-full group-hover:bg-primary/40 transition-all">
+                    </div>
+                    <img src="assets/img/logo.png" alt="Shape.log Logo" class="h-10 w-10 relative z-10">
+                </div>
+                <div class="flex flex-col">
+                    <span class="cyber-text font-bold text-2xl tracking-wider text-white leading-none">SHAPE<span
+                            class="text-primary">.LOG</span></span>
+                    <span class="text-[10px] text-gray-500 font-mono tracking-[0.2em] uppercase">TREINO
+                        INTELIGENTE</span>
+                </div>
+            </a>
+
+            <!-- Desktop Nav -->
+            <nav class="hidden md:flex gap-10 text-sm font-medium text-gray-400">
+                <a href="agents.html" class="text-primary flex items-center gap-2">
+                    <i data-lucide="users" class="w-4 h-4"></i> AGENTES DE IA
+                </a>
+                <a href="index.html#cycle" class="hover:text-white transition-colors flex items-center gap-2">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> CICLO DO APP
+                </a>
+                <a href="index.html#features" class="hover:text-white transition-colors flex items-center gap-2">
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i> FUNCIONALIDADES
+                </a>
+                <a href="readme.html" class="hover:text-primary transition-colors flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-4 h-4"></i> README.md
+                </a>
+            </nav>
+
+            <!-- Buttons -->
+            <div class="hidden md:flex items-center gap-4">
+                <a href="assets/shape-log.apk" download
+                    class="group relative px-6 py-2 overflow-hidden rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/10">
+                    <div
+                        class="absolute inset-0 w-0 bg-gradient-to-r from-primary/20 to-transparent transition-all duration-[250ms] ease-out group-hover:w-full">
+                    </div>
+                    <span
+                        class="relative font-bold text-sm text-primary group-hover:text-white transition-colors flex items-center gap-2 uppercase">
+                        <i data-lucide="download" class="w-4 h-4"></i> BAIXE AGORA O APP GRATUITAMENTE
+                    </span>
+                </a>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-btn" class="text-white p-2 md:hidden">
+                <i data-lucide="menu" class="w-8 h-8"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu"
+            class="absolute left-0 top-20 hidden w-full border-b border-white/10 bg-black/95 backdrop-blur-xl md:hidden">
+            <div class="container mx-auto flex flex-col gap-6 px-6 py-6">
+                <a href="agents.html"
+                    class="flex items-center gap-3 border-b border-white/5 py-2 font-bold text-primary transition-colors">
+                    <i data-lucide="users" class="h-5 w-5"></i> AGENTES IA
+                </a>
+                <a href="index.html#cycle"
+                    class="flex items-center gap-3 border-b border-white/5 py-2 text-gray-400 transition-colors hover:text-white">
+                    <i data-lucide="refresh-cw" class="h-5 w-5"></i> CICLO IA
+                </a>
+                <a href="index.html#features"
+                    class="flex items-center gap-3 border-b border-white/5 py-2 text-gray-400 transition-colors hover:text-white">
+                    <i data-lucide="layout-grid" class="h-5 w-5"></i> FUNCIONALIDADES
+                </a>
+                <a href="readme.html"
+                    class="flex items-center gap-3 border-b border-white/5 py-2 text-gray-400 transition-colors hover:text-primary">
+                    <i data-lucide="file-text" class="h-5 w-5"></i> README.md
+                </a>
+                <a href="assets/shape-log.apk" download
+                    class="flex items-center justify-center gap-2 rounded-lg bg-primary/20 py-4 font-black uppercase text-primary shadow-[0_0_20px_rgba(204,255,0,0.1)] text-xs">
+                    <i data-lucide="download" class="h-5 w-5"></i> BAIXE AGORA O APP GRATUITAMENTE
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Content -->
+    <main class="container mx-auto px-6 pt-32 pb-20">
+
+        <div class="text-center mb-16">
+            <h1 class="cyber-text text-4xl md:text-6xl font-bold mb-4">ESCOLHA SEU <span
+                    class="text-neon-blue">TREINADOR</span></h1>
+            <p class="text-gray-400 max-w-2xl mx-auto text-lg">
+                Selecione uma personalidade abaixo para copiar o <b>Prompt de Sistema</b> otimizado.
+                Cole no ChatGPT, Claude ou Gemini para começar a gerar treinos compatíveis.
+            </p>
+        </div>
+
+        <!-- Agents Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+
+            <!-- Agent: O Sargento -->
+            <div
+                class="glass-panel p-6 rounded-2xl border border-white/10 hover:border-red-500 transition-all group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-br from-red-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20">
+                            <i data-lucide="shield-alert" class="w-6 h-6 text-red-500"></i>
+                        </div>
+                        <span
+                            class="text-[10px] font-mono text-red-500 border border-red-500/30 px-2 py-1 rounded">HARDCORE</span>
+                    </div>
+                    <h3 class="cyber-text text-xl font-bold text-white mb-2">O SARGENTO</h3>
+                    <p class="text-gray-400 text-xs mb-4 h-16">
+                        Disciplina militar. Foco em superação de carga, dor e resiliência mental. Ideal para quem quer
+                        ser cobrado ao extremo.
+                    </p>
+                    <button onclick="copyPrompt('sargento')"
+                        class="w-full bg-white/5 hover:bg-red-500 hover:text-black border border-white/10 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm">
+                        <i data-lucide="copy" class="w-4 h-4"></i> COPIAR PROMPT
+                    </button>
+                </div>
+            </div>
+
+            <!-- Agent: O Pastor (Gospel) -->
+            <div
+                class="glass-panel p-6 rounded-2xl border border-white/10 hover:border-yellow-600 transition-all group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-br from-yellow-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-12 h-12 bg-yellow-600/10 rounded-xl flex items-center justify-center border border-yellow-600/20">
+                            <i data-lucide="book-open" class="w-6 h-6 text-yellow-600"></i>
+                        </div>
+                        <span
+                            class="text-[10px] font-mono text-yellow-600 border border-yellow-600/30 px-2 py-1 rounded">GOSPEL</span>
+                    </div>
+                    <h3 class="cyber-text text-xl font-bold text-white mb-2">O PASTOR</h3>
+                    <p class="text-gray-400 text-xs mb-4 h-16">
+                        O corpo como templo do Espírito. Motivação baseada em gratidão, propósito e disciplina cristã.
+                        "Tudo posso Naquele que me fortalece."
+                    </p>
+                    <button onclick="copyPrompt('gospel')"
+                        class="w-full bg-white/5 hover:bg-yellow-600 hover:text-black border border-white/10 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm">
+                        <i data-lucide="copy" class="w-4 h-4"></i> COPIAR PROMPT
+                    </button>
+                </div>
+            </div>
+
+            <!-- Agent: A Nutri -->
+            <div
+                class="glass-panel p-6 rounded-2xl border border-white/10 hover:border-green-400 transition-all group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-br from-green-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-12 h-12 bg-green-400/10 rounded-xl flex items-center justify-center border border-green-400/20">
+                            <i data-lucide="apple" class="w-6 h-6 text-green-400"></i>
+                        </div>
+                        <span
+                            class="text-[10px] font-mono text-green-400 border border-green-400/30 px-2 py-1 rounded">NUTRIÇÃO</span>
+                    </div>
+                    <h3 class="cyber-text text-xl font-bold text-white mb-2">A NUTRI</h3>
+                    <p class="text-gray-400 text-xs mb-4 h-16">
+                        Especialista em combustível. Foca em macronutrientes para suportar seu treino e maximizar
+                        resultados estéticos.
+                    </p>
+                    <button onclick="copyPrompt('nutri')"
+                        class="w-full bg-white/5 hover:bg-green-400 hover:text-black border border-white/10 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm">
+                        <i data-lucide="copy" class="w-4 h-4"></i> COPIAR PROMPT
+                    </button>
+                </div>
+            </div>
+
+            <!-- Agent: O Híbrido -->
+            <div
+                class="glass-panel p-6 rounded-2xl border border-white/10 hover:border-primary transition-all group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
+                            <i data-lucide="activity" class="w-6 h-6 text-primary"></i>
+                        </div>
+                        <span
+                            class="text-[10px] font-mono text-primary border border-primary/30 px-2 py-1 rounded">CROSS/FUNCIONAL</span>
+                    </div>
+                    <h3 class="cyber-text text-xl font-bold text-white mb-2">O HÍBRIDO</h3>
+                    <p class="text-gray-400 text-xs mb-4 h-16">
+                        Performance atlética total. Mistura força, cardio e mobilidade. Para quem quer ser uma máquina
+                        completa.
+                    </p>
+                    <button onclick="copyPrompt('hibrido')"
+                        class="w-full bg-white/5 hover:bg-primary hover:text-black border border-white/10 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm">
+                        <i data-lucide="copy" class="w-4 h-4"></i> COPIAR PROMPT
+                    </button>
+                </div>
+            </div>
+
+            <!-- Agent: A Wellness (Feminino) -->
+            <div
+                class="glass-panel p-6 rounded-2xl border border-white/10 hover:border-pink-500 transition-all group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-br from-pink-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-12 h-12 bg-pink-500/10 rounded-xl flex items-center justify-center border border-pink-500/20">
+                            <i data-lucide="heart" class="w-6 h-6 text-pink-500"></i>
+                        </div>
+                        <span
+                            class="text-[10px] font-mono text-pink-500 border border-pink-500/30 px-2 py-1 rounded">FEMININO</span>
+                    </div>
+                    <h3 class="cyber-text text-xl font-bold text-white mb-2">A WELLNESS</h3>
+                    <p class="text-gray-400 text-xs mb-4 h-16">
+                        Foco total em inferiores e glúteos com volume estratégico. Desenha o físico feminino com
+                        harmonia e proporção.
+                    </p>
+                    <button onclick="copyPrompt('wellness')"
+                        class="w-full bg-white/5 hover:bg-pink-500 hover:text-black border border-white/10 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm">
+                        <i data-lucide="copy" class="w-4 h-4"></i> COPIAR PROMPT
+                    </button>
+                </div>
+            </div>
+
+            <!-- Agent: O Powerbuilder (Masculino) -->
+            <div
+                class="glass-panel p-6 rounded-2xl border border-white/10 hover:border-orange-500 transition-all group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center border border-orange-500/20">
+                            <i data-lucide="dumbbell" class="w-6 h-6 text-orange-500"></i>
+                        </div>
+                        <span
+                            class="text-[10px] font-mono text-orange-500 border border-orange-500/30 px-2 py-1 rounded">FORÇA
+                            BRUTA</span>
+                    </div>
+                    <h3 class="cyber-text text-xl font-bold text-white mb-2">O POWERBUILDER</h3>
+                    <p class="text-gray-400 text-xs mb-4 h-16">
+                        A união perfeita entre Powerlifting e Bodybuilding. Foco nos levantamentos básicos (SBD) sem
+                        esquecer a estética.
+                    </p>
+                    <button onclick="copyPrompt('powerbuilder')"
+                        class="w-full bg-white/5 hover:bg-orange-500 hover:text-black border border-white/10 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm">
+                        <i data-lucide="copy" class="w-4 h-4"></i> COPIAR PROMPT
+                    </button>
+                </div>
+            </div>
+
+            <!-- Agent: A Yogi (Flexibilidade) -->
+            <div
+                class="glass-panel p-6 rounded-2xl border border-white/10 hover:border-teal-400 transition-all group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-br from-teal-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-12 h-12 bg-teal-400/10 rounded-xl flex items-center justify-center border border-teal-400/20">
+                            <i data-lucide="move" class="w-6 h-6 text-teal-400"></i>
+                        </div>
+                        <span
+                            class="text-[10px] font-mono text-teal-400 border border-teal-400/30 px-2 py-1 rounded">MOBILIDADE</span>
+                    </div>
+                    <h3 class="cyber-text text-xl font-bold text-white mb-2">A YOGI</h3>
+                    <p class="text-gray-400 text-xs mb-4 h-16">
+                        Foco em consciência corporal, flexibilidade e respiração. Treinos fluídos para melhorar postura
+                        e reduzir dores.
+                    </p>
+                    <button onclick="copyPrompt('yogi')"
+                        class="w-full bg-white/5 hover:bg-teal-400 hover:text-black border border-white/10 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm">
+                        <i data-lucide="copy" class="w-4 h-4"></i> COPIAR PROMPT
+                    </button>
+                </div>
+            </div>
+
+            <!-- Agent: O Old School (Golden Era) -->
+            <div
+                class="glass-panel p-6 rounded-2xl border border-white/10 hover:border-yellow-500 transition-all group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-12 h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center border border-yellow-500/20">
+                            <i data-lucide="trophy" class="w-6 h-6 text-yellow-500"></i>
+                        </div>
+                        <span
+                            class="text-[10px] font-mono text-yellow-500 border border-yellow-500/30 px-2 py-1 rounded">GOLDEN
+                            ERA</span>
+                    </div>
+                    <h3 class="cyber-text text-xl font-bold text-white mb-2">O OLD SCHOOL</h3>
+                    <p class="text-gray-400 text-xs mb-4 h-16">
+                        Estilo anos 70. Volume alto, foco na conexão mente-músculo e proporções clássicas (V-Taper).
+                        Arnold Style.
+                    </p>
+                    <button onclick="copyPrompt('oldschool')"
+                        class="w-full bg-white/5 hover:bg-yellow-500 hover:text-black border border-white/10 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm">
+                        <i data-lucide="copy" class="w-4 h-4"></i> COPIAR PROMPT
+                    </button>
+                </div>
+            </div>
+
+            <!-- Agent: A Funcional (Cardio/Hit) -->
+            <div
+                class="glass-panel p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-br from-cyan-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-12 h-12 bg-cyan-400/10 rounded-xl flex items-center justify-center border border-cyan-400/20">
+                            <i data-lucide="zap" class="w-6 h-6 text-cyan-400"></i>
+                        </div>
+                        <span
+                            class="text-[10px] font-mono text-cyan-400 border border-cyan-400/30 px-2 py-1 rounded">INTENSIDADE</span>
+                    </div>
+                    <h3 class="cyber-text text-xl font-bold text-white mb-2">A FUNCIONAL</h3>
+                    <p class="text-gray-400 text-xs mb-4 h-16">
+                        Treinos dinâmicos de alta queima calórica. Mistura HIIT, funcionais e pliometria para definição
+                        e fôlego.
+                    </p>
+                    <button onclick="copyPrompt('funcional')"
+                        class="w-full bg-white/5 hover:bg-cyan-400 hover:text-black border border-white/10 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm">
+                        <i data-lucide="copy" class="w-4 h-4"></i> COPIAR PROMPT
+                    </button>
+                </div>
+            </div>
+
+            <!-- Agent: O Calistênico -->
+            <div
+                class="glass-panel p-6 rounded-2xl border border-white/10 hover:border-white transition-all group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center border border-white/20">
+                            <i data-lucide="arrow-up" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <span
+                            class="text-[10px] font-mono text-white border border-white/30 px-2 py-1 rounded">BODYWEIGHT</span>
+                    </div>
+                    <h3 class="cyber-text text-xl font-bold text-white mb-2">O CALISTÊNICO</h3>
+                    <p class="text-gray-400 text-xs mb-4 h-16">
+                        Domínio total do corpo. Barras, paralelas e isometria. Construa força real sem precisar de
+                        academia.
+                    </p>
+                    <button onclick="copyPrompt('calistenico')"
+                        class="w-full bg-white/5 hover:bg-white hover:text-black border border-white/10 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm">
+                        <i data-lucide="copy" class="w-4 h-4"></i> COPIAR PROMPT
+                    </button>
+                </div>
+            </div>
+
+            <!-- Agent: O Cientista -->
+            <div
+                class="glass-panel p-6 rounded-2xl border border-white/10 hover:border-neon-blue transition-all group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-br from-neon-blue/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-12 h-12 bg-neon-blue/10 rounded-xl flex items-center justify-center border border-neon-blue/20">
+                            <i data-lucide="flask-conical" class="w-6 h-6 text-neon-blue"></i>
+                        </div>
+                        <span
+                            class="text-[10px] font-mono text-neon-blue border border-neon-blue/30 px-2 py-1 rounded">EVIDÊNCIA</span>
+                    </div>
+                    <h3 class="cyber-text text-xl font-bold text-white mb-2">O CIENTISTA</h3>
+                    <p class="text-gray-400 text-xs mb-4 h-16">
+                        Baseado em evidências. Foco em biomecânica e controle de fadiga. Explica os 'porquês' de cada
+                        exercício.
+                    </p>
+                    <button onclick="copyPrompt('cientista')"
+                        class="w-full bg-white/5 hover:bg-neon-blue hover:text-black border border-white/10 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm">
+                        <i data-lucide="copy" class="w-4 h-4"></i> COPIAR PROMPT
+                    </button>
+                </div>
+            </div>
+
+            <!-- Agent: Bio-Hacker (Cyber-Fit) -->
+            <div
+                class="glass-panel p-6 rounded-2xl border border-white/10 hover:border-fuchsia-500 transition-all group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-gradient-to-br from-fuchsia-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-12 h-12 bg-fuchsia-500/10 rounded-xl flex items-center justify-center border border-fuchsia-500/20">
+                            <i data-lucide="cpu" class="w-6 h-6 text-fuchsia-500"></i>
+                        </div>
+                        <span
+                            class="text-[10px] font-mono text-fuchsia-500 border border-fuchsia-500/30 px-2 py-1 rounded">CYBER-FIT</span>
+                    </div>
+                    <h3 class="cyber-text text-xl font-bold text-white mb-2">BIO-HACKER</h3>
+                    <p class="text-gray-400 text-xs mb-4 h-16">
+                        Otimização de hardware biológico. Foco em performance máxima através de dados, bio-hacking e
+                        protocolos de elite.
+                    </p>
+                    <button onclick="copyPrompt('biohacker')"
+                        class="w-full bg-white/5 hover:bg-fuchsia-500 hover:text-black border border-white/10 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm">
+                        <i data-lucide="copy" class="w-4 h-4"></i> COPIAR PROMPT
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast"
+            class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-surface border border-primary text-white px-6 py-3 rounded-full opacity-0 transition-opacity duration-300 pointer-events-none flex items-center gap-2 z-50">
+            <i data-lucide="check-circle" class="w-5 h-5 text-primary"></i>
+            <span class="font-bold">Prompt copiado!</span>
+        </div>
+
+        <!-- Disclaimer -->
+        <div
+            class="mt-16 max-w-4xl mx-auto p-6 bg-red-500/5 border border-red-500/20 rounded-xl flex items-start gap-4">
+            <i data-lucide="alert-triangle" class="w-6 h-6 text-red-500 flex-shrink-0 mt-1"></i>
+            <div>
+                <h4 class="text-red-500 font-bold mb-1">AVISO LEGAL DE RESPONSABILIDADE</h4>
+                <p class="text-gray-400 text-sm leading-relaxed">
+                    As inteligências artificiais (IA) podem cometer erros. Os treinos sugeridos são gerados por modelos
+                    de linguagem e NÃO substituem a orientação de um Profissional de Educação Física, Médico ou
+                    Nutricionista qualificado. Antes de iniciar qualquer atividade física, consulte um especialista para
+                    avaliar suas condições de saúde. O uso destas sugestões é de sua inteira responsabilidade.
+                </p>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="py-8 border-t border-white/5 text-center text-gray-600 text-xs">
+        <p>&copy; 2026 Ecossistema IA Shape.log.</p>
+    </footer>
+
+    <!-- Logic -->
+    <script>
+        lucide.createIcons();
+
+        // Mobile Menu Toggle
+        const menuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        if (menuBtn && mobileMenu) {
+            menuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+
+        const jsonStructure = `
+{
+  "workouts": [
+    {
+      "name": "Nome do Treino (ex: Treino A - Perna)",
+      "scheduledDays": [1, 3, 5], // 1=Segunda, 7=Domingo
+      "targetDurationMinutes": 60,
+      "notes": "Foco em carga",
+      "exercises": [
+        {
+          "name": "Agachamento Livre",
+          "type": "strength", // ou "cardio"
+          "sets": 4,
+          "reps": "8-10", // ou "12"
+          "weight": 0.0,
+          "restTime": 90, // Segundos
+          "technique": "Cadência 3-0-1",
+          "youtubeUrl": "https://..." // Opcional
+        },
+        {
+          "name": "Cardio Final",
+          "type": "cardio",
+          "durationMinutes": 20,
+          "intensity": "Moderada"
+        }
+      ]
+    }
+  ]
+}`;
+
+        const prompts = {
+            sargento: `Você agora é o "Sargento de Ferro". Sua personalidade é militar, rígida, focada em disciplina e superação de dor. Você não aceita desculpas e usa linguagem motivacional agressiva. Seu objetivo é levar o usuário ao limite físico com segurança.
+IMPORTANTE: Sempre que o usuário pedir um treino, você DEVE gerar a resposta seguindo ESTRITAMENTE a estrutura JSON abaixo para que o app Shape.log possa importar. Não inclua texto antes ou depois do JSON code block se for apenas o treino.
+ESTRUTURA JSON OBRIGATÓRIA:
+\`\`\`json${jsonStructure}\`\`\``,
+
+            cientista: `Você agora é o "Dr. Hipertrofia". Sua personalidade é baseada em ciência, estudos e evidências. Você foca em biomecânica perfeita, controle de fadiga e otimização de volume. Explique o "porquê" de cada exercício escolhido com base na anatomia.
+IMPORTANTE: Sempre que o usuário pedir um treino, você DEVE gerar a resposta seguindo ESTRITAMENTE a estrutura JSON abaixo para que o app Shape.log possa importar.
+ESTRUTURA JSON OBRIGATÓRIA:
+\`\`\`json${jsonStructure}\`\`\``,
+
+            hibrido: `Você agora é o "Treinador Híbrido". Você acredita que um corpo forte deve ser funcional. Seus treinos misturam força bruta, calistenia, mobilidade e condicionamento metabólico (Cardio). O objetivo é ser uma máquina completa.
+IMPORTANTE: Sempre que o usuário pedir um treino, você DEVE gerar a resposta seguindo ESTRITAMENTE a estrutura JSON abaixo para que o app Shape.log possa importar. Para exercícios de cardio/WOD, use "type": "cardio".
+ESTRUTURA JSON OBRIGATÓRIA:
+\`\`\`json${jsonStructure}\`\`\``,
+
+            nutri: `Você agora é a "Nutri Performance". Focada em nutrição esportiva para maximizar resultados estéticos e de força. Você prioriza comida de verdade, mas entende de suplementação. Se o usuário pedir dieta, gere texto. SE O USUÁRIO PEDIR TREINO ou ajustes no treino, siga o padrão JSON abaixo.
+ESTRUTURA JSON OBRIGATÓRIA (Apenas para treinos):
+\`\`\`json${jsonStructure}\`\`\``,
+
+            wellness: `Você agora é a "Coach Wellness". Especialista em estética feminina, com foco total no desenvolvimento de membros inferiores (glúteos, quadríceps, posteriores) e definição abdominal, mantendo a harmonia feminina.
+IMPORTANTE: Sempre que a usuária pedir um treino, você DEVE gerar a resposta seguindo ESTRITAMENTE a estrutura JSON abaixo para que o app Shape.log possa importar.
+ESTRUTURA JSON OBRIGATÓRIA:
+\`\`\`json${jsonStructure}\`\`\``,
+
+            powerbuilder: `Você agora é o "Powerbuilder". Sua filosofia é: Força é Beleza. Seus treinos focam em progredir cargas nos básicos (Agachamento, Supino, Terra) mas com volume acessório de fisiculturismo para estética.
+IMPORTANTE: Sempre que o usuário pedir um treino, você DEVE gerar a resposta seguindo ESTRITAMENTE a estrutura JSON abaixo.
+ESTRUTURA JSON OBRIGATÓRIA:
+\`\`\`json${jsonStructure}\`\`\``,
+
+            yogi: `Você agora é a "Mestra Yogi". Focada em mobilidade, flexibilidade e consciência corporal. Seus treinos não visam apenas estética, mas saúde articular, postura e longevidade.
+IMPORTANTE: Sempre que o usuário pedir uma rotina, você DEVE gerar a resposta seguindo ESTRITAMENTE a estrutura JSON abaixo. Use nomes de asanas ou alongamentos como "Exercises".
+ESTRUTURA JSON OBRIGATÓRIA:
+\`\`\`json${jsonStructure}\`\`\``,
+
+            oldschool: `Você agora é o "Old School Bodybuilder". Você vive na Era de Ouro (anos 70). Arnold, Mentzer, Zane. Seus treinos têm alto volume, foco na 'pump' e na conexão mente-músculo.
+IMPORTANTE: Sempre que o usuário pedir um treino, você DEVE gerar a resposta seguindo ESTRITAMENTE a estrutura JSON abaixo.
+ESTRUTURA JSON OBRIGATÓRIA:
+\`\`\`json${jsonStructure}\`\`\``,
+
+            funcional: `Você agora é a "Coach Funcional". Seus treinos são rápidos, intensos e queimam muita caloria. Mistura de HIIT, pliometria e exercícios compostos para definição muscular e fôlego.
+IMPORTANTE: Sempre que o usuário pedir um treino, você DEVE gerar a resposta seguindo ESTRITAMENTE a estrutura JSON abaixo. Para exercícios de tempo/cardio, use "type": "cardio".
+ESTRUTURA JSON OBRIGATÓRIA:
+\`\`\`json${jsonStructure}\`\`\``,
+
+            calistenico: `Você agora é o "Mestre das Barras". Você não precisa de pesos. Seu corpo é sua máquina. Foco em dominadas, flexões, dips e progressões de calistenia.
+IMPORTANTE: Sempre que o usuário pedir um treino, você DEVE gerar a resposta seguindo ESTRITAMENTE a estrutura JSON abaixo.
+ESTRUTURA JSON OBRIGATÓRIA:
+\`\`\`json${jsonStructure}\`\`\``,
+
+            gospel: `Você agora é o "Pastor do Shape". Sua missão é motivar o usuário lembrando que o corpo é o templo do Espírito Santo (1 Coríntios 6:19). Suas respostas são serenas, gratas e focadas em disciplina como forma de honrar a vida. Use referências bíblicas de força e perseverança.
+IMPORTANTE: Sempre que o usuário pedir um treino, você DEVE gerar a resposta seguindo ESTRITAMENTE a estrutura JSON abaixo para que o app Shape.log possa importar.
+ESTRUTURA JSON OBRIGATÓRIA:
+\`\`\`json${jsonStructure}\`\`\``,
+
+            biohacker: `Você agora é o "Bio-Hacker de Elite". Você vê o corpo humano como um hardware que precisa de otimização constante. Seu foco é em bio-hacking, suplementação avançada, janelas de oportunidade e performance baseada em dados técnicos e estética Cyberpunk.
+IMPORTANTE: Sempre que o usuário pedir um treino, você DEVE gerar a resposta seguindo ESTRITAMENTE a estrutura JSON abaixo para que o app Shape.log possa importar.
+ESTRUTURA JSON OBRIGATÓRIA:
+\`\`\`json${jsonStructure}\`\`\``
+        };
+
+        function copyPrompt(agent) {
+            const promptText = prompts[agent];
+            navigator.clipboard.writeText(promptText).then(() => {
+                showToast();
+            });
+        }
+
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('opacity-0');
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+
+</html>

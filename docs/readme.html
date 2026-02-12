@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shape.log | Documentação do Sistema</title>
+    <meta name="description"
+        content="Documentação técnica completa do ecossistema Shape.log. Protocolos JSON, fluxo de inteligência e guia de funcionalidades.">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/img/logo.png">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://joaopaulovieira.github.io/shape.log/readme.html">
+    <meta property="og:title" content="Shape.log | Documentação do Sistema">
+    <meta property="og:description"
+        content="Documentação técnica completa do ecossistema Shape.log. Protocolos JSON, fluxo de inteligência e guia de funcionalidades.">
+    <meta property="og:image" content="https://joaopaulovieira.github.io/shape.log/docs/assets/img/logo.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://joaopaulovieira.github.io/shape.log/readme.html">
+    <meta property="twitter:title" content="Shape.log | Documentação do Sistema">
+    <meta property="twitter:description"
+        content="Documentação técnica completa do ecossistema Shape.log. Protocolos JSON, fluxo de inteligência e guia de funcionalidades.">
+    <meta property="twitter:image" content="https://joaopaulovieira.github.io/shape.log/docs/assets/img/logo.png">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;700;800&family=Fira+Code:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#CCFF00', // Neon Green
+                        surface: '#111111',
+                        background: '#050505',
+                        glass: 'rgba(20, 20, 20, 0.7)',
+                        'neon-blue': '#00E5FF',
+                        'neon-purple': '#D500F9',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                        mono: ['Fira Code', 'myspace'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #050505;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            background-image:
+                radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.08) 0%, transparent 50%),
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+        }
+
+        .cyber-text {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .glass-panel {
+            background: rgba(10, 10, 10, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Scanline effect */
+        .scanline {
+            width: 100%;
+            height: 100px;
+            z-index: 10;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(0, 229, 255, 0.05) 50%, rgba(0, 0, 0, 0) 100%);
+            opacity: 0.15;
+            background-size: 100% 4px;
+            animation: scanline 8s linear infinite;
+            pointer-events: none;
+            position: fixed;
+            top: 0;
+        }
+
+        @keyframes scanline {
+            0% {
+                transform: translateY(-100%);
+            }
+
+            100% {
+                transform: translateY(100vh);
+            }
+        }
+
+        /* Documentation Styling */
+        article {
+            color: #cbd5e1;
+        }
+
+        article h1 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 3.5rem;
+            margin-bottom: 2rem;
+            color: white;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @media (max-width: 768px) {
+            article h1 {
+                font-size: 2.25rem;
+                margin-bottom: 1.5rem;
+            }
+
+            article h2 {
+                font-size: 1.5rem;
+                margin-top: 3rem;
+                margin-bottom: 1rem;
+            }
+
+            article h3 {
+                font-size: 1.1rem;
+                margin-top: 2rem;
+            }
+
+            article p {
+                font-size: 1rem;
+                margin-bottom: 1.25rem;
+            }
+
+            article {
+                padding: 1.5rem !important;
+                border-radius: 24px !important;
+            }
+
+            main {
+                padding-top: 5rem;
+            }
+        }
+
+        article h2 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 2rem;
+            margin-top: 4rem;
+            margin-bottom: 1.25rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            letter-spacing: -0.01em;
+        }
+
+        article h2::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, rgba(0, 229, 255, 0.5), transparent);
+        }
+
+        article h3 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.25rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            color: #00E5FF;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        article p {
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+            font-size: 1.05rem;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        article ul {
+            margin-bottom: 3rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        article li {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        article li strong {
+            font-size: 1.25rem;
+            color: white;
+            font-weight: 700;
+            display: block;
+        }
+
+        article li span {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            line-height: 1.5;
+            font-weight: 400;
+        }
+
+        /* Color Variants for Cards */
+        .cards-green li:hover {
+            border-color: #CCFF00;
+            background: rgba(204, 255, 0, 0.03);
+        }
+
+        .cards-green li strong {
+            color: #CCFF00;
+        }
+
+        .cards-blue li:hover {
+            border-color: #00E5FF;
+            background: rgba(0, 229, 255, 0.03);
+        }
+
+        .cards-blue li strong {
+            color: #00E5FF;
+        }
+
+        .cards-purple li:hover {
+            border-color: #D500F9;
+            background: rgba(213, 0, 249, 0.03);
+        }
+
+        .cards-purple li strong {
+            color: #D500F9;
+        }
+
+        .cards-cyan li:hover {
+            border-color: #22D3EE;
+            background: rgba(34, 211, 238, 0.03);
+        }
+
+        .cards-cyan li strong {
+            color: #22D3EE;
+        }
+
+        .cards-pink li:hover {
+            border-color: #F512D1;
+            background: rgba(245, 18, 209, 0.03);
+        }
+
+        .cards-pink li strong {
+            color: #F512D1;
+        }
+
+        .cards-orange li:hover {
+            border-color: #FB923C;
+            background: rgba(251, 146, 60, 0.03);
+        }
+
+        .cards-orange li strong {
+            color: #FB923C;
+        }
+
+        .cards-silver li:hover {
+            border-color: #94A3B8;
+            background: rgba(148, 163, 184, 0.03);
+        }
+
+        .cards-silver li strong {
+            color: #94A3B8;
+        }
+
+        article code {
+            background: rgba(0, 229, 255, 0.1);
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-family: 'Fira Code', monospace;
+            color: #00E5FF;
+            font-size: 0.9em;
+            border: 1px solid rgba(0, 229, 255, 0.2);
+        }
+
+        article pre {
+            background: #0a0a0a;
+            padding: 2rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 3rem;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        article pre::before {
+            content: "CODE_TERMINAL";
+            position: absolute;
+            top: 0;
+            right: 2rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.1);
+            letter-spacing: 0.2em;
+            padding: 0.5rem 0;
+        }
+
+        article blockquote {
+            background: rgba(0, 229, 255, 0.03);
+            border-left: 4px solid #00E5FF;
+            padding: 2rem;
+            border-radius: 0 20px 20px 0;
+            margin-bottom: 3rem;
+            font-style: italic;
+            color: #94a3b8;
+        }
+
+        article table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            overflow: hidden;
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        article th {
+            background: rgba(255, 255, 255, 0.03);
+            color: white;
+            text-align: left;
+            padding: 1.25rem 1.5rem;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        article td {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            color: #94a3b8;
+        }
+
+        article tr:last-child td {
+            border-bottom: none;
+        }
+
+        article tr:hover td {
+            background: rgba(255, 255, 255, 0.01);
+            color: white;
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col overflow-x-hidden">
+
+    <div class="scanline"></div>
+
+    <!-- Header -->
+    <header class="fixed w-full z-50 glass-panel border-b border-white/5 top-0 transition-all duration-300">
+        <div class="container mx-auto px-6 h-20 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-3 group cursor-pointer">
+                <div class="relative">
+                    <div
+                        class="absolute inset-0 bg-primary/20 blur-md rounded-full group-hover:bg-primary/40 transition-all">
+                    </div>
+                    <img src="assets/img/logo.png" alt="Shape.log Logo" class="h-10 w-10 relative z-10">
+                </div>
+                <div class="flex flex-col">
+                    <span class="cyber-text font-bold text-2xl tracking-wider text-white leading-none">SHAPE<span
+                            class="text-primary">.LOG</span></span>
+                    <span class="text-[10px] text-gray-500 font-mono tracking-[0.2em] uppercase">TREINO
+                        INTELIGENTE</span>
+                </div>
+            </a>
+
+            <!-- Desktop Nav -->
+            <nav class="hidden md:flex gap-10 text-sm font-medium text-gray-400">
+                <a href="agents.html" class="hover:text-primary transition-colors flex items-center gap-2">
+                    <i data-lucide="users" class="w-4 h-4"></i> AGENTES DE IA
+                </a>
+                <a href="index.html#cycle" class="hover:text-white transition-colors flex items-center gap-2">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> CICLO DO APP
+                </a>
+                <a href="index.html#features" class="hover:text-white transition-colors flex items-center gap-2">
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i> FUNCIONALIDADES
+                </a>
+                <a href="readme.html" class="text-primary flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-4 h-4"></i> README.md
+                </a>
+            </nav>
+
+            <!-- Buttons -->
+            <div class="hidden md:flex items-center gap-4">
+                <a href="assets/shape-log.apk" download
+                    class="group relative px-6 py-2 overflow-hidden rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/10">
+                    <div
+                        class="absolute inset-0 w-0 bg-gradient-to-r from-primary/20 to-transparent transition-all duration-[250ms] ease-out group-hover:w-full">
+                    </div>
+                    <span
+                        class="relative font-bold text-sm text-primary group-hover:text-white transition-colors flex items-center gap-2 uppercase">
+                        <i data-lucide="download" class="w-4 h-4"></i> Baixe Agora o App Gratuitamente
+                    </span>
+                </a>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-btn" class="md:hidden text-white p-2">
+                <i data-lucide="menu" class="w-8 h-8"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu"
+            class="hidden md:hidden absolute top-20 left-0 w-full bg-black/95 border-b border-white/10 backdrop-blur-xl">
+            <div class="container mx-auto px-6 py-6 flex flex-col gap-6">
+                <a href="agents.html"
+                    class="text-gray-400 hover:text-primary transition-colors py-2 flex items-center gap-3 border-b border-white/5">
+                    <i data-lucide="users" class="w-5 h-5"></i> AGENTES IA
+                </a>
+                <a href="index.html#cycle"
+                    class="text-gray-400 hover:text-white transition-colors py-2 flex items-center gap-3 border-b border-white/5">
+                    <i data-lucide="refresh-cw" class="w-5 h-5"></i> CICLO IA
+                </a>
+                <a href="index.html#features"
+                    class="text-gray-400 hover:text-white transition-colors py-2 flex items-center gap-3 border-b border-white/5">
+                    <i data-lucide="layout-grid" class="w-5 h-5"></i> FUNCIONALIDADES
+                </a>
+                <a href="readme.html"
+                    class="text-primary transition-colors py-2 flex items-center gap-3 border-b border-white/5 font-bold">
+                    <i data-lucide="file-text" class="w-5 h-5"></i> README.md
+                </a>
+                <a href="assets/shape-log.apk" download
+                    class="bg-primary/20 text-primary py-4 rounded-lg flex items-center justify-center gap-2 font-bold uppercase text-xs">
+                    <i data-lucide="download" class="w-5 h-5"></i> Baixe Agora o App Gratuitamente
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow pt-32 pb-20">
+        <div class="container mx-auto px-6 max-w-[1600px]">
+            <article class="glass-panel p-10 md:p-20 rounded-[40px] border border-white/5">
+                <h1>Shape.log</h1>
+                <p><strong>Shape.log</strong> é uma aplicação Flutter moderna e robusta desenvolvida para ser o seu
+                    companheiro definitivo de treinos e monitoramento corporal. Com uma interface inspirada em estética
+                    Cyberpunk/Futurista ("Cyber-Bio Scanner") e foco em usabilidade, o app permite gerenciar rotinas de
+                    exercícios, registrar medidas corporais detalhadas e manter um perfil biológico como fonte fiel de
+                    dados.</p>
+
+                <h2><i data-lucide="zap" class="w-8 h-8 text-primary"></i> 🚀 Funcionalidades Principais</h2>
+
+                <h3 style="color: #CCFF00;"><i data-lucide="dumbbell" class="w-6 h-6"></i> 1. Gestão de Treinos (Workout
+                    Tracker)</h3>
+                <ul class="cards-green">
+                    <li><strong>Criação de Rotinas</strong><span>Crie treinos personalizados (ex: "Treino A - Peito e
+                            Tríceps").</span></li>
+                    <li><strong>Importação Flexível (AI-Pipeline)</strong><span>Importe treinos gerados por IA
+                            (ChatGPT/Gemini) via arquivos .json ou colando o texto diretamente.</span></li>
+                    <li><strong>Sanitização Inteligente</strong><span>O app gera novos IDs automaticamente, limpa
+                            caminhos de imagem externos e reseta datas para evitar conflitos.</span></li>
+                    <li><strong>Registro de Exercícios</strong><span>Adicione exercícios com detalhes de Séries,
+                            Repetições, Carga, Tempo de Descanso e Técnica.</span></li>
+                    <li><strong>Timer de Descanso</strong><span>Configure o tempo de descanso individual por exercício
+                            (padrão 60s), com slider e chips de seleção rápida.</span></li>
+                    <li><strong>Notificações Sensoriais</strong><span>Alerta de fim de descanso com Som Embutido (que
+                            não interrompe sua música) e Feedback Tátil (vibração).</span></li>
+                    <li><strong>Histórico de Execução</strong><span>Marque treinos como concluídos e acompanhe logs
+                            passados.</span></li>
+                    <li><strong>Ordenação Automática</strong><span>Seus treinos são organizados automaticamente em ordem
+                            alfabética para fácil acesso.</span></li>
+                    <li><strong>Interface Polida</strong><span>Títulos de treinos longos utilizam efeito Marquee (texto
+                            deslizante) para visibilidade completa.</span></li>
+                    <li><strong>Genius Focus Mode</strong><span>Interface de execução imersiva com grade compacta,
+                            histórico de carga (📈) acessível e persistência em tempo real.</span></li>
+                    <li><strong>Smart Timer</strong><span>Lógica inteligente que avança exercícios automaticamente e
+                            detecta o fim do treino.</span></li>
+                </ul>
+
+                <h3 style="color: #00E5FF;"><i data-lucide="ruler" class="w-6 h-6"></i> 2. Monitoramento de Medidas
+                    (Body Tracker)</h3>
+                <ul class="cards-blue">
+                    <li><strong>Cyber-Bio Scanner (Mapa Corporal Interativo)</strong><span>Interface visual 3D-like onde
+                            você toca na parte do corpo (ex: Bíceps, Coxa) para registrar a medida.</span></li>
+                    <li><strong>Bioimpedância Integrada</strong><span>Campo para reportUrl que permite armazenar e abrir
+                            links de balanças de bioimpedância diretamente no navegador.</span></li>
+                    <li><strong>Rastreamento de Circunferências</strong><span>Suporte completo para medidas de Pescoço,
+                            Ombros, Tórax, Cintura, Quadril, Bíceps, Antebraços, Coxas e Panturrilhas.</span></li>
+                    <li><strong>Card de Medidas Expandível</strong><span>Visualize todas as circunferências e detalhes
+                            técnicos ao expandir os registros na lista.</span></li>
+                    <li><strong>Seleção Multi-imagem</strong><span>Adicione múltiplas fotos de progresso simultaneamente
+                            via Galeria.</span></li>
+                    <li><strong>Interface Unificada</strong><span>Fluxo de adição de fotos padronizado entre Treinos e
+                            Medidas.</span></li>
+                    <li><strong>Animações Fluidas</strong><span>Feedback visual com animações de "scanning" ao
+                            selecionar áreas.</span></li>
+                    <li><strong>Histórico Visual</strong><span>Visualize as fotos diretamente no histórico de medidas ao
+                            expandir os registros.</span></li>
+                    <li><strong>Filtros Inteligentes</strong><span>Visualize a evolução nos últimos 7, 30 ou 90
+                            dias.</span></li>
+                </ul>
+
+                <h3 style="color: #D500F9;"><i data-lucide="user-round" class="w-6 h-6" style="color: #D500F9;"></i> 3.
+                    Perfil Biológico (Bio-Data Source of Truth)</h3>
+                <ul class="cards-purple">
+                    <li><strong>Perfil Centralizado</strong><span>Armazena dados imutáveis como Altura, Nível de
+                            Atividade e Peso Meta.</span></li>
+                    <li><strong>Foto de Perfil Customizável</strong><span>Importe sua própria foto da galeria para
+                            personalizar a experiência do "scanner".</span></li>
+                    <li><strong>Cálculo Automático de IMC</strong><span>O app utiliza a altura do seu perfil para
+                            recalcular automaticamente o IMC de todos os registros históricos.</span></li>
+                    <li><strong>Classificação OMS</strong><span>Monitoramento rigoroso do IMC seguindo padrões da
+                            Organização Mundial da Saúde.</span></li>
+                    <li><strong>Persistência Local</strong><span>Todos os dados são salvos localmente de forma segura e
+                            rápida.</span></li>
+                </ul>
+
+                <h3 style="color: #22D3EE;"><i data-lucide="layout" class="w-6 h-6" style="color: #22D3EE;"></i> 4.
+                    Interface e Usabilidade</h3>
+                <ul class="cards-cyan">
+                    <li><strong>Design Moderno</strong><span>Tema escuro com acentos em Cyan e Purple, seguindo padrões
+                            modernos de UI.</span></li>
+                    <li><strong>Reatividade Ultra-fluida</strong><span>Interface que se auto-atualiza instantaneamente
+                            ao salvar novos dados (HIVE Listenables).</span></li>
+                    <li><strong>Navegação Intuitiva</strong><span>Barra de navegação inferior persistente e rotas
+                            fluidas.</span></li>
+                    <li><strong>Inputs Otimizados</strong><span>Uso de Sliders, Chips e Segmented Buttons para facilitar
+                            a entrada de dados.</span></li>
+                    <li><strong>Diálogos Padronizados</strong><span>Sistema customizado de modais e diálogos para uma
+                            experiência visual coesa em todo o app.</span></li>
+                </ul>
+
+                <h3 style="color: #F512D1;"><i data-lucide="library" class="w-6 h-6" style="color: #F512D1;"></i> 5.
+                    Biblioteca de Ativos (Assets Library)</h3>
+                <ul class="cards-pink">
+                    <li><strong>Importação de Pacotes</strong><span>Importe arquivos .zip contendo centenas de imagens
+                            de equipamentos ou execução.</span></li>
+                    <li><strong>Super Picker</strong><span>Ao adicionar fotos aos exercícios, escolha entre Câmera,
+                            Galeria ou a Biblioteca Interna.</span></li>
+                    <li><strong>Busca Rápida</strong><span>Filtre equipamentos pelo nome diretamente no seletor,
+                            agilizando a montagem de treinos visuais.</span></li>
+                </ul>
+
+                <h3 style="color: #FB923C;"><i data-lucide="database" class="w-6 h-6" style="color: #FB923C;"></i> 6.
+                    Sistema de Backup & Restore Completo</h3>
+                <ul class="cards-orange">
+                    <li><strong>Backup Unificado</strong><span>Gera um arquivo .zip contendo todo o banco de dados e
+                            todas as custom images.</span></li>
+                    <li><strong>Portabilidade</strong><span>Salve seus backups em qualquer lugar (Google Drive,
+                            WhatsApp, Local).</span></li>
+                    <li><strong>Restauração Simples</strong><span>Importe o arquivo zip para restaurar o estado exato do
+                            app.</span></li>
+                </ul>
+
+                <h3 style="color: #94A3B8;"><i data-lucide="star" class="w-6 h-6" style="color: #94A3B8;"></i> 7.
+                    Detalhes de Exercício Premium</h3>
+                <ul class="cards-silver">
+                    <li><strong>Informação Rica</strong><span>Visualização clara de Séries, Repetições, Carga e
+                            Descanso.</span></li>
+                    <li><strong>Ajuda Interativa</strong><span>Ícones de informação com Tooltips explicativos para cada
+                            campo.</span></li>
+                    <li><strong>Integração YouTube</strong><span>Card premium com gradiente para "Assistir Tutorial" na
+                            tela de detalhes.</span></li>
+                    <li><strong>YouTube Quick-Play</strong><span>No modo de execução (Focus Mode), um botão 'Play'
+                            vermelho permite abrir o vídeo.</span></li>
+                </ul>
+
+                <h2><i data-lucide="code" class="w-8 h-8 text-neon-blue"></i> 🤖 Padrão de Importação JSON (AI-Ready)
+                </h2>
+                <p>Para que o sistema de importação funcione corretamente (via arquivo ou texto), o JSON deve seguir a
+                    estrutura abaixo. O app é flexível e aceita tanto uma lista direta <code>[]</code> quanto um objeto
+                    contendo a chave <code>"workouts"</code>.</p>
+
+                <pre><code class="language-json">{
+  "workouts": [
+    {
+      "name": "Treino Híbrido (Peito + Cardio)",
+      "scheduledDays": [1, 3, 5],
+      "targetDurationMinutes": 60,
+      "expiryDate": "2024-12-31",
+      "notes": "Foco em progressão de carga e resistência",
+      "exercises": [
+        {
+          "name": "Supino Reto",
+          "type": "strength",
+          "sets": 4,
+          "reps": "8-10",
+          "weight": 30.0,
+          "restTime": 90,
+          "technique": "Cadência 3-0-1",
+          "equipmentNumber": "12",
+          "youtubeUrl": "https://www.youtube.com/watch?v=video_id"
+        },
+        {
+          "name": "Corrida na Esteira",
+          "type": "cardio",
+          "sets": 1,
+          "durationMinutes": 30,
+          "intensity": "Velocidade 8-10km/h",
+          "technique": "Manter postura ereta",
+          "restTime": 60
+        }
+      ]
+    }
+  ]
+}</code></pre>
+
+                <h3>Especificações Técnicas:</h3>
+                <ul>
+                    <li><strong>type</strong>: "strength" (padrão) ou "cardio".</li>
+                    <li><strong>scheduledDays</strong>: Lista de números de 1 (Segunda) a 7 (Domingo).</li>
+                    <li><strong>expiryDate</strong>: Data de validade do treino no formato <code>YYYY-MM-DD</code>
+                        (Opcional).</li>
+                    <li><strong>reps</strong>: (Strength) Aceita números (<code>12</code>) ou strings para intervalos
+                        (<code>"10-12"</code>).</li>
+                    <li><strong>weight</strong>: (Strength) Valor numérico (double/float) representando o peso em kg.
+                    </li>
+                    <li><strong>durationMinutes</strong>: (Cardio) Tempo em minutos.</li>
+                    <li><strong>intensity</strong>: (Cardio) String livre para descrever velocidade/zona (ex: "Zona 2").
+                    </li>
+                    <li><strong>restTime</strong> (ou <code>restSeconds</code>): Tempo de descanso em segundos (ex:
+                        <code>60</code>, <code>90</code>). Padrão: 60s.
+                    </li>
+                    <li><strong>youtubeUrl</strong>: Link completo do vídeo tutorial no YouTube (Opcional).</li>
+                    <li><strong>Sanitização Automática</strong>: Os campos <code>id</code>, <code>imagePaths</code> e
+                        <code>activeStartTime</code> são gerados ou resetados pelo app.
+                    </li>
+                </ul>
+
+                <h2>🛠 Tecnologias Utilizadas</h2>
+                <p>O projeto segue os princípios de <strong>Clean Architecture</strong> para garantir escalabilidade e
+                    testabilidade.</p>
+                <ul class="text-white/80">
+                    <li><strong>Frontend</strong><span>Flutter (Dart)</span></li>
+                    <li><strong>Gerenciamento de Estado</strong><span>Riverpod 2.0 (Providers, Notifiers,
+                            AsyncNotifiers)</span></li>
+                    <li><strong>Banco de Dados Local</strong><span>Hive (NoSQL, rápido e leve)</span></li>
+                    <li><strong>Roteamento</strong><span>GoRouter</span></li>
+                </ul>
+
+                <h2>📂 Estrutura do Projeto</h2>
+                <pre><code>lib/
+├── core/           # Configurações globais (Router, Theme, Constants)
+├── features/       # Módulos funcionais
+│   ├── workout/        # Lógica de Treinos
+│   ├── body_tracker/   # Lógica de Medidas e Mapa Corporal
+│   ├── profile/        # Perfil do Usuário e Dados Biológicos
+│   ├── settings/       # Configurações do App
+│   └── splash/         # Tela de Inicialização e Redirecionamento
+└── main.dart       # Ponto de entrada</code></pre>
+
+                <h2>▶️ Como Rodar o Projeto</h2>
+                <ul>
+                    <li><strong>Gerar Adaptadores do Hive</strong>:
+                        <code>dart run build_runner build --delete-conflicting-outputs</code>
+                    </li>
+                    <li><strong>Executar</strong>: <code>flutter run</code></li>
+                </ul>
+
+                <hr class="border-white/5 my-10">
+                <p class="text-center italic">Desenvolvido com 💙 por João Paulo Vieira.</p>
+            </article>
+        </div>
+    </main>
+
+    <footer class="py-12 border-t border-white/5 text-center bg-black">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col items-center gap-6">
+                <div class="flex items-center gap-3 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+                    <img src="assets/img/logo.png" alt="Shape.log Logo" class="h-8 w-8">
+                    <span class="cyber-text font-bold text-xl tracking-wider text-white">SHAPE.LOG</span>
+                </div>
+                <div class="mt-8 text-xs text-gray-700 font-mono">
+                    &copy; 2026 Shape.log Systems. v1.0.5-stable
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Mobile Menu Toggle
+        const menuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        if (menuBtn && mobileMenu) {
+            menuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+    </script>
+</body>
+
+</html>
