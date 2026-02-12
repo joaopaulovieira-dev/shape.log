@@ -601,7 +601,7 @@ class _ExerciseEditPageState extends ConsumerState<ExerciseEditPage> {
                     letterSpacing: 1.2,
                   ),
                 ),
-                if (trailing != null) trailing,
+                ?trailing,
               ],
             ),
             const SizedBox(height: 16),

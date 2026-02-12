@@ -610,7 +610,7 @@ class _BodyMeasurementEntryPageState
                     letterSpacing: 1.2,
                   ),
                 ),
-                if (trailing != null) trailing,
+                ?trailing,
               ],
             ),
             const SizedBox(height: 20),

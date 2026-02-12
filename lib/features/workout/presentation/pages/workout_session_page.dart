@@ -19,7 +19,6 @@ import '../../../common/services/image_storage_service.dart';
 import '../../../../core/presentation/widgets/app_dialogs.dart';
 import '../../../../core/presentation/widgets/app_modals.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'dart:ui';
 
 class WorkoutSessionPage extends ConsumerStatefulWidget {
   final Workout workout;
