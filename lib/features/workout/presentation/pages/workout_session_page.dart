@@ -11,12 +11,15 @@ import 'package:confetti/confetti.dart';
 import '../../domain/services/workout_report_service.dart';
 import '../../../profile/presentation/providers/user_profile_provider.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/utils/snackbar_utils.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../image_library/presentation/image_source_sheet.dart';
 import '../../../common/services/image_storage_service.dart';
 import '../../../../core/presentation/widgets/app_dialogs.dart';
 import '../../../../core/presentation/widgets/app_modals.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'dart:ui';
 
 class WorkoutSessionPage extends ConsumerStatefulWidget {
   final Workout workout;
@@ -344,10 +347,10 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
       child: SizedBox(
         height: MediaQuery.of(context).size.height * 0.6,
         child: history.isEmpty
-            ? const Center(
+            ? Center(
                 child: Text(
                   'Nenhum histórico encontrado.',
-                  style: TextStyle(color: Colors.grey),
+                  style: GoogleFonts.outfit(color: Colors.grey[500]),
                 ),
               )
             : ListView.builder(
@@ -359,14 +362,17 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                     orElse: () => h.exercises.first,
                   );
 
-                  // Improve date formatting
                   final dateStr =
                       "${h.completedDate.day.toString().padLeft(2, '0')}/${h.completedDate.month.toString().padLeft(2, '0')}/${h.completedDate.year}";
 
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: CircleAvatar(
-                      backgroundColor: AppColors.primary.withOpacity(0.2),
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
                       child: const Icon(
                         Icons.history,
                         color: AppColors.primary,
@@ -375,18 +381,21 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                     ),
                     title: Text(
                       dateStr,
-                      style: const TextStyle(
+                      style: GoogleFonts.outfit(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
                     subtitle: Text(
                       "${exercise.sets} séries x ${exercise.reps} reps",
-                      style: TextStyle(color: Colors.grey[400]),
+                      style: GoogleFonts.outfit(
+                        color: Colors.grey[500],
+                        fontSize: 13,
+                      ),
                     ),
                     trailing: Text(
                       "${exercise.weight} Kg",
-                      style: const TextStyle(
+                      style: GoogleFonts.outfit(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
@@ -445,12 +454,13 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
         child: Column(
           children: [
             // 1. Header
-            Padding(
+            Container(
+              color: AppColors.background,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: const Icon(Icons.close, color: Colors.white),
                     onPressed: () {
                       ref.read(sessionProvider.notifier).exitSession();
                       context.pop();
@@ -465,22 +475,26 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                           children: [
                             Text(
                               'Exercício $currentStep de $totalExercises',
-                              style: TextStyle(
+                              style: GoogleFonts.outfit(
                                 fontSize: 12,
-                                color: colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[500],
+                                letterSpacing: 1.2,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        LinearProgressIndicator(
-                          value: progress,
-                          backgroundColor: colorScheme.surfaceContainerHighest,
-                          color: AppColors.primary,
-                          minHeight: 6,
-                          borderRadius: BorderRadius.circular(3),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            backgroundColor: Colors.white.withOpacity(0.05),
+                            color: AppColors.primary,
+                            minHeight: 6,
+                          ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 8),
                         Center(
                           child: _GlobalTimerWidget(
                             startTime: sessionState.sessionStartTime,
@@ -490,7 +504,7 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.flag, color: AppColors.primary),
+                    icon: const Icon(Icons.flag_outlined, color: Colors.white),
                     tooltip: 'Finalizar Treino',
                     onPressed: _tryFinishWorkout,
                   ),
@@ -602,18 +616,18 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                             30,
                                           ),
                                         ),
-                                        child: const Row(
+                                        child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            Icon(
+                                            const Icon(
                                               Icons.check_circle,
                                               color: Colors.black,
                                               size: 28,
                                             ),
-                                            SizedBox(width: 8),
+                                            const SizedBox(width: 8),
                                             Text(
                                               "CONCLUÍDO",
-                                              style: TextStyle(
+                                              style: GoogleFonts.outfit(
                                                 color: Colors.black,
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 18,
@@ -640,10 +654,10 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                   exercise.name,
                                   maxLines: 3,
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
+                                  style: GoogleFonts.outfit(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
-                                    color: colorScheme.onSurface,
+                                    color: Colors.white,
                                     height: 1.1,
                                   ),
                                 ),
@@ -661,6 +675,32 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                   );
                                 },
                               ),
+                              if (exercise.youtubeUrl != null &&
+                                  exercise.youtubeUrl!.isNotEmpty)
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons
+                                        .play_circle_filled, // More interactive/branded
+                                    size: 24,
+                                    color: Colors.red, // YouTube brand color
+                                  ),
+                                  onPressed: () async {
+                                    final url = Uri.parse(exercise.youtubeUrl!);
+                                    if (await canLaunchUrl(url)) {
+                                      await launchUrl(
+                                        url,
+                                        mode: LaunchMode.externalApplication,
+                                      );
+                                    } else {
+                                      if (context.mounted) {
+                                        SnackbarUtils.showError(
+                                          context,
+                                          'Não foi possível abrir o link.',
+                                        );
+                                      }
+                                    }
+                                  },
+                                ),
                             ],
                           ),
                         ),
@@ -816,31 +856,33 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                           Icons.local_fire_department,
                                           size: 18,
                                           color: _isWarmup
-                                              ? Colors.deepOrange
-                                              : null,
+                                              ? Colors.black
+                                              : Colors.deepOrange,
                                         ),
                                         label: Text(
                                           _isWarmup
                                               ? "Aquecimento"
                                               : "Série Normal",
-                                          style: TextStyle(
+                                          style: GoogleFonts.outfit(
                                             color: _isWarmup
-                                                ? Colors.deepOrange
-                                                : null,
-                                            fontWeight: _isWarmup
-                                                ? FontWeight.bold
-                                                : null,
+                                                ? Colors.black
+                                                : Colors.white70,
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
                                         selected: _isWarmup,
                                         onSelected: (selected) {
                                           setState(() => _isWarmup = selected);
                                         },
-                                        selectedColor: Colors.deepOrange
-                                            .withOpacity(0.2),
-                                        backgroundColor: Theme.of(
-                                          context,
-                                        ).colorScheme.surface,
+                                        selectedColor: AppColors.primary,
+                                        backgroundColor: const Color(
+                                          0xFF2C2C2C,
+                                        ),
+                                        side: BorderSide(
+                                          color: _isWarmup
+                                              ? AppColors.primary
+                                              : Colors.white.withOpacity(0.05),
+                                        ),
                                         showCheckmark: false,
                                       ),
                                     ],
@@ -875,13 +917,15 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                       fontWeight: FontWeight.bold,
                                       color: AppColors.primary,
                                       fontSize: 12,
+                                      letterSpacing: 1.2,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     exercise.technique!,
-                                    style: TextStyle(
-                                      color: colorScheme.onSurface,
+                                    style: GoogleFonts.outfit(
+                                      color: Colors.white.withOpacity(0.9),
+                                      fontSize: 14,
                                     ),
                                   ),
                                 ],
@@ -950,7 +994,7 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                       icon: const Icon(Icons.check_circle_outline, size: 28),
                       label: Text(
                         buttonLabel,
-                        style: const TextStyle(
+                        style: GoogleFonts.outfit(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
@@ -990,26 +1034,27 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
+                  style: GoogleFonts.outfit(
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: Colors.grey[500],
                     fontSize: 12,
+                    letterSpacing: 1.2,
                   ),
                 ),
                 if (subtitle != null) ...[
                   const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
+                      horizontal: 8,
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       subtitle,
-                      style: const TextStyle(
+                      style: GoogleFonts.outfit(
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
                         fontSize: 10,
@@ -1056,23 +1101,27 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
               : (maxLines != 1 ? TextInputType.multiline : TextInputType.text),
           maxLines: maxLines,
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: GoogleFonts.outfit(
             fontSize: largeFont ? 40 : 18,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface,
+            color: Colors.white,
             height: 1.2,
           ),
           decoration: InputDecoration(
             contentPadding: EdgeInsets.symmetric(vertical: largeFont ? 16 : 10),
             filled: true,
-            fillColor: Theme.of(context).cardColor,
+            fillColor: const Color(0xFF1E1E1E),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppColors.primary, width: 1),
             ),
           ),
         ),
@@ -1154,14 +1203,15 @@ class _GlobalTimerWidgetState extends State<_GlobalTimerWidget> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.timer, size: 14, color: Colors.white),
+          const Icon(Icons.timer_outlined, size: 14, color: AppColors.primary),
           const SizedBox(width: 6),
           Text(
             _displayText,
-            style: const TextStyle(
+            style: GoogleFonts.outfit(
               color: Colors.white,
               fontWeight: FontWeight.bold,
-              fontFeatures: [FontFeature.tabularFigures()],
+              fontSize: 13,
+              fontFeatures: [const FontFeature.tabularFigures()],
             ),
           ),
         ],
@@ -1260,25 +1310,43 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
       alignment: Alignment.center,
       children: [
         Dialog(
+          backgroundColor: const Color(0xFF1E1E1E),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(28),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(32.0),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'Treino Concluído! 🎉',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Como foi a intensidade?',
-                    style: TextStyle(fontSize: 16),
+                  Text(
+                    'TREINO CONCLUÍDO! 🎉',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                      letterSpacing: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 24),
+                  Text(
+                    'Excelente trabalho!',
+                    style: GoogleFonts.outfit(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Como foi a intensidade hoje?',
+                    style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
 
                   // RPE Selector
                   Wrap(
@@ -1293,36 +1361,41 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
                       _buildEmojiOption(5, '🥵', 'Exaustão'),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
 
                   // Photos Section
-                  const Text(
-                    'Registrar Foto do Shape (Opcional)',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  Text(
+                    'REGISTRAR SHAPE (OPCIONAL)',
+                    style: GoogleFonts.outfit(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[500],
+                      letterSpacing: 1.2,
+                    ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
 
                   // Horizontal List of Photos + Add Button
                   SizedBox(
-                    height: 100,
+                    height: 120,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: _tempImagePaths.length + 1,
-                      separatorBuilder: (ctx, i) => const SizedBox(width: 8),
+                      separatorBuilder: (ctx, i) => const SizedBox(width: 12),
                       itemBuilder: (ctx, index) {
                         if (index == _tempImagePaths.length) {
                           // Add Button
                           return Row(
                             children: [
                               _buildAddPhotoButton(
-                                Icons.camera_alt,
-                                "Câmera",
+                                Icons.camera_alt_outlined,
+                                "CÂMERA",
                                 ImageSource.camera,
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 12),
                               _buildAddPhotoButton(
-                                Icons.photo_library,
-                                "Galeria",
+                                Icons.photo_library_outlined,
+                                "GALERIA",
                                 ImageSource.gallery,
                               ),
                             ],
@@ -1333,18 +1406,23 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
                         final path = _tempImagePaths[index];
                         return Stack(
                           children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.file(
-                                File(path),
-                                width: 100,
-                                height: 100,
-                                fit: BoxFit.cover,
+                            Container(
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.05),
+                                ),
+                                image: DecorationImage(
+                                  image: FileImage(File(path)),
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                             ),
                             Positioned(
-                              top: 4,
-                              right: 4,
+                              top: 6,
+                              right: 6,
                               child: GestureDetector(
                                 onTap: () {
                                   setState(() {
@@ -1352,15 +1430,15 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
                                   });
                                 },
                                 child: Container(
-                                  padding: const EdgeInsets.all(4),
+                                  padding: const EdgeInsets.all(6),
                                   decoration: const BoxDecoration(
-                                    color: Colors.black54,
+                                    color: Colors.red,
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(
                                     Icons.close,
                                     color: Colors.white,
-                                    size: 16,
+                                    size: 14,
                                   ),
                                 ),
                               ),
@@ -1371,24 +1449,37 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
                     ),
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 40),
                   SizedBox(
                     width: double.infinity,
-                    height: 50,
+                    height: 56,
                     child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
                       onPressed: _selectedRpe == null || _isSaving
                           ? null
                           : _handleSave,
                       child: _isSaving
                           ? const SizedBox(
-                              height: 20,
-                              width: 20,
+                              height: 24,
+                              width: 24,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
+                                color: Colors.black,
+                                strokeWidth: 3,
                               ),
                             )
-                          : const Text('Salvar e Copiar Relatório'),
+                          : Text(
+                              'SALVAR E COPIAR RELATÓRIO',
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
                     ),
                   ),
                 ],
@@ -1418,25 +1509,27 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
   Widget _buildAddPhotoButton(IconData icon, String label, ImageSource source) {
     return InkWell(
       onTap: () => _pickImage(source),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        width: 80,
-        height: 100,
+        width: 100,
+        height: 120,
         decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.grey.withValues(alpha: 0.5),
-            style: BorderStyle.solid,
-          ),
-          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
+          borderRadius: BorderRadius.circular(16),
+          color: Colors.white.withOpacity(0.02),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, color: AppColors.primary, size: 28),
-            const SizedBox(height: 4),
+            const SizedBox(height: 8),
             Text(
               label,
-              style: const TextStyle(fontSize: 10, color: Colors.grey),
+              style: GoogleFonts.outfit(
+                fontSize: 10,
+                color: Colors.grey[400],
+                fontWeight: FontWeight.bold,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -1456,28 +1549,28 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.primary.withValues(alpha: 0.2)
+                  ? AppColors.primary.withOpacity(0.1)
                   : Colors.transparent,
               border: Border.all(
                 color: isSelected
                     ? AppColors.primary
-                    : Colors.grey.withValues(alpha: 0.3),
-                width: 2,
+                    : Colors.white.withOpacity(0.05),
+                width: 1,
               ),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(20),
             ),
             child: Text(emoji, style: const TextStyle(fontSize: 32)),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 10,
+            style: GoogleFonts.outfit(
+              fontSize: 11,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? AppColors.primary : Colors.grey,
+              color: isSelected ? AppColors.primary : Colors.grey[500],
             ),
           ),
         ],
@@ -1504,56 +1597,84 @@ class _RestTimerDialog extends ConsumerWidget {
     });
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(32.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Descanso',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              'DESCANSO',
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[500],
+                letterSpacing: 1.5,
+              ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             SizedBox(
-              height: 150,
-              width: 150,
+              height: 180,
+              width: 180,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
                   CircularProgressIndicator(
                     value: progress,
-                    strokeWidth: 12,
-                    backgroundColor: Colors.grey[200],
+                    strokeWidth: 8,
+                    backgroundColor: Colors.white.withOpacity(0.05),
                     color: AppColors.primary,
+                    strokeCap: StrokeCap.round,
                   ),
                   Center(
                     child: Text(
                       '$remaining',
-                      style: const TextStyle(
-                        fontSize: 48,
+                      style: GoogleFonts.outfit(
+                        fontSize: 64,
                         fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                TextButton(
+                TextButton.icon(
                   onPressed: () {
                     ref.read(sessionProvider.notifier).addTime(30);
                   },
-                  child: const Text('+30s'),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: Text(
+                    '30s',
+                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                  ),
+                  style: TextButton.styleFrom(foregroundColor: Colors.white70),
                 ),
-                FilledButton(
+                ElevatedButton(
                   onPressed: () {
                     ref.read(sessionProvider.notifier).skipRest();
                   },
-                  child: const Text('Pular'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.black,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: Text(
+                    'PULAR',
+                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import 'package:flutter/services.dart';
 import '../../domain/entities/body_measurement.dart';
-import '../../../common/presentation/widgets/glass_container.dart';
 import '../../presentation/utils/body_tracker_formatter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class BodyTrackerSummaryHeader extends StatelessWidget {
   final List<BodyMeasurement> measurements;
@@ -42,16 +42,14 @@ class BodyTrackerSummaryHeader extends StatelessWidget {
         ? last.fatPercentage! - firstFat.fatPercentage!
         : 0.0;
 
-    return GlassContainer(
-      margin: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 8,
-      ), // Match MeasurementCard
-      padding: const EdgeInsets.all(
-        16,
-      ), // Match MeasurementCard content padding
-      borderRadius: BorderRadius.circular(16), // Match MeasurementCard
-      color: AppColors.surface.withOpacity(0.8), // Match MeasurementCard
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -62,10 +60,10 @@ class BodyTrackerSummaryHeader extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     "CONQUISTAS TOTAIS",
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
+                    style: GoogleFonts.outfit(
+                      color: Colors.grey[500],
                       fontSize: 10,
                       letterSpacing: 1.5,
                       fontWeight: FontWeight.bold,
@@ -101,7 +99,7 @@ class BodyTrackerSummaryHeader extends StatelessWidget {
                           width: 1,
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
@@ -112,7 +110,7 @@ class BodyTrackerSummaryHeader extends StatelessWidget {
                           SizedBox(width: 6),
                           Text(
                             "COPIAR IA",
-                            style: TextStyle(
+                            style: GoogleFonts.outfit(
                               color: AppColors.neonBlue,
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
@@ -207,7 +205,7 @@ class BodyTrackerSummaryHeader extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             text.toUpperCase(),
-            style: TextStyle(
+            style: GoogleFonts.outfit(
               color: color,
               fontSize: 8,
               fontWeight: FontWeight.bold,
@@ -238,10 +236,11 @@ class BodyTrackerSummaryHeader extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               label.toUpperCase(),
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: GoogleFonts.outfit(
+                color: Colors.grey[500],
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
               ),
             ),
           ],
@@ -256,21 +255,21 @@ class BodyTrackerSummaryHeader extends StatelessWidget {
             children: [
               Text(
                 "${isPositive ? '+' : ''}${value.toStringAsFixed(1)}",
-                style: TextStyle(
+                style: GoogleFonts.outfit(
                   color: color,
-                  fontSize: 28,
+                  fontSize: 32,
                   fontWeight: FontWeight.bold,
                   shadows: [
-                    Shadow(color: color.withOpacity(0.5), blurRadius: 10),
+                    Shadow(color: color.withValues(alpha: 0.3), blurRadius: 10),
                   ],
                 ),
               ),
               const SizedBox(width: 2),
               Text(
                 "kg",
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
+                style: GoogleFonts.outfit(
+                  color: Colors.grey[600],
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -310,10 +309,11 @@ class BodyTrackerSummaryHeader extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               label.toUpperCase(),
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: GoogleFonts.outfit(
+                color: Colors.grey[600],
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
               ),
             ),
           ],
@@ -326,9 +326,9 @@ class BodyTrackerSummaryHeader extends StatelessWidget {
             children: [
               Text(
                 "${isPositive ? '+' : ''}${value.toStringAsFixed(1)}$unit",
-                style: TextStyle(
+                style: GoogleFonts.outfit(
                   color: finalColor,
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),

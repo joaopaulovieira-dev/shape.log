@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,48 +19,85 @@ class WorkoutListPage extends ConsumerWidget {
     final historyListAsync = ref.watch(historyListProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Treinos'),
-        // Report logic temporarily disabled until History UI is ready
-      ),
       body: routinesAsyncVal.when(
-        data: (routines) => routines.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Nenhum treino cadastrado.'),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () => _showCreateOptions(context, ref),
-                      child: const Text('Criar ou Importar Treino'),
+        data: (routines) => CustomScrollView(
+          slivers: [
+            // Modern Header
+            SliverAppBar(
+              expandedHeight: 120.0,
+              floating: true,
+              pinned: true,
+              backgroundColor: AppColors.background,
+              flexibleSpace: FlexibleSpaceBar(
+                centerTitle: true,
+                titlePadding: const EdgeInsets.only(bottom: 16),
+                title: Text(
+                  'Meus Treinos',
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                background: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primary.withOpacity(0.1),
+                        AppColors.background,
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                     ),
-                  ],
+                  ),
+                ),
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  onPressed: () => _showCreateOptions(context, ref),
+                ),
+              ],
+            ),
+
+            // Content
+            if (routines.isEmpty)
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.fitness_center,
+                        size: 64,
+                        color: Colors.grey[800],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Nenhum treino encontrado',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                      ),
+                      const SizedBox(height: 24),
+                      FilledButton.icon(
+                        onPressed: () => _showCreateOptions(context, ref),
+                        icon: const Icon(Icons.add),
+                        label: const Text('CRIAR NOVO TREINO'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               )
-            : ListView.builder(
-                itemCount: routines.length,
-                itemBuilder: (context, index) {
+            else
+              SliverList(
+                delegate: SliverChildBuilderDelegate((context, index) {
                   final routine = routines[index];
-                  // Format scheduled days
-                  final daysStr = routine.scheduledDays.isEmpty
-                      ? 'Sem agendamento'
-                      : routine.scheduledDays
-                            .map((d) {
-                              const days = [
-                                'Dom',
-                                'Seg',
-                                'Ter',
-                                'Qua',
-                                'Qui',
-                                'Sex',
-                                'Sáb',
-                              ];
-                              if (d == 7) return 'Dom';
-                              return days[d];
-                            })
-                            .join(', ');
-
                   final now = DateTime.now();
                   final isToday = routine.scheduledDays.contains(now.weekday);
                   final isExpired =
@@ -80,9 +118,16 @@ class WorkoutListPage extends ConsumerWidget {
                     key: ValueKey(routine.id),
                     direction: DismissDirection.endToStart,
                     background: Container(
-                      color: Colors.red,
+                      margin: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 16,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade900,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                       alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 20),
+                      padding: const EdgeInsets.only(right: 24),
                       child: const Icon(Icons.delete, color: Colors.white),
                     ),
                     confirmDismiss: (_) async {
@@ -90,7 +135,7 @@ class WorkoutListPage extends ConsumerWidget {
                         context: context,
                         title: 'Excluir Treino?',
                         description:
-                            'Tem certeza que deseja excluir "${routine.name}"? Esta ação não pode ser desfeita.',
+                            'Tem certeza que deseja excluir "${routine.name}"?',
                         confirmText: 'EXCLUIR',
                         isDestructive: true,
                       );
@@ -104,115 +149,175 @@ class WorkoutListPage extends ConsumerWidget {
                         SnackbarUtils.showInfo(context, 'Treino excluído');
                       }
                     },
-                    child: Card(
-                      color: isToday
-                          ? AppColors.primary.withValues(alpha: 0.1)
-                          : AppColors.surface,
-                      shape: isToday
-                          ? RoundedRectangleBorder(
-                              side: const BorderSide(
-                                color: AppColors.primary,
-                                width: 1,
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                            )
-                          : RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                      elevation: isToday ? 4 : 0,
+                    child: Container(
                       margin: const EdgeInsets.symmetric(
-                        horizontal: 8,
+                        horizontal: 16,
                         vertical: 8,
                       ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 24,
-                          horizontal: 16,
-                        ),
-                        leading: CircleAvatar(
-                          backgroundColor: isToday
-                              ? AppColors.primary
-                              : Colors.white12,
-                          foregroundColor: isToday
-                              ? Colors.black
-                              : AppColors.textPrimary,
-                          child: Text(
-                            routine.name.isNotEmpty
-                                ? routine.name[0].toUpperCase()
-                                : '?',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                      decoration: BoxDecoration(
+                        color: isToday
+                            ? AppColors.primary.withValues(alpha: 0.1)
+                            : AppColors.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: isToday
+                            ? Border.all(
+                                color: AppColors.primary.withOpacity(0.5),
+                                width: 1,
+                              )
+                            : Border.all(color: Colors.white.withOpacity(0.05)),
+                      ),
+                      child: InkWell(
+                        onTap: () => context.go('/workouts/${routine.id}'),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Header Row: Title + Badges
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      routine.name,
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (isExpired)
+                                    _buildBadge(
+                                      'VENCIDO',
+                                      AppColors.error.withOpacity(0.2),
+                                      AppColors.error,
+                                    ),
+                                  if (isToday) ...[
+                                    const SizedBox(width: 8),
+                                    _buildBadge(
+                                      'HOJE',
+                                      AppColors.primary,
+                                      Colors.black,
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Middle Row: Days + Duration
+                              Row(
+                                children: [
+                                  // Day Indicators
+                                  Expanded(
+                                    child: Row(
+                                      children: List.generate(7, (i) {
+                                        final dayIndex = i + 1; // 1=Mon...7=Sun
+                                        // Adjust because routine uses 7=Sun, 1=Mon typically
+                                        // Let's assume strict mapping for simplicity
+                                        // Code used: 7=Sun, 1=Mon.
+                                        final isActive = routine.scheduledDays
+                                            .contains(dayIndex);
+                                        final isTodayDot =
+                                            now.weekday == dayIndex;
+
+                                        return Container(
+                                          margin: const EdgeInsets.only(
+                                            right: 4,
+                                          ),
+                                          width: 8,
+                                          height: 8,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: isActive
+                                                ? (isTodayDot
+                                                      ? AppColors.primary
+                                                      : Colors.white)
+                                                : Colors.white12,
+                                            boxShadow: isTodayDot
+                                                ? [
+                                                    const BoxShadow(
+                                                      color: AppColors.primary,
+                                                      blurRadius: 4,
+                                                    ),
+                                                  ]
+                                                : null,
+                                          ),
+                                        );
+                                      }),
+                                    ),
+                                  ),
+                                  // Duration
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.timer_outlined,
+                                        size: 16,
+                                        color: Colors.grey[500],
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${routine.targetDurationMinutes} min',
+                                        style: GoogleFonts.robotoMono(
+                                          color: Colors.grey[400],
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+
+                              // Footer: Done Status or CTA
+                              if (isDoneToday) ...[
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.check_circle,
+                                      color: AppColors.primary,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Treino concluído hoje!',
+                                      style: TextStyle(
+                                        color: AppColors.primary.withOpacity(
+                                          0.8,
+                                        ),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ] else ...[
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Text(
+                                    'Toque para iniciar',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                        title: Row(
-                          children: [
-                            Expanded(
-                              child: MarqueeWidget(
-                                child: Text(
-                                  routine.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            if (isToday) ...[
-                              const SizedBox(width: 8),
-                              _buildBadge(
-                                'HOJE',
-                                AppColors.primary,
-                                Colors.black,
-                              ),
-                            ],
-                            if (isExpired) ...[
-                              const SizedBox(width: 8),
-                              _buildBadge(
-                                'VENCIDO',
-                                AppColors.error,
-                                Colors.white,
-                              ),
-                            ],
-                          ],
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              daysStr,
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            if (isDoneToday)
-                              const Padding(
-                                padding: EdgeInsets.only(top: 4.0),
-                                child: Text(
-                                  'Treino Finalizado',
-                                  style: TextStyle(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                        trailing: Text(
-                          '${routine.targetDurationMinutes} min',
-                          style: const TextStyle(color: AppColors.primary),
-                        ),
-                        onTap: () {
-                          context.go('/workouts/${routine.id}');
-                        },
                       ),
                     ),
                   );
-                },
+                }, childCount: routines.length),
               ),
+          ],
+        ),
         error: (err, stack) => Center(child: Text('Erro: $err')),
         loading: () => const Center(child: CircularProgressIndicator()),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreateOptions(context, ref),
-        child: const Icon(Icons.add),
       ),
     );
   }

@@ -8,6 +8,7 @@ import '../../../workout/presentation/providers/workout_provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/snackbar_utils.dart';
 import '../../../../core/presentation/widgets/app_dialogs.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class WelcomePage extends ConsumerWidget {
   const WelcomePage({super.key});
@@ -15,83 +16,147 @@ class WelcomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Spacer(),
-              // Logo
-              Center(
-                child: Image.asset(
-                  'assets/icon/logo.png',
-                  height: 120,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Icon(
-                      Icons.fitness_center,
-                      size: 100,
-                      color: AppColors.primary,
-                    );
-                  },
-                ),
+      backgroundColor: AppColors.background,
+      body: Stack(
+        children: [
+          // Background Decorative Elements
+          Positioned(
+            top: -100,
+            right: -50,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary.withValues(alpha: 0.05),
               ),
-              const SizedBox(height: 32),
-              const Text(
-                'Bem-vindo ao\nShape.log',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                  height: 1.2,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Seu companheiro definitivo de treinos e monitoramento corporal.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
-              ),
-              const Spacer(),
-
-              // Create New Profile Button
-              ElevatedButton(
-                onPressed: () => context.go('/profile/create'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Criar Novo Perfil',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Restore Backup Button
-              OutlinedButton.icon(
-                onPressed: () => _handleRestoreBackup(context, ref),
-                icon: const Icon(Icons.restore_page),
-                label: const Text('Restaurar Backup Existente'),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.primary),
-                  foregroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 48),
-            ],
+            ),
           ),
-        ),
+          Positioned(
+            bottom: -50,
+            left: -100,
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary.withValues(alpha: 0.03),
+              ),
+            ),
+          ),
+
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Spacer(flex: 2),
+                  // Logo with glow
+                  Center(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                            blurRadius: 40,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: Image.asset(
+                        'assets/icon/logo.png',
+                        height: 140,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.fitness_center,
+                            size: 100,
+                            color: AppColors.primary,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  Text(
+                    'Bem-vindo ao\nShape.log',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.outfit(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      height: 1.1,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Seu companheiro definitivo de treinos e monitoramento corporal.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.outfit(
+                      fontSize: 15,
+                      color: Colors.grey[400],
+                      height: 1.5,
+                    ),
+                  ),
+                  const Spacer(flex: 3),
+
+                  // Create New Profile Button
+                  SizedBox(
+                    height: 60,
+                    child: ElevatedButton(
+                      onPressed: () => context.go('/profile/create'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'CRIAR NOVO PERFIL',
+                        style: GoogleFonts.outfit(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Restore Backup Button
+                  SizedBox(
+                    height: 60,
+                    child: TextButton.icon(
+                      onPressed: () => _handleRestoreBackup(context, ref),
+                      icon: const Icon(Icons.restore_page_outlined, size: 20),
+                      label: const Text('RESTAURAR BACKUP'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        textStyle: GoogleFonts.outfit(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

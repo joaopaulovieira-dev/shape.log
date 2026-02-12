@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../providers/body_tracker_provider.dart';
 import '../../../profile/presentation/providers/user_profile_provider.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -58,205 +59,241 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
     }).toList();
 
     return Scaffold(
-      backgroundColor:
-          Colors.black, // Ensure deep black background for glassmorphism
-      appBar: AppBar(
-        title: const Text('Medidas Corporais'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(
-              _showSummary ? Icons.visibility : Icons.visibility_off,
-              color: AppColors.textSecondary,
+      backgroundColor: Colors.black,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 120.0,
+            floating: true,
+            pinned: true,
+            backgroundColor: AppColors.background,
+            flexibleSpace: FlexibleSpaceBar(
+              centerTitle: true,
+              titlePadding: const EdgeInsets.only(bottom: 16),
+              title: Text(
+                'Medidas',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary.withOpacity(0.1),
+                      AppColors.background,
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+              ),
             ),
-            onPressed: () => setState(() => _showSummary = !_showSummary),
+            actions: [
+              IconButton(
+                icon: Icon(
+                  _showSummary ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.white,
+                ),
+                onPressed: () => setState(() => _showSummary = !_showSummary),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add, color: Colors.white),
+                onPressed: () => context.go('/body-tracker/add'),
+              ),
+            ],
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.go('/body-tracker/add'),
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.black),
-      ),
-      body: Column(
-        children: [
-          // Spacing to avoid sticking to AppBar
-          const SizedBox(height: 20),
 
           // SUMMARY HEADER
           if (measurementList.isNotEmpty && _showSummary)
-            BodyTrackerSummaryHeader(measurements: measurementList),
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  BodyTrackerSummaryHeader(measurements: measurementList),
+                ],
+              ),
+            ),
 
           // FILTERS
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 8.0, // Reduced vertical padding slightly
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Expand All Button
-                TextButton.icon(
-                  onPressed: measurementList.isEmpty
-                      ? null
-                      : () => _toggleAll(
-                          measurementList.map((e) => e.id).toList(),
-                        ),
-                  icon: Icon(
-                    _expandedIds.length == measurementList.length
-                        ? Icons.unfold_less
-                        : Icons.unfold_more,
-                    color: AppColors.primary,
-                    size: 16,
-                  ),
-                  label: Text(
-                    _expandedIds.length == measurementList.length
-                        ? "Recolher Tudo"
-                        : "Expandir Tudo",
-                    style: const TextStyle(
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Expand All Button
+                  TextButton.icon(
+                    onPressed: measurementList.isEmpty
+                        ? null
+                        : () => _toggleAll(
+                            measurementList.map((e) => e.id).toList(),
+                          ),
+                    icon: Icon(
+                      _expandedIds.length == measurementList.length
+                          ? Icons.unfold_less
+                          : Icons.unfold_more,
                       color: AppColors.primary,
-                      fontSize: 12,
+                      size: 16,
+                    ),
+                    label: Text(
+                      _expandedIds.length == measurementList.length
+                          ? "Recolher Tudo"
+                          : "Expandir Tudo",
+                      style: GoogleFonts.outfit(
+                        color: AppColors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(0, 0),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: const Size(0, 0),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ),
 
-                // Filter Dropdown
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.white.withOpacity(0.1)),
-                  ),
-                  child: PopupMenuButton<String>(
-                    initialValue: _filterMode,
-                    onSelected: (value) => setState(() => _filterMode = value),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.filter_list,
-                          color: AppColors.textSecondary,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _filterMode == 'all'
-                              ? "Todas"
-                              : (_filterMode == '30_days'
-                                    ? "30 Dias"
-                                    : (_filterMode == '90_days'
-                                          ? "90 Dias"
-                                          : "7 Dias")),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
+                  // Filter Dropdown
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withOpacity(0.1)),
+                    ),
+                    child: PopupMenuButton<String>(
+                      initialValue: _filterMode,
+                      onSelected: (value) =>
+                          setState(() => _filterMode = value),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.filter_list,
+                            color: AppColors.textSecondary,
+                            size: 16,
                           ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _filterMode == 'all'
+                                ? "Todas"
+                                : (_filterMode == '30_days'
+                                      ? "30 Dias"
+                                      : (_filterMode == '90_days'
+                                            ? "90 Dias"
+                                            : "7 Dias")),
+                            style: GoogleFonts.outfit(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.arrow_drop_down,
+                            color: AppColors.textSecondary,
+                            size: 16,
+                          ),
+                        ],
+                      ),
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(value: 'all', child: Text("Todas")),
+                        const PopupMenuItem(
+                          value: '90_days',
+                          child: Text("Últimos 90 dias"),
                         ),
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.arrow_drop_down,
-                          color: AppColors.textSecondary,
-                          size: 16,
+                        const PopupMenuItem(
+                          value: '30_days',
+                          child: Text("Últimos 30 dias"),
+                        ),
+                        const PopupMenuItem(
+                          value: '7_days',
+                          child: Text("Últimos 7 dias"),
                         ),
                       ],
                     ),
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(value: 'all', child: Text("Todas")),
-                      const PopupMenuItem(
-                        value: '90_days',
-                        child: Text("Últimos 90 dias"),
-                      ),
-                      const PopupMenuItem(
-                        value: '30_days',
-                        child: Text("Últimos 30 dias"),
-                      ),
-                      const PopupMenuItem(
-                        value: '7_days',
-                        child: Text("Últimos 7 dias"),
-                      ),
-                    ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
           // LIST
-          Expanded(
-            child: measurementList.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.insights,
-                          size: 64,
-                          color: Colors.white.withOpacity(0.1),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          rawList.isEmpty
-                              ? 'Comece sua jornada.\nToque em + para registrar.'
-                              : 'Nenhuma medida neste período.',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.grey),
-                        ),
-                      ],
+          if (measurementList.isEmpty)
+            SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.insights,
+                      size: 64,
+                      color: Colors.white.withOpacity(0.1),
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 80),
-                    itemCount: measurementList.length,
-                    itemBuilder: (context, index) {
-                      final current = measurementList[index];
-                      // Compare with NEXT (older because sorted descending)
-                      final next = (index + 1 < measurementList.length)
-                          ? measurementList[index + 1]
-                          : null;
+                    const SizedBox(height: 16),
+                    Text(
+                      rawList.isEmpty
+                          ? 'Comece sua jornada.\nToque em + para registrar.'
+                          : 'Nenhuma medida neste período.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final current = measurementList[index];
+                // Compare with NEXT (older because sorted descending)
+                final next = (index + 1 < measurementList.length)
+                    ? measurementList[index + 1]
+                    : null;
 
-                      final isExpanded = _expandedIds.contains(current.id);
+                final isExpanded = _expandedIds.contains(current.id);
 
-                      return MeasurementCard(
-                        measurement: current,
-                        previousMeasurement: next,
-                        isExpanded: isExpanded,
-                        onExpand: () => _toggleExpand(current.id),
-                        onEdit: () {
-                          context.push('/body-tracker/add', extra: current);
-                        },
-                        onDelete: () async {
-                          final confirm = await AppDialogs.showConfirmDialog<bool>(
-                            context: context,
-                            title: "Excluir",
-                            description:
-                                "Tem certeza que deseja excluir este registro?",
-                            confirmText: "EXCLUIR",
-                            isDestructive: true,
-                          );
+                return MeasurementCard(
+                  measurement: current,
+                  previousMeasurement: next,
+                  isExpanded: isExpanded,
+                  onExpand: () => _toggleExpand(current.id),
+                  onEdit: () {
+                    context.push('/body-tracker/add', extra: current);
+                  },
+                  onDelete: () async {
+                    final confirm = await AppDialogs.showConfirmDialog<bool>(
+                      context: context,
+                      title: "Excluir",
+                      description:
+                          "Tem certeza que deseja excluir este registro?",
+                      confirmText: "EXCLUIR",
+                      isDestructive: true,
+                    );
 
-                          if (confirm == true) {
-                            ref
-                                .read(bodyTrackerProvider.notifier)
-                                .deleteMeasurement(current.id);
-                          }
-                        },
-                        userHeight: userProfile?.height,
-                      );
-                    },
-                  ),
-          ),
+                    if (confirm == true) {
+                      ref
+                          .read(bodyTrackerProvider.notifier)
+                          .deleteMeasurement(current.id);
+                    }
+                  },
+                  userHeight: userProfile?.height,
+                );
+              }, childCount: measurementList.length),
+            ),
+
+          // Bottom padding
+          const SliverToBoxAdapter(child: SizedBox(height: 80)),
         ],
       ),
     );

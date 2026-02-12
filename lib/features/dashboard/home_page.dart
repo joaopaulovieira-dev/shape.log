@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
+import '../../features/profile/presentation/providers/user_profile_provider.dart';
 import 'package:shape_log/features/dashboard/widgets/dashboard_widgets.dart'; // Import Widgets
 import '../../features/workout/data/services/active_session_service.dart';
 import '../../features/workout/presentation/providers/workout_provider.dart';
@@ -133,18 +135,11 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     final workoutAsync = ref.watch(routineListProvider);
+    final userProfileAsync = ref.watch(userProfileProvider);
+    final userName = userProfileAsync.value?.name.split(' ').first ?? 'Atleta';
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset('assets/icon/logo.png', height: 28),
-            const SizedBox(width: 12),
-            const Text('Shape.log'),
-          ],
-        ),
-      ),
+      backgroundColor: Colors.black, // Standard background
       body: _isLoadingSession
           ? const Center(child: CircularProgressIndicator())
           : workoutAsync.when(
@@ -170,55 +165,120 @@ class _HomePageState extends ConsumerState<HomePage> {
                       allWorkouts,
                     );
 
-                    return SingleChildScrollView(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // 1. Resume Active Session (Priority)
-                          if (_activeWorkout != null) ...[
-                            _buildResumeCard(),
-                            const SizedBox(height: 24),
-                          ],
-
-                          // 2. Weekly Streak Strip
-                          WeeklyConsistencyStrip(history: history),
-                          const SizedBox(height: 24),
-
-                          // 3. Smart Action Card (Suggestion)
-                          if (_activeWorkout ==
-                              null) // Only show if no active session
-                            SmartActionCard(
-                              suggestedWorkout: suggestedWorkout,
-                              onStart: () {
-                                if (suggestedWorkout != null) {
-                                  context.push(
-                                    '/session',
-                                    extra: suggestedWorkout,
-                                  );
-                                } else {
-                                  // Fallback or go to workouts creation
-                                  context.go('/workouts');
-                                }
-                              },
+                    return CustomScrollView(
+                      slivers: [
+                        // 1. Standardized App Bar
+                        SliverAppBar(
+                          expandedHeight: 120.0,
+                          floating: true,
+                          pinned: true,
+                          backgroundColor: AppColors.background,
+                          flexibleSpace: FlexibleSpaceBar(
+                            centerTitle: true,
+                            titlePadding: const EdgeInsets.only(bottom: 16),
+                            title: Text(
+                              'Shape.log',
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
-
-                          if (_activeWorkout == null)
-                            const SizedBox(height: 24),
-
-                          // 4. Last Session Recap
-                          if (lastSession != null) ...[
-                            LastSessionRecap(lastSession: lastSession),
-                            const SizedBox(height: 24),
+                            background: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppColors.primary.withOpacity(0.1),
+                                    AppColors.background,
+                                  ],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                ),
+                              ),
+                            ),
+                          ),
+                          actions: [
+                            IconButton(
+                              icon: const Icon(
+                                Icons.notifications_none,
+                                color: Colors.white,
+                              ),
+                              onPressed: () {}, // Future notification feature
+                            ),
                           ],
+                        ),
 
-                          // 5. Quick Menu Grid
-                          // 5. Weekly Performance Card
-                          WeeklyPerformanceCard(history: history),
+                        // 2. Content
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Welcome Section
+                                Text(
+                                  'Olá, $userName 👋',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Pronto para superar seus limites hoje?',
+                                  style: TextStyle(
+                                    color: Colors.grey[400],
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
 
-                          const SizedBox(height: 40), // Bottom padding
-                        ],
-                      ),
+                                // 1. Resume Active Session (Priority)
+                                if (_activeWorkout != null) ...[
+                                  _buildResumeCard(),
+                                  const SizedBox(height: 24),
+                                ],
+
+                                // 2. Weekly Streak Strip
+                                WeeklyConsistencyStrip(history: history),
+                                const SizedBox(height: 24),
+
+                                // 3. Smart Action Card (Suggestion)
+                                if (_activeWorkout ==
+                                    null) // Only show if no active session
+                                  SmartActionCard(
+                                    suggestedWorkout: suggestedWorkout,
+                                    onStart: () {
+                                      if (suggestedWorkout != null) {
+                                        context.push(
+                                          '/session',
+                                          extra: suggestedWorkout,
+                                        );
+                                      } else {
+                                        // Fallback or go to workouts creation
+                                        context.go('/workouts');
+                                      }
+                                    },
+                                  ),
+
+                                if (_activeWorkout == null)
+                                  const SizedBox(height: 24),
+
+                                // 4. Last Session Recap
+                                if (lastSession != null) ...[
+                                  LastSessionRecap(lastSession: lastSession),
+                                  const SizedBox(height: 24),
+                                ],
+
+                                // 5. Weekly Performance Card
+                                WeeklyPerformanceCard(history: history),
+
+                                const SizedBox(height: 40), // Bottom padding
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     );
                   },
                 );
