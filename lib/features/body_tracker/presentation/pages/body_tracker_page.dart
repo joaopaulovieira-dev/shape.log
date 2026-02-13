@@ -77,18 +77,6 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
                   color: Colors.white,
                 ),
               ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primary.withOpacity(0.1),
-                      AppColors.background,
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
-              ),
             ),
             actions: [
               IconButton(

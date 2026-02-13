@@ -176,24 +176,28 @@ class _HomePageState extends ConsumerState<HomePage> {
                           flexibleSpace: FlexibleSpaceBar(
                             centerTitle: true,
                             titlePadding: const EdgeInsets.only(bottom: 16),
-                            title: Text(
-                              'Shape.log',
-                              style: GoogleFonts.outfit(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            background: Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    AppColors.primary.withOpacity(0.1),
-                                    AppColors.background,
-                                  ],
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
+                            title: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                RichText(
+                                  text: TextSpan(
+                                    style: GoogleFonts.outfit(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      fontSize: 22,
+                                    ),
+                                    children: [
+                                      const TextSpan(text: 'Shape'),
+                                      TextSpan(
+                                        text: '.log',
+                                        style: TextStyle(
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ),
                           actions: [

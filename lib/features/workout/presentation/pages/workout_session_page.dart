@@ -1641,38 +1641,57 @@ class _RestTimerDialog extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                TextButton.icon(
-                  onPressed: () {
-                    ref.read(sessionProvider.notifier).addTime(30);
-                  },
-                  icon: const Icon(Icons.add, size: 18),
-                  label: Text(
-                    '30s',
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                Expanded(
+                  child: SizedBox(
+                    height: 56,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        ref.read(sessionProvider.notifier).addTime(30);
+                      },
+                      icon: const Icon(Icons.add, size: 20),
+                      label: Text(
+                        '30s',
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: BorderSide(color: Colors.white.withOpacity(0.2)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
                   ),
-                  style: TextButton.styleFrom(foregroundColor: Colors.white70),
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    ref.read(sessionProvider.notifier).skipRest();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.black,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: SizedBox(
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        ref.read(sessionProvider.notifier).skipRest();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.black,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Text(
+                        'PULAR',
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                  ),
-                  child: Text(
-                    'PULAR',
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
