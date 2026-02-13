@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shape.log | Como Utilizar os Agentes</title>
+    <meta name="description"
+        content="Guia completo de como utilizar os Agentes de IA do Shape.log no ChatGPT, Gemini e Claude.">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/img/logo.png">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://joaopaulovieira.github.io/shape.log/guide.html">
+    <meta property="og:title" content="Shape.log | Como Utilizar os Agentes">
+    <meta property="og:description"
+        content="Guia completo de como utilizar os Agentes de IA do Shape.log no ChatGPT, Gemini e Claude.">
+    <meta property="og:image"
+        content="https://joaopaulovieira.github.io/shape.log/docs/assets/img/logo_fundo_preto.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://joaopaulovieira.github.io/shape.log/guide.html">
+    <meta property="twitter:title" content="Shape.log | Como Utilizar os Agentes">
+    <meta property="twitter:description"
+        content="Guia completo de como utilizar os Agentes de IA do Shape.log no ChatGPT, Gemini e Claude.">
+    <meta property="twitter:image"
+        content="https://joaopaulovieira.github.io/shape.log/docs/assets/img/logo_fundo_preto.png">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;700;800&family=Fira+Code:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#CCFF00',
+                        surface: '#111111',
+                        background: '#050505',
+                        glass: 'rgba(20, 20, 20, 0.7)',
+                        'neon-blue': '#00E5FF',
+                        'neon-purple': '#D500F9',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                        mono: ['Fira Code', 'myspace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #050505;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            background-image:
+                radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.05) 0%, transparent 50%),
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+        }
+
+        .cyber-text {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .glass-panel {
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="fixed w-full z-50 glass-panel border-b border-white/5 top-0 transition-all duration-300">
+        <div class="container mx-auto px-6 h-20 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-3 group cursor-pointer">
+                <div class="relative">
+                    <div
+                        class="absolute inset-0 bg-primary/20 blur-md rounded-full group-hover:bg-primary/40 transition-all">
+                    </div>
+                    <img src="assets/img/logo.png" alt="Shape.log Logo" class="h-10 w-10 relative z-10">
+                </div>
+                <div class="flex flex-col">
+                    <span class="cyber-text font-bold text-2xl tracking-wider text-white leading-none">SHAPE<span
+                            class="text-primary">.LOG</span></span>
+                    <span class="text-[10px] text-gray-500 font-mono tracking-[0.2em] uppercase">TREINO
+                        INTELIGENTE</span>
+                </div>
+            </a>
+
+            <!-- Desktop Nav -->
+            <nav class="hidden xl:flex gap-10 text-sm font-medium text-gray-400">
+                <a href="agents.html" class="hover:text-white transition-colors flex items-center gap-2">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> VOLTAR AOS AGENTES
+                </a>
+            </nav>
+
+            <!-- Buttons -->
+            <div class="hidden xl:flex items-center gap-4">
+                <a href="assets/shape-log.apk" download
+                    class="group relative px-6 py-2 overflow-hidden rounded-xl bg-white/5 hover:bg-white/10 transition-colors border border-white/10">
+                    <div
+                        class="absolute inset-0 w-0 bg-gradient-to-r from-primary/20 to-transparent transition-all duration-[250ms] ease-out group-hover:w-full">
+                    </div>
+                    <span
+                        class="relative font-bold text-sm text-primary group-hover:text-white transition-colors flex items-center gap-2">
+                        <i data-lucide="download" class="w-4 h-4"></i> BAIXAR APP
+                    </span>
+                </a>
+            </div>
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-btn" class="text-white p-2 xl:hidden">
+                <i data-lucide="menu" class="w-8 h-8"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu"
+            class="absolute left-0 top-20 hidden w-full border-b border-white/10 bg-black/95 backdrop-blur-xl xl:hidden">
+            <div class="container mx-auto flex flex-col gap-6 px-6 py-6">
+                <a href="agents.html"
+                    class="flex items-center gap-3 border-b border-white/5 py-2 font-bold text-white transition-colors">
+                    <i data-lucide="arrow-left" class="h-5 w-5"></i> VOLTAR AOS AGENTES
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Content -->
+    <main class="container mx-auto px-6 pt-32 pb-20">
+
+        <div class="text-center mb-16">
+            <h1 class="cyber-text text-4xl md:text-5xl font-bold mb-4">COMO USAR OS <span
+                    class="text-neon-blue">AGENTES</span></h1>
+            <p class="text-gray-400 max-w-2xl mx-auto text-lg">
+                Siga os 4 passos simples abaixo para gerar seu treino personalizado usando Inteligência Artificial.
+            </p>
+        </div>
+
+        <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
+
+            <!-- Step 1 -->
+            <div class="glass-panel p-8 rounded-2xl border border-white/10 relative overflow-hidden group">
+                <div
+                    class="absolute -right-4 -top-4 text-white/5 font-black text-9xl cyber-text select-none group-hover:text-white/10 transition-colors">
+                    1</div>
+                <div class="relative z-10">
+                    <div
+                        class="w-12 h-12 bg-neon-blue/20 rounded-xl flex items-center justify-center border border-neon-blue/30 mb-6">
+                        <i data-lucide="users" class="w-6 h-6 text-neon-blue"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Escolha seu Treinador</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Navegue pela página de <a href="agents.html" class="text-primary hover:underline">Agentes</a> e
+                        encontre a personalidade que mais combina com seu objetivo (Ex: "O Sargento" para disciplina, "O
+                        Zen" para mente e corpo).
+                    </p>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="glass-panel p-8 rounded-2xl border border-white/10 relative overflow-hidden group">
+                <div
+                    class="absolute -right-4 -top-4 text-white/5 font-black text-9xl cyber-text select-none group-hover:text-white/10 transition-colors">
+                    2</div>
+                <div class="relative z-10">
+                    <div
+                        class="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/30 mb-6">
+                        <i data-lucide="copy" class="w-6 h-6 text-primary"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Copie o Prompt</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Clique no botão <b>"COPIAR PROMPT"</b> no cartão do agente. Isso copiará automaticamente as
+                        instruções ocultas (Prompt de Sistema) para sua área de transferência.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="glass-panel p-8 rounded-2xl border border-white/10 relative overflow-hidden group">
+                <div
+                    class="absolute -right-4 -top-4 text-white/5 font-black text-9xl cyber-text select-none group-hover:text-white/10 transition-colors">
+                    3</div>
+                <div class="relative z-10">
+                    <div
+                        class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center border border-purple-500/30 mb-6">
+                        <i data-lucide="message-square" class="w-6 h-6 text-purple-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Cole na IA</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-4">
+                        Abra seu assistente de IA favorito e cole (Ctrl+V) o texto copiado no chat.
+                    </p>
+                    <div class="flex gap-4">
+                        <a href="https://chat.openai.com" target="_blank"
+                            class="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg border border-white/10 transition-colors">
+                            <i data-lucide="bot" class="w-4 h-4"></i> ChatGPT
+                        </a>
+                        <a href="https://gemini.google.com" target="_blank"
+                            class="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg border border-white/10 transition-colors">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i> Gemini
+                        </a>
+                        <a href="https://claude.ai" target="_blank"
+                            class="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg border border-white/10 transition-colors">
+                            <i data-lucide="brain" class="w-4 h-4"></i> Claude
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="glass-panel p-8 rounded-2xl border border-white/10 relative overflow-hidden group">
+                <div
+                    class="absolute -right-4 -top-4 text-white/5 font-black text-9xl cyber-text select-none group-hover:text-white/10 transition-colors">
+                    4</div>
+                <div class="relative z-10">
+                    <div
+                        class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center border border-green-500/30 mb-6">
+                        <i data-lucide="file-json" class="w-6 h-6 text-green-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Responda e Importe</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        A IA fará algumas perguntas (Anamnese). Responda-as. Ao final, ela gerará um código JSON. Copie
+                        esse código e use a função de Importar no aplicativo <b>Shape.log</b>.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="pt-12 pb-12 border-t border-white/5 bg-[#030303]">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-gray-500 text-sm">
+                &copy; 2026 Shape.log. Todos os direitos reservados.
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Mobile Menu Logic
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    </script>
+</body>
+
+</html>
