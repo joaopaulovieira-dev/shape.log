@@ -1,6 +1,8 @@
-# Shape.log
+# Shape<span style="color: #CCFF00;">.log</span>: A Interface Física para sua I.A.
 
-**Shape.log** é uma aplicação Flutter moderna e robusta desenvolvida para ser o seu companheiro definitivo de treinos e monitoramento corporal. Com uma interface inspirada em estética Cyberpunk/Futurista ("Cyber-Bio Scanner") e foco em usabilidade, o app permite gerenciar rotinas de exercícios, registrar medidas corporais detalhadas e manter um perfil biológico como fonte fiel de dados.
+Uma aplicação Flutter robusta que atua como o elo definitivo entre o seu planejamento digital e a execução real. Com estética Cyberpunk, o Shape<span style="color: #CCFF00;">.log</span> permite importar treinos via JSON gerados por Inteligência Artificial, monitorar bioimpedância com precisão clínica e gerar relatórios de dados para análise contínua.
+
+A I.A. planeja. Você executa. O Shape<span style="color: #CCFF00;">.log</span> conecta.
 
 ## 🚀 Funcionalidades Principais
 

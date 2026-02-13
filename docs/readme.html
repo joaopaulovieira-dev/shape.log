@@ -17,7 +17,8 @@
     <meta property="og:title" content="Shape.log | Documentação do Sistema">
     <meta property="og:description"
         content="Documentação técnica completa do ecossistema Shape.log. Protocolos JSON, fluxo de inteligência e guia de funcionalidades.">
-    <meta property="og:image" content="https://joaopaulovieira.github.io/shape.log/docs/assets/img/logo.png">
+    <meta property="og:image"
+        content="https://joaopaulovieira.github.io/shape.log/docs/assets/img/logo_fundo_preto.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
@@ -25,7 +26,8 @@
     <meta property="twitter:title" content="Shape.log | Documentação do Sistema">
     <meta property="twitter:description"
         content="Documentação técnica completa do ecossistema Shape.log. Protocolos JSON, fluxo de inteligência e guia de funcionalidades.">
-    <meta property="twitter:image" content="https://joaopaulovieira.github.io/shape.log/docs/assets/img/logo.png">
+    <meta property="twitter:image"
+        content="https://joaopaulovieira.github.io/shape.log/docs/assets/img/logo_fundo_preto.png">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -394,13 +396,13 @@
             <!-- Buttons -->
             <div class="hidden xl:flex items-center gap-4">
                 <a href="assets/shape-log.apk" download
-                    class="group relative px-6 py-2 overflow-hidden rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/10">
+                    class="group relative px-6 py-2 overflow-hidden rounded-xl bg-white/5 hover:bg-white/10 transition-colors border border-white/10">
                     <div
                         class="absolute inset-0 w-0 bg-gradient-to-r from-primary/20 to-transparent transition-all duration-[250ms] ease-out group-hover:w-full">
                     </div>
                     <span
-                        class="relative font-bold text-sm text-primary group-hover:text-white transition-colors flex items-center gap-2 uppercase">
-                        <i data-lucide="download" class="w-4 h-4"></i> Baixe Agora o App Gratuitamente
+                        class="relative font-bold text-sm text-primary group-hover:text-white transition-colors flex items-center gap-2">
+                        <i data-lucide="download" class="w-4 h-4"></i> BAIXAR APP
                     </span>
                 </a>
             </div>
@@ -432,8 +434,8 @@
                     <i data-lucide="file-text" class="w-5 h-5"></i> README.md
                 </a>
                 <a href="assets/shape-log.apk" download
-                    class="bg-primary/20 text-primary py-4 rounded-lg flex items-center justify-center gap-2 font-bold uppercase text-xs">
-                    <i data-lucide="download" class="w-5 h-5"></i> Baixe Agora o App Gratuitamente
+                    class="bg-primary/20 text-primary py-4 rounded-lg flex items-center justify-center gap-2 font-bold">
+                    <i data-lucide="download" class="w-5 h-5"></i> BAIXAR APP
                 </a>
             </div>
         </div>
@@ -674,35 +676,54 @@
                 <br><span class="text-xs font-mono text-gray-700">VERSÃO: ESTÁVEL 1.0.0</span>
             </p>
 
-            <a href="assets/shape-log.apk" download
-                class="inline-flex items-center gap-3 bg-white text-black px-10 py-5 rounded-xl font-bold text-xl hover:bg-gray-200 transition-colors mb-16 shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-                <i data-lucide="smartphone"></i>
-                BAIXAR APP AGORA
-            </a>
+            <div class="flex flex-col items-center gap-8 mb-16">
+                <a href="assets/shape-log.apk" download
+                    class="group relative inline-flex items-center justify-center gap-4 bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/20 text-white px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105 shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_32px_rgba(255,255,255,0.1)] overflow-hidden w-full sm:w-auto tracking-widest uppercase">
+
+                    <!-- White Glass Reflection -->
+                    <div class="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none">
+                    </div>
+
+                    <i data-lucide="download"
+                        class="w-6 h-6 relative z-10 text-gray-300 group-hover:text-white transition-colors duration-300"></i>
+                    <span
+                        class="relative z-10 text-gray-300 group-hover:text-white transition-colors duration-300">BAIXAR
+                        AGORA</span>
+                </a>
+            </div>
 
             <div
                 class="grid grid-cols-1 md:grid-cols-3 gap-8 py-10 border-t border-white/5 text-left text-sm text-gray-500">
                 <div>
                     <h5 class="text-white font-bold mb-4 font-mono">STACK</h5>
                     <ul class="space-y-2">
-                        <li>Flutter (Dart)</li>
-                        <li>Riverpod 2.0</li>
-                        <li>Hive NoSQL</li>
-                        <li>Clean Architecture</li>
+                        <li><a href="https://flutter.dev" target="_blank"
+                                class="hover:text-primary transition-colors">Flutter (Dart)</a></li>
+                        <li><a href="https://riverpod.dev" target="_blank"
+                                class="hover:text-primary transition-colors">Riverpod 2.0</a></li>
+                        <li><a href="https://pub.dev/packages/hive" target="_blank"
+                                class="hover:text-primary transition-colors">Hive NoSQL</a></li>
+                        <li><a href="https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html"
+                                target="_blank" class="hover:text-primary transition-colors">Clean Architecture</a></li>
                     </ul>
                 </div>
                 <div>
                     <h5 class="text-white font-bold mb-4 font-mono">RECURSOS</h5>
                     <ul class="space-y-2">
                         <li><a href="index.html#protocol" class="hover:text-primary">Documentação JSON</a></li>
-                        <li><a href="agents.html" class="hover:text-primary">Guia de Prompts</a></li>
-                        <li><a href="#" class="hover:text-primary">Reportar Bug</a></li>
+                        <li><a href="agents.html" class="hover:text-primary">Agentes de IA</a></li>
+                        <li><a href="https://github.com/joaopaulovieira-dev/shape.log/issues" target="_blank"
+                                class="hover:text-primary">Reportar Bug</a></li>
                     </ul>
                 </div>
                 <div>
                     <h5 class="text-white font-bold mb-4 font-mono">SOBRE</h5>
                     <p class="leading-relaxed mb-4">
-                        Shape.log é um projeto open-source focado em privacidade e performance.
+                        O Shape.log é uma
+                        robusta aplicação Flutter Mobile com estética
+                        Cyberpunk que conecta o planejamento digital à prática real, permitindo a importação de treinos
+                        via JSON gerados por Inteligência Artificial, o monitoramento de bioimpedância com precisão
+                        clínica e a geração de relatórios detalhados para análise contínua de performance.
                     </p>
                     <div class="flex flex-col gap-2">
                         <a href="https://github.com/joaopaulovieira-dev/shape.log" target="_blank"
@@ -711,10 +732,10 @@
                         </a>
                         <a href="https://www.linkedin.com/in/joaopaulovieirapereira/" target="_blank"
                             class="flex items-center gap-2 hover:text-white transition-colors">
-                            <i data-lucide="linkedin" class="w-4 h-4"></i> João Paulo Vieira
+                            <i data-lucide="linkedin" class="w-4 h-4"></i> João Paulo
                         </a>
                     </div>
-                    <p class="mt-4 opacity-50">&copy; 2026 João Paulo Vieira.</p>
+                    <p class="mt-4 opacity-50">&copy; 2026 João Paulo.</p>
                 </div>
             </div>
         </div>
