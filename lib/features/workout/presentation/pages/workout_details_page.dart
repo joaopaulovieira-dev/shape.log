@@ -102,18 +102,6 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                       color: Colors.white,
                     ),
                   ),
-                  background: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.primary.withOpacity(0.15),
-                          AppColors.background,
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                  ),
                 ),
                 actions: [
                   IconButton(
