@@ -71,7 +71,7 @@
             color: #ffffff;
             font-family: 'Inter', sans-serif;
             background-image:
-                radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.05) 0%, transparent 50%),
                 linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
             background-size: 100% 100%, 40px 40px, 40px 40px;
@@ -89,29 +89,7 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
         }
 
-        /* Scanline effect */
-        .scanline {
-            width: 100%;
-            height: 100px;
-            z-index: 10;
-            background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(0, 229, 255, 0.05) 50%, rgba(0, 0, 0, 0) 100%);
-            opacity: 0.15;
-            background-size: 100% 4px;
-            animation: scanline 8s linear infinite;
-            pointer-events: none;
-            position: fixed;
-            top: 0;
-        }
 
-        @keyframes scanline {
-            0% {
-                transform: translateY(-100%);
-            }
-
-            100% {
-                transform: translateY(100vh);
-            }
-        }
 
         /* Documentation Styling */
         article {
@@ -378,8 +356,6 @@
 </head>
 
 <body class="antialiased min-h-screen flex flex-col overflow-x-hidden">
-
-    <div class="scanline"></div>
 
     <!-- Header -->
     <header class="fixed w-full z-50 glass-panel border-b border-white/5 top-0 transition-all duration-300">
@@ -688,15 +664,57 @@
         </div>
     </main>
 
-    <footer class="py-12 border-t border-white/5 text-center bg-black">
-        <div class="container mx-auto px-6">
-            <div class="flex flex-col items-center gap-6">
-                <div class="flex items-center gap-3 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-                    <img src="assets/img/logo.png" alt="Shape.log Logo" class="h-8 w-8">
-                    <span class="cyber-text font-bold text-xl tracking-wider text-white">SHAPE.LOG</span>
+    <!-- Technical Footer -->
+    <footer id="download" class="pt-24 pb-12 border-t border-white/5 bg-[#030303]">
+        <div class="container mx-auto px-6 text-center">
+
+            <h2 class="cyber-text text-4xl font-bold mb-8">INICIE O PROTOCOLO</h2>
+            <p class="text-gray-500 mb-10 max-w-lg mx-auto">
+                Download direto. Sem anúncios. Dados 100% locais.
+                <br><span class="text-xs font-mono text-gray-700">VERSÃO: ESTÁVEL 1.0.0</span>
+            </p>
+
+            <a href="assets/shape-log.apk" download
+                class="inline-flex items-center gap-3 bg-white text-black px-10 py-5 rounded-xl font-bold text-xl hover:bg-gray-200 transition-colors mb-16 shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                <i data-lucide="smartphone"></i>
+                BAIXAR APP AGORA
+            </a>
+
+            <div
+                class="grid grid-cols-1 md:grid-cols-3 gap-8 py-10 border-t border-white/5 text-left text-sm text-gray-500">
+                <div>
+                    <h5 class="text-white font-bold mb-4 font-mono">STACK</h5>
+                    <ul class="space-y-2">
+                        <li>Flutter (Dart)</li>
+                        <li>Riverpod 2.0</li>
+                        <li>Hive NoSQL</li>
+                        <li>Clean Architecture</li>
+                    </ul>
                 </div>
-                <div class="mt-8 text-xs text-gray-700 font-mono">
-                    &copy; 2026 Shape.log Systems. v1.0.5-stable
+                <div>
+                    <h5 class="text-white font-bold mb-4 font-mono">RECURSOS</h5>
+                    <ul class="space-y-2">
+                        <li><a href="index.html#protocol" class="hover:text-primary">Documentação JSON</a></li>
+                        <li><a href="agents.html" class="hover:text-primary">Guia de Prompts</a></li>
+                        <li><a href="#" class="hover:text-primary">Reportar Bug</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="text-white font-bold mb-4 font-mono">SOBRE</h5>
+                    <p class="leading-relaxed mb-4">
+                        Shape.log é um projeto open-source focado em privacidade e performance.
+                    </p>
+                    <div class="flex flex-col gap-2">
+                        <a href="https://github.com/joaopaulovieira-dev/shape.log" target="_blank"
+                            class="flex items-center gap-2 hover:text-white transition-colors">
+                            <i data-lucide="github" class="w-4 h-4"></i> GitHub Repo
+                        </a>
+                        <a href="https://www.linkedin.com/in/joaopaulovieirapereira/" target="_blank"
+                            class="flex items-center gap-2 hover:text-white transition-colors">
+                            <i data-lucide="linkedin" class="w-4 h-4"></i> João Paulo Vieira
+                        </a>
+                    </div>
+                    <p class="mt-4 opacity-50">&copy; 2026 João Paulo Vieira.</p>
                 </div>
             </div>
         </div>
