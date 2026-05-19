@@ -8,6 +8,7 @@ import '../../data/services/workout_import_service.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
 import '../../../../core/utils/snackbar_utils.dart';
 import '../../../../core/presentation/widgets/app_dialogs.dart';
+import '../../../../core/presentation/widgets/app_empty_state.dart';
 import '../../../../core/presentation/widgets/app_modals.dart';
 
 class WorkoutListPage extends ConsumerWidget {
@@ -50,36 +51,13 @@ class WorkoutListPage extends ConsumerWidget {
             // Content
             if (routines.isEmpty)
               SliverFillRemaining(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.fitness_center,
-                        size: 64,
-                        color: Colors.grey[800],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Nenhum treino encontrado',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                      ),
-                      const SizedBox(height: 24),
-                      FilledButton.icon(
-                        onPressed: () => _showCreateOptions(context, ref),
-                        icon: const Icon(Icons.add),
-                        label: const Text('CRIAR NOVO TREINO'),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                hasScrollBody: false,
+                child: AppEmptyState(
+                  icon: Icons.fitness_center_rounded,
+                  title: 'Nenhum treino encontrado',
+                  subtitle: 'Crie um treino personalizado ou importe um arquivo JSON para começar a registrar seus treinos.',
+                  actionLabel: 'Criar ou Importar',
+                  onActionPressed: () => _showCreateOptions(context, ref),
                 ),
               )
             else
@@ -380,35 +358,65 @@ class WorkoutListPage extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        titlePadding: const EdgeInsets.fromLTRB(24, 28, 24, 16),
+        contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.white.withOpacity(0.05)),
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(color: Colors.white.withOpacity(0.06), width: 1.5),
         ),
-        title: const Text(
+        title: Text(
           'Colar Treino (JSON)',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
         ),
         content: TextField(
           controller: controller,
           maxLines: 10,
-          style: const TextStyle(color: Colors.white),
+          style: GoogleFonts.outfit(color: Colors.white, fontSize: 14),
           decoration: InputDecoration(
             hintText: 'Cole o JSON aqui...',
-            hintStyle: TextStyle(color: Colors.grey[600]),
+            hintStyle: GoogleFonts.outfit(color: Colors.grey[600], fontSize: 14),
             filled: true,
-            fillColor: Colors.black26,
+            fillColor: Colors.black.withOpacity(0.2),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppColors.primary, width: 1),
             ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancelar', style: TextStyle(color: Colors.grey[500])),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey[400],
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'CANCELAR',
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
           ),
+          const SizedBox(width: 4),
           FilledButton(
             onPressed: () async {
               final text = controller.text.trim();
@@ -435,11 +443,19 @@ class WorkoutListPage extends ConsumerWidget {
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.black,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('PROCESSAR'),
+            child: Text(
+              'PROCESSAR',
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
           ),
         ],
       ),

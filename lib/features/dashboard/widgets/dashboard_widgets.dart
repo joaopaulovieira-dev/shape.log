@@ -288,12 +288,19 @@ class LastSessionRecap extends StatelessWidget {
           // Background Image with Overlay if exists
           if (hasImage)
             Positioned.fill(
-              child: Image.file(
-                ImagePathResolver.resolveToFile(lastSession!.imagePaths!.first),
-                fit: BoxFit.cover,
-                color: Colors.black.withOpacity(0.7), // Darken
-                colorBlendMode: BlendMode.darken,
-              ),
+              child: ImagePathResolver.isRemote(lastSession!.imagePaths!.first)
+                  ? Image.network(
+                      lastSession!.imagePaths!.first,
+                      fit: BoxFit.cover,
+                      color: Colors.black.withOpacity(0.7),
+                      colorBlendMode: BlendMode.darken,
+                    )
+                  : Image.file(
+                      ImagePathResolver.resolveToFile(lastSession!.imagePaths!.first),
+                      fit: BoxFit.cover,
+                      color: Colors.black.withOpacity(0.7), // Darken
+                      colorBlendMode: BlendMode.darken,
+                    ),
             ),
 
           Padding(

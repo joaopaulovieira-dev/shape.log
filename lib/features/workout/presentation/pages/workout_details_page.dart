@@ -416,7 +416,11 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                           color: const Color(0xFF1E1E1E),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: ListTile(
+                        child: Material(
+                          color: Colors.transparent,
+                          clipBehavior: Clip.antiAlias,
+                          borderRadius: BorderRadius.circular(20),
+                          child: ListTile(
                           contentPadding: const EdgeInsets.all(12),
                           leading: Container(
                             width: 60,
@@ -428,17 +432,19 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                             child: ex.imagePaths.isNotEmpty
                                 ? ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
-                                    child: Image.file(
-                                      ImagePathResolver.resolveToFile(
-                                        ex.imagePaths.first,
-                                      ),
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (ctx, err, stack) =>
-                                          const Icon(
-                                            Icons.broken_image,
-                                            color: Colors.grey,
+                                    child: ImagePathResolver.isRemote(ex.imagePaths.first)
+                                        ? Image.network(ex.imagePaths.first, fit: BoxFit.cover)
+                                        : Image.file(
+                                            ImagePathResolver.resolveToFile(
+                                              ex.imagePaths.first,
+                                            ),
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (ctx, err, stack) =>
+                                                const Icon(
+                                                  Icons.broken_image,
+                                                  color: Colors.grey,
+                                                ),
                                           ),
-                                    ),
                                   )
                                 : const Icon(
                                     Icons.fitness_center,
@@ -494,6 +500,7 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                               '/workouts/${workout.id}/exercises/$index',
                             );
                           },
+                        ),
                         ),
                       );
                     }),

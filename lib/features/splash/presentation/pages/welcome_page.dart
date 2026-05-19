@@ -83,15 +83,23 @@ class WelcomePage extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 40),
-                  Text(
-                    'Bem-vindo ao\nShape.log',
+                  RichText(
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.outfit(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      height: 1.1,
-                      letterSpacing: -0.5,
+                    text: TextSpan(
+                      style: GoogleFonts.outfit(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        height: 1.1,
+                        letterSpacing: -0.5,
+                      ),
+                      children: [
+                        const TextSpan(text: 'Bem-vindo ao\nShape'),
+                        TextSpan(
+                          text: '.log',
+                          style: TextStyle(color: AppColors.primary),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -122,20 +130,18 @@ class WelcomePage extends ConsumerWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // Custom colored G for Google icon representation
+                          // Official Google icon asset representation
                           Container(
-                            padding: const EdgeInsets.all(6),
+                            width: 28,
+                            height: 28,
                             decoration: const BoxDecoration(
                               color: Colors.white,
                               shape: BoxShape.circle,
                             ),
-                            child: const Text(
-                              'G',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
-                              ),
+                            padding: const EdgeInsets.all(4),
+                            child: Image.asset(
+                              'assets/images/google_logo.png',
+                              fit: BoxFit.contain,
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -242,15 +248,24 @@ class WelcomePage extends ConsumerWidget {
       if (credential != null) {
         final syncService = ref.read(syncServiceProvider);
 
-        // Se o usuário já tiver dados locais pré-existentes no Hive,
-        // podemos enviá-los ao Firestore (Merge).
-        // Se for um novo dispositivo sem dados locais, podemos baixar o Firestore.
-        // Vamos rodar ambos em sequência de forma inteligente:
-        // Primeiro tentamos fazer o download das informações salvas na nuvem.
-        await syncService.downloadDataFromFirestore();
+        // Tentamos sincronizar os dados locais com a nuvem de forma resiliente.
+        // Se houver algum problema de rede/Firestore, permitimos que o usuário
+        // continue usando o app em modo local/offline normalmente.
+        try {
+          // Primeiro tentamos fazer o download das informações salvas na nuvem.
+          await syncService.downloadDataFromFirestore();
 
-        // Em seguida, se houver dados locais que não estavam na nuvem, enviamos (Merge)
-        await syncService.uploadLocalDataToFirestore();
+          // Em seguida, se houver dados locais que não estavam na nuvem, enviamos (Merge)
+          await syncService.uploadLocalDataToFirestore();
+        } catch (syncError) {
+          print('Aviso ao sincronizar dados com o Firestore: $syncError');
+          if (context.mounted) {
+            SnackbarUtils.showInfo(
+              context,
+              'Modo offline: os dados de sincronização serão atualizados quando houver conexão.',
+            );
+          }
+        }
 
         // Recarrega os dados do perfil local
         ref.invalidate(userProfileProvider);
@@ -264,6 +279,30 @@ class WelcomePage extends ConsumerWidget {
           final profile = await repo.getProfile();
 
           if (profile != null) {
+            final googleUser = credential.user;
+            String? updatedPhoto = profile.profilePicturePath;
+            String updatedName = profile.name;
+            bool profileChanged = false;
+
+            if ((updatedPhoto == null || updatedPhoto.isEmpty) &&
+                googleUser?.photoURL != null) {
+              updatedPhoto = googleUser!.photoURL;
+              profileChanged = true;
+            }
+
+            if (updatedName.isEmpty && googleUser?.displayName != null) {
+              updatedName = googleUser!.displayName!;
+              profileChanged = true;
+            }
+
+            if (profileChanged) {
+              final updatedProfile = profile.copyWith(
+                name: updatedName,
+                profilePicturePath: updatedPhoto,
+              );
+              await repo.saveProfile(updatedProfile);
+              ref.invalidate(userProfileProvider);
+            }
             context.go('/');
           } else {
             // Se o perfil ainda é nulo, redirecionamos para criação do perfil
@@ -337,13 +376,45 @@ class WelcomePage extends ConsumerWidget {
           // Invalidate providers to reload data
           ref.invalidate(userProfileProvider);
           ref.invalidate(routineListProvider);
-          // ref.invalidate(historyListProvider); // Ensure this provider exists or remove if not needed. It was invalidating in previous code.
 
+          // Se o usuário está autenticado, sincronizar dados restaurados com o Firebase
+          final syncService = ref.read(syncServiceProvider);
+          final isLoggedIn = syncService.isUserAuthenticated;
+          if (isLoggedIn) {
+            if (context.mounted) {
+              SnackbarUtils.showInfo(
+                context,
+                'Sincronizando dados restaurados com o Firebase...',
+              );
+            }
+            try {
+              await syncService.uploadLocalDataToFirestore().timeout(
+                const Duration(seconds: 30),
+              );
+              if (context.mounted) {
+                SnackbarUtils.showSuccess(
+                  context,
+                  'Backup restaurado e sincronizado com o Firebase!',
+                );
+              }
+            } catch (syncError) {
+              print('Aviso ao sincronizar backup com o Firestore: $syncError');
+              if (context.mounted) {
+                SnackbarUtils.showSuccess(
+                  context,
+                  'Backup restaurado! A sincronização com o Firebase ocorrerá quando houver conexão.',
+                );
+              }
+            }
+          } else {
+            if (context.mounted) {
+              SnackbarUtils.showSuccess(
+                context,
+                'Backup restaurado com sucesso!',
+              );
+            }
+          }
           if (context.mounted) {
-            SnackbarUtils.showSuccess(
-              context,
-              'Backup restaurado com sucesso!',
-            );
             context.go('/');
           }
         } else {

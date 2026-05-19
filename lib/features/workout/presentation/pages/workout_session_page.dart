@@ -579,18 +579,20 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                               BlendMode.multiply,
                                             ),
                                       child: exercise.imagePaths.isNotEmpty
-                                          ? Image.file(
-                                              ImagePathResolver.resolveToFile(
-                                                exercise.imagePaths.first,
-                                              ),
-                                              fit: BoxFit.contain,
-                                              errorBuilder: (_, _, _) =>
-                                                  const Icon(
-                                                    Icons.broken_image,
-                                                    color: Colors.white,
-                                                    size: 50,
+                                          ? (ImagePathResolver.isRemote(exercise.imagePaths.first)
+                                              ? Image.network(exercise.imagePaths.first, fit: BoxFit.contain)
+                                              : Image.file(
+                                                  ImagePathResolver.resolveToFile(
+                                                    exercise.imagePaths.first,
                                                   ),
-                                            )
+                                                  fit: BoxFit.contain,
+                                                  errorBuilder: (_, _, _) =>
+                                                      const Icon(
+                                                        Icons.broken_image,
+                                                        color: Colors.white,
+                                                        size: 50,
+                                                      ),
+                                                ))
                                           : const Center(
                                               child: Icon(
                                                 Icons.fitness_center,
@@ -1314,6 +1316,7 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
           backgroundColor: const Color(0xFF1E1E1E),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(28),
+            side: BorderSide(color: Colors.white.withOpacity(0.06), width: 1.5),
           ),
           child: Padding(
             padding: const EdgeInsets.all(32.0),
@@ -1416,9 +1419,7 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
                                   color: Colors.white.withOpacity(0.05),
                                 ),
                                 image: DecorationImage(
-                                  image: FileImage(
-                                    ImagePathResolver.resolveToFile(path),
-                                  ),
+                                  image: ImagePathResolver.resolveToImageProvider(path),
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -1601,7 +1602,10 @@ class _RestTimerDialog extends ConsumerWidget {
 
     return Dialog(
       backgroundColor: const Color(0xFF1E1E1E),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(28),
+        side: BorderSide(color: Colors.white.withOpacity(0.06), width: 1.5),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(32.0),
         child: Column(

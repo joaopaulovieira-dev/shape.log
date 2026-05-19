@@ -50,6 +50,9 @@ class WorkoutRepositoryImpl implements WorkoutRepository {
 
   @override
   Future<void> deleteHistory(String id) async {
-    return localDataSource.deleteHistory(id);
+    await localDataSource.deleteHistory(id);
+    if (syncService != null) {
+      await syncService!.deleteHistory(id);
+    }
   }
 }

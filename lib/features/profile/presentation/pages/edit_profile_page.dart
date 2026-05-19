@@ -14,6 +14,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:io';
 import '../../../../core/utils/image_path_resolver.dart';
+import '../../../../core/services/auth_service.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
   final bool isFirstRun; // If true, don't show "Cancel" button, force save
@@ -36,6 +37,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   Gender _gender = Gender.male;
   String? _profilePicturePath;
   final Set<String> _limitations = {};
+  bool _isFieldsPopulated = false;
 
   final List<String> _availableLimitations = [
     "Joelho",
@@ -50,20 +52,13 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   @override
   void initState() {
     super.initState();
-    // Initial load for when we enter the page normally
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final state = ref.read(userProfileProvider);
-      state.whenData((profile) => _populateFields(profile));
-    });
   }
 
   void _populateFields(UserProfile? profile) {
-    if (profile == null) return;
-
-    _nameController.text = profile.name;
-    _ageController.text = profile.age.toString();
-    _weightController.text = profile.targetWeight.toString();
-    setState(() {
+    if (profile != null) {
+      _nameController.text = profile.name;
+      _ageController.text = profile.age.toString();
+      _weightController.text = profile.targetWeight.toString();
       _height = profile.height;
       _activityLevel = profile.activityLevel;
       _dietType = profile.dietType;
@@ -71,7 +66,18 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       _profilePicturePath = profile.profilePicturePath;
       _limitations.clear();
       _limitations.addAll(profile.limitations);
-    });
+    } else {
+      // Se for a primeira vez (profile == null), tentamos obter os dados da conta Google/Firebase
+      final user = ref.read(authServiceProvider).currentUser;
+      if (user != null) {
+        if (user.displayName != null && user.displayName!.isNotEmpty) {
+          _nameController.text = user.displayName!;
+        }
+        if (user.photoURL != null && user.photoURL!.isNotEmpty) {
+          _profilePicturePath = user.photoURL;
+        }
+      }
+    }
   }
 
   @override
@@ -110,11 +116,20 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   Widget build(BuildContext context) {
     final profileState = ref.watch(userProfileProvider);
 
+    if (profileState is AsyncData<UserProfile?>) {
+      if (!_isFieldsPopulated) {
+        _populateFields(profileState.value);
+        _isFieldsPopulated = true;
+      }
+    }
+
     // Listen for data changes (like after a restore) to re-populate fields
     ref.listen<AsyncValue<UserProfile?>>(userProfileProvider, (previous, next) {
       next.whenData((profile) {
         if (profile != null) {
-          _populateFields(profile);
+          setState(() {
+            _populateFields(profile);
+          });
         }
       });
     });
@@ -184,7 +199,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                   radius: 50,
                                   backgroundColor: const Color(0xFF2A2A2A),
                                   backgroundImage: _profilePicturePath != null
-                                      ? FileImage(ImagePathResolver.resolveToFile(_profilePicturePath!))
+                                      ? ImagePathResolver.resolveToImageProvider(_profilePicturePath!)
                                       : null,
                                   child: _profilePicturePath == null
                                       ? const Icon(

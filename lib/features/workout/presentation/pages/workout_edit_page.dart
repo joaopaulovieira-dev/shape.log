@@ -178,18 +178,6 @@ class _WorkoutEditPageState extends ConsumerState<WorkoutEditPage> {
                     color: Colors.white,
                   ),
                 ),
-                background: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.primary.withOpacity(0.1),
-                        AppColors.background,
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                  ),
-                ),
               ),
               actions: [
                 if (widget.workoutId != null)
@@ -340,65 +328,69 @@ class _WorkoutEditPageState extends ConsumerState<WorkoutEditPage> {
                             }),
                           ),
                           const SizedBox(height: 16),
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
-                                shape: BoxShape.circle,
+                          Material(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            child: ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.event_available,
+                                  color: AppColors.primary,
+                                  size: 20,
+                                ),
                               ),
-                              child: const Icon(
-                                Icons.event_available,
-                                color: AppColors.primary,
-                                size: 20,
+                              title: const Text(
+                                'Validade do Treino',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            title: const Text(
-                              'Validade do Treino',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                              subtitle: Text(
+                                _expiryDate == null
+                                    ? 'Não definida'
+                                    : DateFormat(
+                                        'dd/MM/yyyy',
+                                      ).format(_expiryDate!),
+                                style: TextStyle(color: Colors.grey[400]),
                               ),
-                            ),
-                            subtitle: Text(
-                              _expiryDate == null
-                                  ? 'Não definida'
-                                  : DateFormat(
-                                      'dd/MM/yyyy',
-                                    ).format(_expiryDate!),
-                              style: TextStyle(color: Colors.grey[400]),
-                            ),
-                            trailing: Icon(
-                              Icons.calendar_today_outlined,
-                              size: 18,
-                              color: Colors.grey[600],
-                            ),
-                            onTap: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: _expiryDate ?? DateTime.now(),
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime(2100),
-                                builder: (context, child) {
-                                  return Theme(
-                                    data: Theme.of(context).copyWith(
-                                      colorScheme: const ColorScheme.dark(
-                                        primary: AppColors.primary,
-                                        onPrimary: Colors.black,
-                                        surface: Color(0xFF1E1E1E),
+                              trailing: Icon(
+                                Icons.calendar_today_outlined,
+                                size: 18,
+                                color: Colors.grey[600],
+                              ),
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: _expiryDate ?? DateTime.now(),
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime(2100),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: const ColorScheme.dark(
+                                          primary: AppColors.primary,
+                                          onPrimary: Colors.black,
+                                          surface: Color(0xFF1E1E1E),
+                                        ),
                                       ),
-                                    ),
-                                    child: child!,
-                                  );
-                                },
-                              );
-                              if (picked != null) {
-                                setState(() {
-                                  _expiryDate = picked;
-                                });
-                              }
-                            },
+                                      child: child!,
+                                    );
+                                  },
+                                );
+                                if (picked != null) {
+                                  setState(() {
+                                    _expiryDate = picked;
+                                  });
+                                }
+                              },
+                            ),
                           ),
                         ],
                       ),
@@ -483,7 +475,11 @@ class _WorkoutEditPageState extends ConsumerState<WorkoutEditPage> {
                           color: Colors.white.withOpacity(0.05),
                         ),
                       ),
-                      child: ListTile(
+                      child: Material(
+                        color: Colors.transparent,
+                        clipBehavior: Clip.antiAlias,
+                        borderRadius: BorderRadius.circular(20),
+                        child: ListTile(
                         onTap: () => _editExercise(index),
                         contentPadding: const EdgeInsets.all(16),
                         title: Text.rich(
@@ -581,6 +577,7 @@ class _WorkoutEditPageState extends ConsumerState<WorkoutEditPage> {
                               setState(() => _exercises.removeAt(index)),
                         ),
                       ),
+                    ),
                     );
                   }, childCount: _exercises.length),
                 ),

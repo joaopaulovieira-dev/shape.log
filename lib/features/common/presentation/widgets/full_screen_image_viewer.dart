@@ -46,10 +46,12 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                 minScale: 0.5,
                 maxScale: 4.0,
                 child: Center(
-                  child: Image.file(
-                    ImagePathResolver.resolveToFile(widget.imagePaths[index]),
-                    fit: BoxFit.contain,
-                  ),
+                  child: ImagePathResolver.isRemote(widget.imagePaths[index])
+                      ? Image.network(widget.imagePaths[index], fit: BoxFit.contain)
+                      : Image.file(
+                          ImagePathResolver.resolveToFile(widget.imagePaths[index]),
+                          fit: BoxFit.contain,
+                        ),
                 ),
               );
             },

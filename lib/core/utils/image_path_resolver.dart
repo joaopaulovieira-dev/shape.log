@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/painting.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
@@ -48,5 +49,18 @@ class ImagePathResolver {
   /// Retorna um objeto File com o caminho resolvido.
   static File resolveToFile(String pathString) {
     return File(resolve(pathString));
+  }
+
+  /// Retorna true se o path é uma URL remota (Firebase Storage, http, etc.)
+  static bool isRemote(String pathString) {
+    return pathString.startsWith('http://') ||
+        pathString.startsWith('https://') ||
+        pathString.startsWith('gs://');
+  }
+
+  /// Retorna o ImageProvider correto: NetworkImage para URLs, FileImage para locais.
+  static ImageProvider resolveToImageProvider(String pathString) {
+    if (isRemote(pathString)) return NetworkImage(pathString);
+    return FileImage(resolveToFile(pathString));
   }
 }

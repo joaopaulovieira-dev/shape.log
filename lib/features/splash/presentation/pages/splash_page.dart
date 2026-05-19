@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../profile/presentation/providers/user_profile_provider.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/sync_service.dart';
+import '../../../../core/constants/app_colors.dart';
 
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
@@ -159,13 +160,21 @@ class _SplashPageState extends ConsumerState<SplashPage>
                         Image.asset('assets/icon/logo.png', height: 100),
                         const SizedBox(height: 16),
                         // App Name
-                        Text(
-                          'Shape.log',
-                          style: GoogleFonts.outfit(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 2.0, // Premium spacing
+                        RichText(
+                          text: TextSpan(
+                            style: GoogleFonts.outfit(
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 2.0,
+                            ),
+                            children: [
+                              const TextSpan(text: 'Shape'),
+                              TextSpan(
+                                text: '.log',
+                                style: TextStyle(color: AppColors.primary),
+                              ),
+                            ],
                           ),
                         ),
                       ],

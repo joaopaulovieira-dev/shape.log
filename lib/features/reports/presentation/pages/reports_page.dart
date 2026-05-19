@@ -22,6 +22,7 @@ import '../../../image_library/presentation/image_source_sheet.dart';
 import '../../../common/presentation/widgets/full_screen_image_viewer.dart';
 import '../../../common/services/image_storage_service.dart';
 import '../../../../core/presentation/widgets/app_modals.dart';
+import '../../../../core/presentation/widgets/app_empty_state.dart';
 
 enum HubMode { analytics, logs }
 
@@ -213,7 +214,12 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
     final history = widget.history;
 
     if (history.isEmpty) {
-      return _buildEmptyState(context);
+      return const AppEmptyState(
+        icon: Icons.bar_chart_rounded,
+        title: 'Sem dados suficientes',
+        subtitle:
+            'Complete seu primeiro treino para desbloquear a análise inteligente de volume, consistência e grupamentos musculares.',
+      );
     }
 
     // Apply Filter
@@ -227,14 +233,10 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
     }).toList();
 
     if (filteredHistory.isEmpty && _filterMode != 'all') {
-      final label = _filterMode == '30_days'
-          ? '30 dias'
-          : (_filterMode == '90_days' ? '90 dias' : '7 dias');
-      return Center(
-        child: Text(
-          'Sem dados nos últimos $label.',
-          style: const TextStyle(color: Colors.grey),
-        ),
+      return const AppEmptyState(
+        icon: Icons.filter_list_off_rounded,
+        title: 'Sem dados no período',
+        subtitle: 'Nenhum treino foi concluído no período selecionado.',
       );
     }
 
@@ -337,31 +339,6 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
       ),
     );
   }
-
-  Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.bar_chart, size: 80, color: Colors.grey[700]),
-          const SizedBox(height: 16),
-          Text(
-            'Sem dados suficientes',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Complete seu primeiro treino para desbloquear os gráficos!',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _HistoryTab extends ConsumerWidget {
@@ -420,21 +397,11 @@ class _HistoryTab extends ConsumerWidget {
         ),
         Expanded(
           child: history.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.history, size: 64, color: Colors.grey[800]),
-                      const SizedBox(height: 16),
-                      Text(
-                        "Sem histórico de treinos.",
-                        style: GoogleFonts.outfit(
-                          color: Colors.grey[600],
-                          fontSize: 18,
-                        ),
-                      ),
-                    ],
-                  ),
+              ? const AppEmptyState(
+                  icon: Icons.history_rounded,
+                  title: 'Nenhum treino realizado',
+                  subtitle:
+                      'Seu histórico de treinos concluídos aparecerá aqui. Inicie um treino hoje mesmo!',
                 )
               : ListView.builder(
                   padding: const EdgeInsets.symmetric(
@@ -602,12 +569,14 @@ class _HistoryTab extends ConsumerWidget {
                                               child: ClipRRect(
                                                 borderRadius:
                                                     BorderRadius.circular(6),
-                                                child: Image.file(
-                                                  ImagePathResolver.resolveToFile(h.imagePaths[i]),
-                                                  width: 40,
-                                                  height: 40,
-                                                  fit: BoxFit.cover,
-                                                ),
+                                                child: ImagePathResolver.isRemote(h.imagePaths[i])
+                                                    ? Image.network(h.imagePaths[i], width: 40, height: 40, fit: BoxFit.cover)
+                                                    : Image.file(
+                                                        ImagePathResolver.resolveToFile(h.imagePaths[i]),
+                                                        width: 40,
+                                                        height: 40,
+                                                        fit: BoxFit.cover,
+                                                      ),
                                               ),
                                             );
                                           },
@@ -766,7 +735,9 @@ class _PhotoManagerDialogState extends State<_PhotoManagerDialog> {
                             },
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: Image.file(ImagePathResolver.resolveToFile(path), fit: BoxFit.cover),
+                              child: ImagePathResolver.isRemote(path)
+                                  ? Image.network(path, fit: BoxFit.cover)
+                                  : Image.file(ImagePathResolver.resolveToFile(path), fit: BoxFit.cover),
                             ),
                           ),
                           Positioned(

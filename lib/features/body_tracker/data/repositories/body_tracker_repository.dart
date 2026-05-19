@@ -67,7 +67,6 @@ class BodyTrackerRepository {
   }
 
   Future<void> deleteMeasurement(String id) async {
-    // 1. Clean up images
     final directory = await getApplicationDocumentsDirectory();
     final measurementDir = Directory('${directory.path}/body_images/$id');
 
@@ -76,6 +75,10 @@ class BodyTrackerRepository {
     }
 
     await _box.delete(id);
+
+    if (_syncService != null) {
+      await _syncService.deleteMeasurement(id);
+    }
   }
 
   List<BodyMeasurement> getAllMeasurements() {

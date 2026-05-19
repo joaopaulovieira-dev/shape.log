@@ -191,18 +191,6 @@ class _ExerciseEditPageState extends ConsumerState<ExerciseEditPage> {
                     color: Colors.white,
                   ),
                 ),
-                background: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.primary.withOpacity(0.15),
-                        AppColors.background,
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                  ),
-                ),
               ),
               actions: [
                 IconButton(
@@ -495,7 +483,9 @@ class _ExerciseEditPageState extends ConsumerState<ExerciseEditPage> {
                                     color: Colors.white.withOpacity(0.05),
                                   ),
                                   image: DecorationImage(
-                                    image: FileImage(ImagePathResolver.resolveToFile(_imagePaths[index])),
+                                    image: ImagePathResolver.resolveToImageProvider(
+                                      _imagePaths[index],
+                                    ),
                                     fit: BoxFit.cover,
                                   ),
                                 ),

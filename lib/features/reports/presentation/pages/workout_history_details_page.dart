@@ -8,6 +8,7 @@ import 'package:shape_log/features/workout/domain/entities/workout_history.dart'
 import 'package:shape_log/features/workout/domain/services/workout_report_service.dart';
 
 import 'package:shape_log/features/workout/presentation/providers/workout_provider.dart';
+import '../../../../core/presentation/widgets/app_dialogs.dart';
 
 class WorkoutHistoryDetailsPage extends ConsumerWidget {
   final WorkoutHistory history;
@@ -96,41 +97,28 @@ class WorkoutHistoryDetailsPage extends ConsumerWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, WidgetRef ref) {
-    showDialog(
+  void _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final confirmed = await AppDialogs.showConfirmDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Excluir Treino?'),
-        content: const Text(
+      title: 'Excluir Treino?',
+      description:
           'Essa ação apagará permanentemente este registro do seu histórico e afetará seus gráficos. Tem certeza?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('CANCELAR'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(ctx); // Close Dialog
-
-              // Perform Delete
-              await ref
-                  .read(workoutRepositoryProvider)
-                  .deleteHistory(history.id);
-
-              if (context.mounted) {
-                Navigator.pop(context); // Close Page
-                SnackbarUtils.showSuccess(
-                  context,
-                  'Treino excluído com sucesso.',
-                );
-              }
-            },
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('SIM, EXCLUIR'),
-          ),
-        ],
-      ),
+      confirmText: 'EXCLUIR',
+      cancelText: 'CANCELAR',
+      isDestructive: true,
     );
+
+    if (confirmed == true && context.mounted) {
+      // Perform Delete
+      await ref.read(workoutRepositoryProvider).deleteHistory(history.id);
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close Page
+        SnackbarUtils.showSuccess(
+          context,
+          'Treino excluído com sucesso.',
+        );
+      }
+    }
   }
 }

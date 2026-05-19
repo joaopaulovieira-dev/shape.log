@@ -36,7 +36,8 @@ class ProfileHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final badge = _getBadge(totalWorkouts);
     final badgeColor = _getBadgeColor(totalWorkouts);
-    final hasPhoto = userProfile?.profilePicturePath != null;
+    final profile = userProfile;
+    final hasPhoto = profile?.profilePicturePath != null;
     final neonGreen = AppColors.primary;
 
     return Container(
@@ -65,11 +66,7 @@ class ProfileHeroCard extends StatelessWidget {
                   ),
                   image: hasPhoto
                       ? DecorationImage(
-                          image: FileImage(
-                            ImagePathResolver.resolveToFile(
-                              userProfile!.profilePicturePath!,
-                            ),
-                          ),
+                          image: ImagePathResolver.resolveToImageProvider(profile!.profilePicturePath!),
                           fit: BoxFit.cover,
                         )
                       : null,

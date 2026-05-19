@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
 
 class AppDialogs {
@@ -14,38 +15,69 @@ class AppDialogs {
     return showDialog<T>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        titlePadding: const EdgeInsets.fromLTRB(24, 28, 24, 12),
+        contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.white.withOpacity(0.05)),
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(color: Colors.white.withOpacity(0.06), width: 1.5),
         ),
         title: Text(
           title,
-          style: const TextStyle(
+          style: GoogleFonts.outfit(
             color: Colors.white,
             fontWeight: FontWeight.bold,
+            fontSize: 20,
           ),
         ),
-        content:
-            content ??
-            Text(description ?? '', style: TextStyle(color: Colors.grey[400])),
+        content: content ??
+            Text(
+              description ?? '',
+              style: GoogleFonts.outfit(
+                color: Colors.grey[400],
+                fontSize: 14,
+                height: 1.4,
+              ),
+            ),
+        actionsAlignment: MainAxisAlignment.end,
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(cancelText, style: TextStyle(color: Colors.grey[500])),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey[400],
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              cancelText,
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
           ),
+          const SizedBox(width: 4),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: isDestructive ? Colors.red : AppColors.primary,
+              backgroundColor: isDestructive ? AppColors.error : AppColors.primary,
               foregroundColor: isDestructive ? Colors.white : Colors.black,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
             child: Text(
               confirmText,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
           ),
         ],
@@ -63,29 +95,52 @@ class AppDialogs {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        titlePadding: const EdgeInsets.fromLTRB(24, 28, 24, 12),
+        contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.white.withOpacity(0.05)),
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(color: Colors.white.withOpacity(0.06), width: 1.5),
         ),
         title: Text(
           title,
-          style: const TextStyle(
+          style: GoogleFonts.outfit(
             color: Colors.white,
             fontWeight: FontWeight.bold,
+            fontSize: 20,
           ),
         ),
-        content:
-            content ??
-            Text(description ?? '', style: TextStyle(color: Colors.grey[400])),
+        content: content ??
+            Text(
+              description ?? '',
+              style: GoogleFonts.outfit(
+                color: Colors.grey[400],
+                fontSize: 14,
+                height: 1.4,
+              ),
+            ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              buttonText,
-              style: const TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.bold,
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.black,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                buttonText,
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
             ),
           ),
@@ -94,19 +149,43 @@ class AppDialogs {
     );
   }
 
-  static void showLoadingDialog(BuildContext context) {
+  static void showLoadingDialog(BuildContext context, {String? message}) {
     showDialog(
       context: context,
       barrierDismissible: false,
       useRootNavigator: true,
       builder: (context) => Center(
         child: Container(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E),
-            borderRadius: BorderRadius.circular(16),
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.06), width: 1.5),
           ),
-          child: const CircularProgressIndicator(color: AppColors.primary),
+          child: message != null
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(
+                      color: AppColors.primary,
+                      strokeWidth: 4,
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      message,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                )
+              : const CircularProgressIndicator(
+                  color: AppColors.primary,
+                  strokeWidth: 4,
+                ),
         ),
       ),
     );

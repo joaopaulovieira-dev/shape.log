@@ -6,6 +6,7 @@ import '../providers/body_tracker_provider.dart';
 import '../../../profile/presentation/providers/user_profile_provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/presentation/widgets/app_dialogs.dart';
+import '../../../../core/presentation/widgets/app_empty_state.dart';
 import '../widgets/body_tracker_summary_header.dart';
 import '../widgets/measurement_card.dart';
 
@@ -216,29 +217,22 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
           // LIST
           if (measurementList.isEmpty)
             SliverFillRemaining(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.insights,
-                      size: 64,
-                      color: Colors.white.withOpacity(0.1),
+              hasScrollBody: false,
+              child: rawList.isEmpty
+                  ? AppEmptyState(
+                      icon: Icons.insights_rounded,
+                      title: 'Nenhuma medida registrada',
+                      subtitle:
+                          'Registre suas medidas corporais para acompanhar sua evolução física ao longo do tempo.',
+                      actionLabel: 'Registrar Medida',
+                      onActionPressed: () => context.go('/body-tracker/add'),
+                    )
+                  : const AppEmptyState(
+                      icon: Icons.filter_list_off_rounded,
+                      title: 'Nenhuma medida no período',
+                      subtitle:
+                          'Não encontramos registros de medidas corporais para o filtro selecionado.',
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      rawList.isEmpty
-                          ? 'Comece sua jornada.\nToque em + para registrar.'
-                          : 'Nenhuma medida neste período.',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             )
           else
             SliverList(

@@ -109,18 +109,20 @@ class ExerciseDetailsPage extends ConsumerWidget {
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(24),
-                                    child: Image.file(
-                                      ImagePathResolver.resolveToFile(path),
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (ctx, err, stack) =>
-                                          const Center(
-                                            child: Icon(
-                                              Icons.broken_image,
-                                              color: Colors.white24,
-                                              size: 50,
-                                            ),
+                                    child: ImagePathResolver.isRemote(path)
+                                        ? Image.network(path, fit: BoxFit.contain)
+                                        : Image.file(
+                                            ImagePathResolver.resolveToFile(path),
+                                            fit: BoxFit.contain,
+                                            errorBuilder: (ctx, err, stack) =>
+                                                const Center(
+                                                  child: Icon(
+                                                    Icons.broken_image,
+                                                    color: Colors.white24,
+                                                    size: 50,
+                                                  ),
+                                                ),
                                           ),
-                                    ),
                                   ),
                                 );
                               },

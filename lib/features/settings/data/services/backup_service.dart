@@ -12,7 +12,6 @@ import '../../../profile/data/models/user_profile_hive_model.dart';
 import '../../../workout/data/models/workout_hive_model.dart';
 import '../../../workout/data/models/workout_history_hive_model.dart';
 import '../../../body_tracker/data/models/body_measurement_hive_model.dart';
-import '../repositories/settings_repository.dart';
 
 final backupServiceProvider = Provider((ref) => BackupService(ref));
 
@@ -160,23 +159,13 @@ class BackupService {
 
       final zipFile = File(pickResult.files.single.path!);
 
-      // Analyze ZIP without extracting everything
-      final inputStream = InputFileStream(zipFile.path);
-      final archive = ZipDecoder().decodeStream(inputStream);
+      // Lê os bytes completos antes de decodificar.
+      // Necessário no iOS onde o InputFileStream pode falhar com
+      // security-scoped URLs retornados pelo FilePicker.
+      final zipBytes = await zipFile.readAsBytes();
+      final archive = ZipDecoder().decodeBytes(zipBytes);
 
-      final jsonFile = archive.findFile('backup_data.json');
-      if (jsonFile == null) {
-        throw Exception('Dados inválidos: "backup_data.json" não encontrado.');
-      }
-
-      final jsonString = utf8.decode(jsonFile.content as List<int>);
-      final Map<String, dynamic> data = jsonDecode(jsonString);
-
-      if (double.parse(data['version'] ?? '0') < 1.0) {
-        throw Exception('Versão de backup incompatível.');
-      }
-
-      // Count images
+      // Contabiliza imagens (library + exercise images)
       int imageCount = 0;
       for (final file in archive) {
         if (file.isFile &&
@@ -186,7 +175,47 @@ class BackupService {
         }
       }
 
-      inputStream.close();
+      // Busca resiliente: tenta pelo path exato primeiro,
+      // depois por nome de arquivo (sem depender do path completo)
+      ArchiveFile? jsonEntry = archive.findFile('backup_data.json');
+      if (jsonEntry == null) {
+        final matches = archive.files
+            .where((f) => f.isFile && p.basename(f.name) == 'backup_data.json')
+            .toList();
+        if (matches.isNotEmpty) jsonEntry = matches.first;
+      }
+
+      // Compatibilidade com backups antigos (somente library/, sem JSON)
+      if (jsonEntry == null) {
+        final hasLibraryFiles = archive.files.any(
+          (f) => f.isFile && f.name.startsWith('library/'),
+        );
+        if (hasLibraryFiles) {
+          return BackupAnalysis(
+            zipFile: zipFile,
+            metadata: {
+              'version': '1.0',
+              'timestamp': DateTime.now().toIso8601String(),
+              'libraryOnly': true,
+            },
+            workoutCount: 0,
+            historyCount: 0,
+            measurementCount: 0,
+            imageCount: imageCount,
+          );
+        }
+        throw Exception(
+          'Arquivo inválido: nenhum dado de backup encontrado.\n'
+          'Arquivos presentes: ${archive.files.map((f) => f.name).join(', ')}',
+        );
+      }
+
+      final jsonString = utf8.decode(jsonEntry.content as List<int>);
+      final Map<String, dynamic> data = jsonDecode(jsonString);
+
+      if (double.parse(data['version'] ?? '0') < 1.0) {
+        throw Exception('Versão de backup incompatível.');
+      }
 
       return BackupAnalysis(
         zipFile: zipFile,
@@ -198,7 +227,7 @@ class BackupService {
       );
     } catch (e) {
       print('Analysis error: $e');
-      return null;
+      rethrow; // Repropaga para o _handleRestore exibir o erro ao usuário
     }
   }
 
@@ -207,20 +236,18 @@ class BackupService {
       final zipFile = analysis.zipFile;
       final data = analysis.metadata;
 
-      // 1. Decode ZIP (Need to reopen stream as close() was termed)
-      // Actually we decoded it in memory before but we closed the stream.
-      // Let's reopen.
-      final inputStream = InputFileStream(zipFile.path);
-      final archive = ZipDecoder().decodeStream(inputStream);
+      // 1. Decodifica o ZIP a partir dos bytes completos (mais confiável no iOS)
+      final zipBytes = await zipFile.readAsBytes();
+      final archive = ZipDecoder().decodeBytes(zipBytes);
 
-      // 3. Prepare Image Directory
+      // 2. Prepara diretório de imagens
       final appDir = await getApplicationDocumentsDirectory();
       final imageDir = Directory('${appDir.path}/exercise_images');
       if (!await imageDir.exists()) {
         await imageDir.create(recursive: true);
       }
 
-      // 4. Extract Images & Library
+      // 3. Extrai imagens e biblioteca
       final libraryDir = Directory('${appDir.path}/image_library');
       if (!await libraryDir.exists()) {
         await libraryDir.create(recursive: true);
@@ -241,9 +268,15 @@ class BackupService {
           }
         }
       }
-      inputStream.close();
 
-      // Handle Profile Path Fix
+      // Se é um backup legado (só library), encerra após extrair as imagens
+      final isLibraryOnly = data['libraryOnly'] == true;
+      if (isLibraryOnly) {
+        print('Backup legado: somente imagens da biblioteca restauradas.');
+        return true;
+      }
+
+      // Corrige o path da foto de perfil
       if (data['profile'] != null &&
           data['profile']['profilePicturePath'] != null) {
         final relPath = data['profile']['profilePicturePath'] as String;
@@ -252,8 +285,8 @@ class BackupService {
         }
       }
 
-      // 6. Reconstruct Absolute Paths in JSON
-      void fixPaths(List entities) {
+      // Reconstrói paths absolutos nas entidades
+      void fixPaths(List<dynamic> entities) {
         for (var entity in entities) {
           final List<String> currentPaths = List<String>.from(
             entity['imagePaths'] ?? [],
@@ -264,48 +297,60 @@ class BackupService {
         }
       }
 
-      for (var workout in data['workouts']) {
-        fixPaths(workout['exercises']);
-      }
-      // Fix newly added gallery images in history items
-      fixPaths(data['history']);
-      for (var historyEntry in data['history']) {
-        fixPaths(historyEntry['exercises']);
-      }
-      fixPaths(data['measurements']);
+      final workouts = List<dynamic>.from(data['workouts'] ?? []);
+      final history = List<dynamic>.from(data['history'] ?? []);
+      final measurements = List<dynamic>.from(data['measurements'] ?? []);
 
-      // 6. Persist to Hive
-      final settingsRepo = _ref.read(settingsRepositoryProvider);
-      await settingsRepo.clearAllBoxes();
-
-      if (data['profile'] != null) {
-        final profileBox = Hive.box<UserProfileHiveModel>('user_profile');
-        // Use a fixed key for profile to ensure there's only one, matching UserProfileRepository
-        await profileBox.put(
-          'current_user',
-          UserProfileHiveModel.fromMap(data['profile']),
-        );
-        print('Profile restored successfully into user_profile box.');
+      for (var workout in workouts) {
+        fixPaths(List<dynamic>.from(workout['exercises'] ?? []));
       }
+      fixPaths(history);
+      for (var historyEntry in history) {
+        fixPaths(List<dynamic>.from(historyEntry['exercises'] ?? []));
+      }
+      fixPaths(measurements);
 
+      // 4. Mescla incremental com o Hive (upsert por ID)
       final routinesBox = Hive.box<WorkoutHiveModel>('routines');
-      for (var item in (data['workouts'] as List? ?? [])) {
-        final model = WorkoutHiveModel.fromMap(item);
+      for (var item in workouts) {
+        final model = WorkoutHiveModel.fromMap(item as Map<String, dynamic>);
         await routinesBox.put(model.id, model);
       }
 
       final historyBox = Hive.box<WorkoutHistoryHiveModel>('history_log');
-      for (var item in (data['history'] as List? ?? [])) {
-        final model = WorkoutHistoryHiveModel.fromMap(item);
+      for (var item in history) {
+        final model = WorkoutHistoryHiveModel.fromMap(
+          item as Map<String, dynamic>,
+        );
         await historyBox.put(model.id, model);
       }
 
       final measurementsBox = Hive.box<BodyMeasurementHiveModel>(
         'body_measurements',
       );
-      for (var item in (data['measurements'] as List? ?? [])) {
-        final model = BodyMeasurementHiveModel.fromMap(item);
+      for (var item in measurements) {
+        final model = BodyMeasurementHiveModel.fromMap(
+          item as Map<String, dynamic>,
+        );
         await measurementsBox.put(model.id, model);
+      }
+
+      // Perfil: só importa do backup se não houver perfil atual
+      if (data['profile'] != null) {
+        final profileBox = Hive.box<UserProfileHiveModel>('user_profile');
+        if (!profileBox.containsKey('current_user')) {
+          await profileBox.put(
+            'current_user',
+            UserProfileHiveModel.fromMap(
+              data['profile'] as Map<String, dynamic>,
+            ),
+          );
+          print(
+            'Perfil restaurado do backup (nenhum perfil atual encontrado).',
+          );
+        } else {
+          print('Perfil atual mantido. Dados de perfil do backup ignorados.');
+        }
       }
 
       return true;

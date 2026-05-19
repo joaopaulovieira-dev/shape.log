@@ -403,10 +403,8 @@ class MeasurementCard extends StatelessWidget {
                           color: Colors.white.withOpacity(0.1),
                         ),
                         image: DecorationImage(
-                          image: FileImage(
-                            ImagePathResolver.resolveToFile(
-                              measurement.imagePaths[index],
-                            ),
+                          image: ImagePathResolver.resolveToImageProvider(
+                            measurement.imagePaths[index],
                           ),
                           fit: BoxFit.cover,
                         ),
