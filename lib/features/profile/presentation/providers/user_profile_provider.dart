@@ -1,14 +1,17 @@
-import 'package:riverpod/riverpod.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/user_profile.dart';
+import '../../domain/repositories/user_profile_repository.dart';
 import '../../data/repositories/user_profile_repository.dart';
-
+import '../../data/repositories/user_profile_firestore_repository.dart';
 import '../../../../core/services/sync_service.dart';
 
-// Repository Provider
 final userProfileRepositoryProvider = Provider<UserProfileRepository>((ref) {
+  if (kIsWeb) {
+    return UserProfileFirestoreRepository();
+  }
   final syncService = ref.watch(syncServiceProvider);
-  return UserProfileRepository(syncService);
+  return UserProfileHiveRepository(syncService);
 });
 
 // Notifier

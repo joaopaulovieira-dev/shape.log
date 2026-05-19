@@ -5,13 +5,15 @@ import '../models/body_measurement_hive_model.dart';
 import '../../domain/entities/body_measurement.dart';
 
 import '../../../../core/services/sync_service.dart';
+import '../../domain/repositories/body_tracker_repository.dart';
 
-class BodyTrackerRepository {
+class BodyTrackerHiveRepository implements BodyTrackerRepository {
   final Box<BodyMeasurementHiveModel> _box;
   final SyncService? _syncService;
 
-  BodyTrackerRepository(this._box, [this._syncService]);
+  BodyTrackerHiveRepository(this._box, [this._syncService]);
 
+  @override
   Future<void> saveMeasurement(BodyMeasurement measurement) async {
     // handled in the provider or UI, but let's robustify it here.
     // actually, best practice: Logic here.
@@ -66,6 +68,7 @@ class BodyTrackerRepository {
     }
   }
 
+  @override
   Future<void> deleteMeasurement(String id) async {
     final directory = await getApplicationDocumentsDirectory();
     final measurementDir = Directory('${directory.path}/body_images/$id');
@@ -81,6 +84,7 @@ class BodyTrackerRepository {
     }
   }
 
+  @override
   List<BodyMeasurement> getAllMeasurements() {
     final measurements = _box.values.map((e) => e.toEntity()).toList();
     // Sort by date descending (newest first)

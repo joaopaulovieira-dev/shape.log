@@ -1,5 +1,7 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:io' show File, Directory;
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:hive_ce/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
@@ -16,7 +18,7 @@ import '../../../body_tracker/data/models/body_measurement_hive_model.dart';
 final backupServiceProvider = Provider((ref) => BackupService(ref));
 
 class BackupAnalysis {
-  final File zipFile;
+  final Uint8List zipBytes;
   final Map<String, dynamic> metadata;
   final int workoutCount;
   final int historyCount;
@@ -24,7 +26,7 @@ class BackupAnalysis {
   final int imageCount;
 
   BackupAnalysis({
-    required this.zipFile,
+    required this.zipBytes,
     required this.metadata,
     required this.workoutCount,
     required this.historyCount,
@@ -37,9 +39,7 @@ class BackupAnalysis {
 }
 
 class BackupService {
-  final Ref _ref;
-
-  BackupService(this._ref);
+  BackupService(Ref ref);
 
   Future<String?> generateFullBackupZip() async {
     try {
@@ -157,12 +157,13 @@ class BackupService {
 
       if (pickResult == null) return null;
 
-      final zipFile = File(pickResult.files.single.path!);
-
-      // Lê os bytes completos antes de decodificar.
-      // Necessário no iOS onde o InputFileStream pode falhar com
-      // security-scoped URLs retornados pelo FilePicker.
-      final zipBytes = await zipFile.readAsBytes();
+      // Na web os bytes vêm direto do FilePicker; no mobile lemos do File.
+      final Uint8List zipBytes;
+      if (kIsWeb) {
+        zipBytes = pickResult.files.single.bytes!;
+      } else {
+        zipBytes = await File(pickResult.files.single.path!).readAsBytes();
+      }
       final archive = ZipDecoder().decodeBytes(zipBytes);
 
       // Contabiliza imagens (library + exercise images)
@@ -192,7 +193,7 @@ class BackupService {
         );
         if (hasLibraryFiles) {
           return BackupAnalysis(
-            zipFile: zipFile,
+            zipBytes: zipBytes,
             metadata: {
               'version': '1.0',
               'timestamp': DateTime.now().toIso8601String(),
@@ -218,7 +219,7 @@ class BackupService {
       }
 
       return BackupAnalysis(
-        zipFile: zipFile,
+        zipBytes: zipBytes,
         metadata: data,
         workoutCount: (data['workouts'] as List?)?.length ?? 0,
         historyCount: (data['history'] as List?)?.length ?? 0,
@@ -233,12 +234,10 @@ class BackupService {
 
   Future<bool> restoreFromAnalysis(BackupAnalysis analysis) async {
     try {
-      final zipFile = analysis.zipFile;
       final data = analysis.metadata;
 
-      // 1. Decodifica o ZIP a partir dos bytes completos (mais confiável no iOS)
-      final zipBytes = await zipFile.readAsBytes();
-      final archive = ZipDecoder().decodeBytes(zipBytes);
+      // 1. Decodifica o ZIP a partir dos bytes já lidos no pickAndAnalyzeBackup
+      final archive = ZipDecoder().decodeBytes(analysis.zipBytes);
 
       // 2. Prepara diretório de imagens
       final appDir = await getApplicationDocumentsDirectory();

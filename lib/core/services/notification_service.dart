@@ -80,14 +80,21 @@ class NotificationService {
       iOS: iosDetails,
     );
 
-    // Cancel any previous notification with this ID just in case
+    // Garante que a data seja sempre no futuro — o plugin rejeita datas passadas.
+    // Adiciona 1s de buffer para cobrir delay de processamento em timers curtos.
+    final now = tz.TZDateTime.now(tz.local);
+    var tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
+    if (tzDate.isBefore(now.add(const Duration(seconds: 1)))) {
+      tzDate = now.add(const Duration(seconds: 1));
+    }
+
     await _notificationsPlugin.cancel(id: id);
 
     await _notificationsPlugin.zonedSchedule(
       id: id,
       title: title,
       body: body,
-      scheduledDate: tz.TZDateTime.from(scheduledDate, tz.local),
+      scheduledDate: tzDate,
       notificationDetails: details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );

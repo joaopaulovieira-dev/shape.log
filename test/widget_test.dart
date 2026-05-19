@@ -13,7 +13,7 @@ import 'package:shape_log/main.dart';
 import 'package:shape_log/core/services/auth_service.dart';
 import 'package:shape_log/core/services/sync_service.dart';
 import 'package:shape_log/features/profile/presentation/providers/user_profile_provider.dart';
-import 'package:shape_log/features/profile/data/repositories/user_profile_repository.dart';
+import 'package:shape_log/features/profile/domain/repositories/user_profile_repository.dart';
 import 'package:shape_log/features/profile/domain/entities/user_profile.dart';
 
 class MockAuthService implements AuthService {

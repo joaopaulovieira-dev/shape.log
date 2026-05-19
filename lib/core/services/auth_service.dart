@@ -1,54 +1,56 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  // GoogleSignIn só é instanciado no mobile — evita erro no plugin web
+  GoogleSignIn? _googleSignIn;
   bool _isInitialized = false;
 
-  // Stream do estado da autenticação
   Stream<User?> get authStateChanges => _auth.authStateChanges();
-
-  // Obter usuário atual
   User? get currentUser => _auth.currentUser;
 
-  Future<void> _ensureInitialized() async {
-    if (!_isInitialized) {
-      try {
-        await _googleSignIn.initialize();
-      } catch (e) {
-        print('Erro ao inicializar GoogleSignIn: $e');
-      }
-      _isInitialized = true;
-    }
+  GoogleSignIn get _signIn {
+    _googleSignIn ??= GoogleSignIn.instance;
+    return _googleSignIn!;
   }
 
-  // Login com o Google
+  Future<void> _ensureInitialized() async {
+    if (_isInitialized || kIsWeb) return;
+    try {
+      await _signIn.initialize();
+    } catch (e) {
+      print('Erro ao inicializar GoogleSignIn: $e');
+    }
+    _isInitialized = true;
+  }
+
+  // Login com Google — usa signInWithPopup na web, fluxo nativo no mobile
   Future<UserCredential?> signInWithGoogle() async {
+    if (kIsWeb) {
+      // Na web o Firebase abre o popup de OAuth diretamente
+      final provider = GoogleAuthProvider();
+      provider.addScope('email');
+      provider.addScope('profile');
+      return await _auth.signInWithPopup(provider);
+    }
+
     try {
       await _ensureInitialized();
-
-      // Inicia o fluxo de autenticação do Google (lança exceção se cancelado)
-      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
-
+      final GoogleSignInAccount googleUser = await _signIn.authenticate();
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;
-
-      // Cria uma nova credencial de autenticação do Firebase (usando idToken)
       final AuthCredential credential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
       );
-
-      // Autentica no Firebase com a credencial
       return await _auth.signInWithCredential(credential);
     } on GoogleSignInException catch (e) {
       if (e.code == GoogleSignInExceptionCode.canceled) {
         print('Login cancelado pelo usuário.');
         return null;
       }
-      print(
-        'Erro GoogleSignInException no login com Google: ${e.code} - ${e.description}',
-      );
+      print('Erro GoogleSignInException: ${e.code} - ${e.description}');
       rethrow;
     } catch (e) {
       print('Erro no login com Google: $e');
@@ -56,10 +58,11 @@ class AuthService {
     }
   }
 
-  // Logout
   Future<void> signOut() async {
-    await _ensureInitialized();
-    await _googleSignIn.signOut();
+    if (!kIsWeb) {
+      await _ensureInitialized();
+      await _signIn.signOut();
+    }
     await _auth.signOut();
   }
 }

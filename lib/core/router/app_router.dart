@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +17,7 @@ import '../../features/settings/presentation/settings_page.dart';
 import '../../features/profile/presentation/pages/edit_profile_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 import '../../features/splash/presentation/pages/welcome_page.dart';
+import '../../features/splash/presentation/pages/web_login_page.dart';
 import '../../features/workout/presentation/pages/workout_session_page.dart';
 import '../../features/workout/domain/entities/workout.dart';
 import '../../features/reports/presentation/pages/reports_page.dart';
@@ -30,7 +32,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/splash', builder: (context, state) => const SplashPage()),
       GoRoute(
         path: '/welcome',
-        builder: (context, state) => const WelcomePage(),
+        builder: (context, state) =>
+            kIsWeb ? const WebLoginPage() : const WelcomePage(),
       ),
       ShellRoute(
         builder: (context, state, child) {

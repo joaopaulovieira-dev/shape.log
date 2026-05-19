@@ -1,13 +1,14 @@
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import '../../../../core/services/sync_service.dart';
 import '../../domain/entities/user_profile.dart';
+import '../../domain/repositories/user_profile_repository.dart';
 import '../models/user_profile_hive_model.dart';
 
-class UserProfileRepository {
+class UserProfileHiveRepository implements UserProfileRepository {
   static const String boxName = 'user_profile';
   final SyncService? _syncService;
 
-  UserProfileRepository([this._syncService]);
+  UserProfileHiveRepository([this._syncService]);
 
   Future<Box<UserProfileHiveModel>> _openBox() async {
     if (!Hive.isBoxOpen(boxName)) {
@@ -16,6 +17,7 @@ class UserProfileRepository {
     return Hive.box<UserProfileHiveModel>(boxName);
   }
 
+  @override
   Future<void> saveProfile(UserProfile profile) async {
     final box = await _openBox();
     final model = UserProfileHiveModel.fromEntity(profile);
@@ -26,12 +28,14 @@ class UserProfileRepository {
     }
   }
 
+  @override
   Future<UserProfile?> getProfile() async {
     final box = await _openBox();
     final model = box.get('current_user');
     return model?.toEntity();
   }
 
+  @override
   Future<void> deleteProfile() async {
     final box = await _openBox();
     await box.delete('current_user');

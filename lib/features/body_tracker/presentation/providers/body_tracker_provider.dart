@@ -1,22 +1,26 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import '../../data/models/body_measurement_hive_model.dart';
 import '../../data/repositories/body_tracker_repository.dart';
+import '../../data/repositories/body_tracker_firestore_repository.dart';
 import '../../domain/entities/body_measurement.dart';
+import '../../domain/repositories/body_tracker_repository.dart';
 import '../../../../core/services/sync_service.dart';
 
-// Access the Hive Box
 final bodymeasurementsBoxProvider = Provider<Box<BodyMeasurementHiveModel>>((
   ref,
 ) {
   return Hive.box<BodyMeasurementHiveModel>('body_measurements');
 });
 
-// Access the Repository
 final bodyTrackerRepositoryProvider = Provider<BodyTrackerRepository>((ref) {
+  if (kIsWeb) {
+    return BodyTrackerFirestoreRepository();
+  }
   final box = ref.watch(bodymeasurementsBoxProvider);
   final syncService = ref.watch(syncServiceProvider);
-  return BodyTrackerRepository(box, syncService);
+  return BodyTrackerHiveRepository(box, syncService);
 });
 
 // Notifier to manage the list of measurements

@@ -1,21 +1,21 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/workout.dart';
 import '../../domain/entities/workout_history.dart';
 import '../../domain/repositories/workout_repository.dart';
 import '../../data/datasources/workout_local_data_source.dart';
+import '../../data/datasources/workout_firestore_data_source.dart';
 import '../../data/repositories/workout_repository_impl.dart';
 import '../../../../core/services/sync_service.dart';
 
-// Dependency Injection
-
-// provider/workout_provider.dart
-
 final workoutLocalDataSourceProvider = Provider<WorkoutLocalDataSource>((ref) {
-  // Box 'routines' is opened in main.dart, so this is safe.
   return WorkoutHiveDataSource();
 });
 
 final workoutRepositoryProvider = Provider<WorkoutRepository>((ref) {
+  if (kIsWeb) {
+    return WorkoutFirestoreDataSource();
+  }
   final localDataSource = ref.watch(workoutLocalDataSourceProvider);
   final syncService = ref.watch(syncServiceProvider);
   return WorkoutRepositoryImpl(

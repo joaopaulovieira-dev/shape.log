@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:audio_session/audio_session.dart' as as_session;
 import 'package:vibration/vibration.dart';
 import 'package:uuid/uuid.dart';
 import 'package:shape_log/core/services/notification_service.dart';
@@ -415,62 +414,37 @@ class SessionController extends Notifier<WorkoutSessionState>
 
   Future<void> _triggerAlert() async {
     try {
-      // Configurar a sessão de áudio para gerenciar o volume corretamente (ducking)
-      final session = await as_session.AudioSession.instance;
-      await session.configure(
-        const as_session.AudioSessionConfiguration(
-          avAudioSessionCategory: as_session.AVAudioSessionCategory.playback,
-          avAudioSessionCategoryOptions:
-              as_session.AVAudioSessionCategoryOptions.duckOthers,
-          avAudioSessionMode: as_session.AVAudioSessionMode.defaultMode,
-          avAudioSessionRouteSharingPolicy:
-              as_session.AVAudioSessionRouteSharingPolicy.defaultPolicy,
-          avAudioSessionSetActiveOptions:
-              as_session.AVAudioSessionSetActiveOptions.none,
-          androidAudioAttributes: as_session.AndroidAudioAttributes(
-            contentType: as_session.AndroidAudioContentType.music,
-            usage: as_session.AndroidAudioUsage.media,
-          ),
-          androidAudioFocusGainType:
-              as_session.AndroidAudioFocusGainType.gainTransientMayDuck,
+      await _audioPlayer.setVolume(1.0);
+
+      // Contexto de reprodução: mixWithOthers para não suprimir o áudio de
+      // outros apps. O beep toca em cima da música sem baixar o volume dela.
+      final ctx = AudioContext(
+        android: AudioContextAndroid(
+          isSpeakerphoneOn: false,
+          stayAwake: true,
+          contentType: AndroidContentType.sonification,
+          usageType: AndroidUsageType.notificationEvent,
+          audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+        ),
+        iOS: AudioContextIOS(
+          category: AVAudioSessionCategory.playback,
+          options: {AVAudioSessionOptions.mixWithOthers},
         ),
       );
 
-      // Ativar sessão
-      await session.setActive(true);
-
-      // Play using AssetSource (Robust & Standard)
-      await _audioPlayer.setVolume(1.0); // Ensure max volume
-
-      // Play 3 times (Beep... Beep... Beep)
+      // Toca 3 bipes e aguarda cada um terminar antes do próximo
       for (int i = 0; i < 3; i++) {
         await _audioPlayer.play(
           AssetSource('sounds/timer_alert.wav'),
-          mode: PlayerMode.mediaPlayer,
-          ctx: AudioContext(
-            android: AudioContextAndroid(
-              isSpeakerphoneOn: false,
-              stayAwake: true,
-              contentType: AndroidContentType.music,
-              usageType: AndroidUsageType.media,
-              audioFocus: AndroidAudioFocus.gainTransientMayDuck,
-            ),
-            iOS: AudioContextIOS(
-              category: AVAudioSessionCategory.playback,
-              options: {
-                AVAudioSessionOptions.mixWithOthers,
-                AVAudioSessionOptions.duckOthers,
-              },
-            ),
-          ),
+          mode: PlayerMode.lowLatency,
+          ctx: ctx,
         );
-        // Wait for beep duration (500ms) + small pause (300ms)
-        if (i < 2) await Future.delayed(const Duration(milliseconds: 800));
+        await _audioPlayer.onPlayerComplete.first;
+        if (i < 2) await Future.delayed(const Duration(milliseconds: 200));
       }
 
-      // Pequeno atraso para garantir que o som parou antes de desativar a sessão de áudio
-      await Future.delayed(const Duration(milliseconds: 600));
-      await session.setActive(false);
+      // Para o player e libera o foco de áudio
+      await _audioPlayer.stop();
 
       // 4. Vibrate (Sync with audio: 3x 500ms vibration)
       if (await Vibration.hasVibrator()) {

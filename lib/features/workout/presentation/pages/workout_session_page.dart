@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -100,8 +101,14 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
   }
 
   Future<void> _retrieveLostData() async {
-    final LostDataResponse response = await ImageSourceSheet.picker
-        .retrieveLostData();
+    // retrieveLostData só existe no Android; no iOS lança UnimplementedError.
+    if (!Platform.isAndroid) return;
+    late LostDataResponse response;
+    try {
+      response = await ImageSourceSheet.picker.retrieveLostData();
+    } catch (_) {
+      return;
+    }
     if (response.isEmpty) return;
     if (response.file != null) {
       _recoveredImages.add(response.file!.path);

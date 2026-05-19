@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/router/app_router.dart';
@@ -20,46 +21,45 @@ import 'core/utils/image_path_resolver.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await Hive.initFlutter();
   await initializeDateFormatting('pt_BR', null);
-  await ImagePathResolver.init();
 
-  // Initialize Notifications
-  await NotificationService().init();
-  await NotificationService().requestPermissions();
+  if (!kIsWeb) {
+    await Hive.initFlutter();
+    await ImagePathResolver.init();
 
-  // Register Adapters
-  Hive.registerAdapter(WorkoutTypeHiveAdapter());
-  Hive.registerAdapter(WorkoutStatusHiveAdapter());
-  Hive.registerAdapter(ExerciseModelAdapter());
-  Hive.registerAdapter(WorkoutHiveModelAdapter());
-  Hive.registerAdapter(WorkoutHistoryHiveModelAdapter());
-  Hive.registerAdapter(BodyMeasurementHiveModelAdapter());
-  Hive.registerAdapter(UserProfileHiveModelAdapter());
-  Hive.registerAdapter(ExerciseTypeAdapter());
-  Hive.registerAdapter(ExerciseSetHistoryHiveModelAdapter());
+    await NotificationService().init();
+    await NotificationService().requestPermissions();
 
-  // Open Box
-  try {
-    await Hive.openBox<WorkoutHiveModel>('routines');
-    await Hive.openBox<WorkoutHistoryHiveModel>('history_log');
-    await Hive.openBox<BodyMeasurementHiveModel>('body_measurements');
-    await Hive.openBox<UserProfileHiveModel>('user_profile');
-    await Hive.openBox('settings');
-  } catch (e) {
-    // If opening fails (e.g. schema mismatch), delete boxes and try again
+    Hive.registerAdapter(WorkoutTypeHiveAdapter());
+    Hive.registerAdapter(WorkoutStatusHiveAdapter());
+    Hive.registerAdapter(ExerciseModelAdapter());
+    Hive.registerAdapter(WorkoutHiveModelAdapter());
+    Hive.registerAdapter(WorkoutHistoryHiveModelAdapter());
+    Hive.registerAdapter(BodyMeasurementHiveModelAdapter());
+    Hive.registerAdapter(UserProfileHiveModelAdapter());
+    Hive.registerAdapter(ExerciseTypeAdapter());
+    Hive.registerAdapter(ExerciseSetHistoryHiveModelAdapter());
+
     try {
-      await Hive.deleteBoxFromDisk('routines');
-      await Hive.deleteBoxFromDisk('history_log');
-      await Hive.deleteBoxFromDisk('body_measurements');
-      await Hive.deleteBoxFromDisk('user_profile');
-      await Hive.deleteBoxFromDisk('settings');
-    } catch (_) {}
-    await Hive.openBox<WorkoutHiveModel>('routines');
-    await Hive.openBox<WorkoutHistoryHiveModel>('history_log');
-    await Hive.openBox<BodyMeasurementHiveModel>('body_measurements');
-    await Hive.openBox<UserProfileHiveModel>('user_profile');
-    await Hive.openBox('settings');
+      await Hive.openBox<WorkoutHiveModel>('routines');
+      await Hive.openBox<WorkoutHistoryHiveModel>('history_log');
+      await Hive.openBox<BodyMeasurementHiveModel>('body_measurements');
+      await Hive.openBox<UserProfileHiveModel>('user_profile');
+      await Hive.openBox('settings');
+    } catch (e) {
+      try {
+        await Hive.deleteBoxFromDisk('routines');
+        await Hive.deleteBoxFromDisk('history_log');
+        await Hive.deleteBoxFromDisk('body_measurements');
+        await Hive.deleteBoxFromDisk('user_profile');
+        await Hive.deleteBoxFromDisk('settings');
+      } catch (_) {}
+      await Hive.openBox<WorkoutHiveModel>('routines');
+      await Hive.openBox<WorkoutHistoryHiveModel>('history_log');
+      await Hive.openBox<BodyMeasurementHiveModel>('body_measurements');
+      await Hive.openBox<UserProfileHiveModel>('user_profile');
+      await Hive.openBox('settings');
+    }
   }
 
   runApp(
