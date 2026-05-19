@@ -1,10 +1,11 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
 import '../../features/profile/presentation/providers/user_profile_provider.dart';
-import 'package:shape_log/features/dashboard/widgets/dashboard_widgets.dart'; // Import Widgets
+import 'package:shape_log/features/dashboard/widgets/dashboard_widgets.dart';
 import '../../features/workout/data/services/active_session_service.dart';
 import '../../features/workout/presentation/providers/workout_provider.dart';
 import '../../features/workout/presentation/providers/session_provider.dart';
@@ -144,153 +145,136 @@ class _HomePageState extends ConsumerState<HomePage> {
           ? const Center(child: CircularProgressIndicator())
           : workoutAsync.when(
               data: (allWorkouts) {
+                if (kIsWeb) {
+                  final historyAsync = ref.watch(historyListProvider);
+                  return historyAsync.when(
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (e, st) =>
+                        _buildHistoryContent([], allWorkouts, userName),
+                    data: (entities) => _buildHistoryContent(
+                      entities
+                          .map(WorkoutHistoryHiveModel.fromEntity)
+                          .toList(),
+                      allWorkouts,
+                      userName,
+                    ),
+                  );
+                }
                 return ValueListenableBuilder<Box<WorkoutHistoryHiveModel>>(
                   valueListenable: Hive.box<WorkoutHistoryHiveModel>(
                     'history_log',
                   ).listenable(),
-                  builder: (context, box, _) {
-                    final history = box.values.toList();
-
-                    // Sort history for usage
-                    final sortedHistory =
-                        List<WorkoutHistoryHiveModel>.from(history)..sort(
-                          (a, b) => b.completedDate.compareTo(a.completedDate),
-                        );
-
-                    final lastSession = sortedHistory.isNotEmpty
-                        ? sortedHistory.first
-                        : null;
-                    final suggestedWorkout = _getSuggestedWorkout(
-                      history,
-                      allWorkouts,
-                    );
-
-                    return CustomScrollView(
-                      slivers: [
-                        // 1. Standardized App Bar
-                        SliverAppBar(
-                          expandedHeight: 120.0,
-                          floating: true,
-                          pinned: true,
-                          backgroundColor: AppColors.background,
-                          flexibleSpace: FlexibleSpaceBar(
-                            centerTitle: true,
-                            titlePadding: const EdgeInsets.only(bottom: 16),
-                            title: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                RichText(
-                                  text: TextSpan(
-                                    style: GoogleFonts.outfit(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      fontSize: 22,
-                                    ),
-                                    children: [
-                                      const TextSpan(text: 'Shape'),
-                                      TextSpan(
-                                        text: '.log',
-                                        style: TextStyle(
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          actions: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.notifications_none,
-                                color: Colors.white,
-                              ),
-                              onPressed: () {}, // Future notification feature
-                            ),
-                          ],
-                        ),
-
-                        // 2. Content
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Welcome Section
-                                Text(
-                                  'Olá, $userName 👋',
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Pronto para superar seus limites hoje?',
-                                  style: TextStyle(
-                                    color: Colors.grey[400],
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-
-                                // 1. Resume Active Session (Priority)
-                                if (_activeWorkout != null) ...[
-                                  _buildResumeCard(),
-                                  const SizedBox(height: 24),
-                                ],
-
-                                // 2. Weekly Streak Strip
-                                WeeklyConsistencyStrip(history: history),
-                                const SizedBox(height: 24),
-
-                                // 3. Smart Action Card (Suggestion)
-                                if (_activeWorkout ==
-                                    null) // Only show if no active session
-                                  SmartActionCard(
-                                    suggestedWorkout: suggestedWorkout,
-                                    onStart: () {
-                                      if (suggestedWorkout != null) {
-                                        context.push(
-                                          '/session',
-                                          extra: suggestedWorkout,
-                                        );
-                                      } else {
-                                        // Fallback or go to workouts creation
-                                        context.go('/workouts');
-                                      }
-                                    },
-                                  ),
-
-                                if (_activeWorkout == null)
-                                  const SizedBox(height: 24),
-
-                                // 4. Last Session Recap
-                                if (lastSession != null) ...[
-                                  LastSessionRecap(lastSession: lastSession),
-                                  const SizedBox(height: 24),
-                                ],
-
-                                // 5. Weekly Performance Card
-                                WeeklyPerformanceCard(history: history),
-
-                                const SizedBox(height: 40), // Bottom padding
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
+                  builder: (context, box, _) =>
+                      _buildHistoryContent(box.values.toList(), allWorkouts, userName),
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, stack) =>
                   Center(child: Text('Erro ao carregar treinos: $err')),
             ),
+    );
+  }
+
+  Widget _buildHistoryContent(
+    List<WorkoutHistoryHiveModel> history,
+    List<Workout> allWorkouts,
+    String userName,
+  ) {
+    final sortedHistory = List<WorkoutHistoryHiveModel>.from(history)
+      ..sort((a, b) => b.completedDate.compareTo(a.completedDate));
+
+    final lastSession = sortedHistory.isNotEmpty ? sortedHistory.first : null;
+    final suggestedWorkout = _getSuggestedWorkout(history, allWorkouts);
+
+    return CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          expandedHeight: 120.0,
+          floating: true,
+          pinned: true,
+          backgroundColor: AppColors.background,
+          flexibleSpace: FlexibleSpaceBar(
+            centerTitle: true,
+            titlePadding: const EdgeInsets.only(bottom: 16),
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: 22,
+                    ),
+                    children: [
+                      const TextSpan(text: 'Shape'),
+                      TextSpan(
+                        text: '.log',
+                        style: TextStyle(color: AppColors.primary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.notifications_none, color: Colors.white),
+              onPressed: () {},
+            ),
+          ],
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Olá, $userName 👋',
+                  style: GoogleFonts.outfit(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Pronto para superar seus limites hoje?',
+                  style: TextStyle(color: Colors.grey[400], fontSize: 14),
+                ),
+                const SizedBox(height: 24),
+                if (_activeWorkout != null) ...[
+                  _buildResumeCard(),
+                  const SizedBox(height: 24),
+                ],
+                WeeklyConsistencyStrip(history: history),
+                const SizedBox(height: 24),
+                if (_activeWorkout == null)
+                  SmartActionCard(
+                    suggestedWorkout: suggestedWorkout,
+                    onStart: () {
+                      if (suggestedWorkout != null) {
+                        context.push('/session', extra: suggestedWorkout);
+                      } else {
+                        context.go('/workouts');
+                      }
+                    },
+                  ),
+                if (_activeWorkout == null) const SizedBox(height: 24),
+                if (lastSession != null) ...[
+                  LastSessionRecap(lastSession: lastSession),
+                  const SizedBox(height: 24),
+                ],
+                WeeklyPerformanceCard(history: history),
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 

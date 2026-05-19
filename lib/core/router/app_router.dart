@@ -21,6 +21,7 @@ import '../../features/splash/presentation/pages/web_login_page.dart';
 import '../../features/workout/presentation/pages/workout_session_page.dart';
 import '../../features/workout/domain/entities/workout.dart';
 import '../../features/reports/presentation/pages/reports_page.dart';
+import '../presentation/widgets/web_scaffold.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -37,6 +38,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       ShellRoute(
         builder: (context, state, child) {
+          if (kIsWeb) return WebScaffold(child: child);
           return ScaffoldWithBottomNavBar(child: child);
         },
         routes: [

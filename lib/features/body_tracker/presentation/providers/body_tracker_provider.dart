@@ -30,17 +30,30 @@ class BodyTrackerNotifier extends Notifier<List<BodyMeasurement>> {
   @override
   List<BodyMeasurement> build() {
     _repository = ref.watch(bodyTrackerRepositoryProvider);
+    if (kIsWeb) {
+      // Na web o repositório é async (Firestore) — dispara carregamento e
+      // atualiza o estado quando os dados chegarem.
+      Future.microtask(() async {
+        final data = await _repository.fetchAll();
+        state = data;
+      });
+      return [];
+    }
     return _repository.getAllMeasurements();
   }
 
   Future<void> addMeasurement(BodyMeasurement measurement) async {
     await _repository.saveMeasurement(measurement);
-    state = _repository.getAllMeasurements();
+    state = await _repository.fetchAll();
   }
 
   Future<void> deleteMeasurement(String id) async {
     await _repository.deleteMeasurement(id);
-    state = _repository.getAllMeasurements();
+    state = await _repository.fetchAll();
+  }
+
+  Future<void> refresh() async {
+    state = await _repository.fetchAll();
   }
 }
 

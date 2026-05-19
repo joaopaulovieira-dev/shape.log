@@ -85,6 +85,9 @@ class BodyTrackerHiveRepository implements BodyTrackerRepository {
   }
 
   @override
+  Future<List<BodyMeasurement>> fetchAll() async => getAllMeasurements();
+
+  @override
   List<BodyMeasurement> getAllMeasurements() {
     final measurements = _box.values.map((e) => e.toEntity()).toList();
     // Sort by date descending (newest first)

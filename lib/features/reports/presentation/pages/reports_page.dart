@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
 import 'package:shape_log/features/body_tracker/presentation/providers/body_tracker_provider.dart';
 import 'package:shape_log/features/profile/presentation/providers/user_profile_provider.dart';
+import 'package:shape_log/features/workout/presentation/providers/workout_provider.dart';
 import 'package:shape_log/features/reports/presentation/widgets/advanced_analytics_widgets.dart';
 import 'package:shape_log/features/workout/domain/services/workout_report_service.dart';
 import 'package:shape_log/features/workout/domain/entities/workout_history.dart';
@@ -49,17 +51,34 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: ValueListenableBuilder<Box<WorkoutHistoryHiveModel>>(
-        valueListenable: Hive.box<WorkoutHistoryHiveModel>(
-          'history_log',
-        ).listenable(),
-        builder: (context, box, _) {
-          final historyList = box.values.map((e) => e.toEntity()).toList();
-          historyList.sort(
-            (a, b) => b.completedDate.compareTo(a.completedDate),
-          );
+      body: kIsWeb
+          ? ref.watch(historyListProvider).when(
+              loading: () =>
+                  const Center(child: CircularProgressIndicator()),
+              error: (e, _) => _buildBody(<WorkoutHistory>[]),
+              data: (list) {
+                final sorted = [...list]
+                  ..sort((a, b) => b.completedDate.compareTo(a.completedDate));
+                return _buildBody(sorted);
+              },
+            )
+          : ValueListenableBuilder<Box<WorkoutHistoryHiveModel>>(
+              valueListenable: Hive.box<WorkoutHistoryHiveModel>(
+                'history_log',
+              ).listenable(),
+              builder: (context, box, _) {
+                final historyList =
+                    box.values.map((e) => e.toEntity()).toList()
+                      ..sort(
+                          (a, b) => b.completedDate.compareTo(a.completedDate));
+                return _buildBody(historyList);
+              },
+            ),
+    );
+  }
 
-          return NestedScrollView(
+  Widget _buildBody(List<WorkoutHistory> historyList) {
+    return NestedScrollView(
             headerSliverBuilder: (context, innerBoxIsScrolled) {
               return [
                 SliverAppBar(
@@ -115,9 +134,6 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                     ),
             ),
           );
-        },
-      ),
-    );
   }
 
   Widget _buildHubSelector() {

@@ -1,0 +1,12 @@
+[
+  {
+    "origin": [
+      "http://localhost:*",
+      "https://shape-log-app.web.app",
+      "https://shape-log-app.firebaseapp.com"
+    ],
+    "method": ["GET", "HEAD"],
+    "responseHeader": ["Content-Type", "Content-Length", "Accept-Ranges"],
+    "maxAgeSeconds": 3600
+  }
+]

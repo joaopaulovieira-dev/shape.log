@@ -35,7 +35,8 @@ class BodyTrackerFirestoreRepository implements BodyTrackerRepository {
     return List.unmodifiable(_cache);
   }
 
-  Future<List<BodyMeasurement>> fetchMeasurements() async {
+  @override
+  Future<List<BodyMeasurement>> fetchAll() async {
     await _ensureLoaded();
     return getAllMeasurements();
   }

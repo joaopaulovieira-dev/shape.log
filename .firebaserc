@@ -1,5 +1,7 @@
 {
-  "projects": {},
+  "projects": {
+    "default": "shape-log-app"
+  },
   "targets": {},
   "etags": {}
 }

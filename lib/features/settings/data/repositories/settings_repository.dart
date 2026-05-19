@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:hive_ce/hive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../profile/data/models/user_profile_hive_model.dart';
@@ -11,19 +12,21 @@ class SettingsRepository {
   static const String _settingsBoxName = 'settings';
   static const String _lastBackupKey = 'last_backup_date';
 
-  final Box _box = Hive.box(_settingsBoxName);
+  // Acesso lazy — evita crash na web onde o box nunca é aberto
+  Box? get _box => kIsWeb ? null : Hive.box(_settingsBoxName);
 
   DateTime? getLastBackupDate() {
-    final String? dateStr = _box.get(_lastBackupKey);
+    final String? dateStr = _box?.get(_lastBackupKey);
     if (dateStr == null) return null;
     return DateTime.parse(dateStr);
   }
 
   Future<void> setLastBackupDate(DateTime date) async {
-    await _box.put(_lastBackupKey, date.toIso8601String());
+    await _box?.put(_lastBackupKey, date.toIso8601String());
   }
 
   Future<void> clearAllBoxes() async {
+    if (kIsWeb) return;
     if (Hive.isBoxOpen('user_profile')) {
       await Hive.box<UserProfileHiveModel>('user_profile').clear();
     }

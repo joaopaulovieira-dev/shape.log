@@ -1,1 +1,83 @@
-{"firestore":{"database":"(default)","location":"nam5","rules":"firestore.rules","indexes":"firestore.indexes.json"},"auth":{"providers":{"googleSignIn":{"oAuthBrandDisplayName":"Shape.log","supportEmail":"joaopaulovieira.dev@gmail.com"}}},"flutter":{"platforms":{"android":{"default":{"projectId":"shape-log-app","appId":"1:522991040005:android:720eed548548cde7318e6c","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"shape-log-app","appId":"1:522991040005:ios:83079a15b15fec6a318e6c","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"shape-log-app","configurations":{"android":"1:522991040005:android:720eed548548cde7318e6c","ios":"1:522991040005:ios:83079a15b15fec6a318e6c","web":"1:522991040005:web:cdbc2212f5d17399318e6c"}}}}}}
+{
+  "firestore": {
+    "database": "(default)",
+    "location": "nam5",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(js|css|wasm)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      },
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "Cross-Origin-Embedder-Policy",
+            "value": "require-corp"
+          },
+          {
+            "key": "Cross-Origin-Opener-Policy",
+            "value": "same-origin"
+          }
+        ]
+      }
+    ]
+  },
+  "auth": {
+    "providers": {
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Shape.log",
+        "supportEmail": "joaopaulovieira.dev@gmail.com"
+      }
+    }
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "shape-log-app",
+          "appId": "1:522991040005:android:720eed548548cde7318e6c",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "shape-log-app",
+          "appId": "1:522991040005:ios:83079a15b15fec6a318e6c",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "shape-log-app",
+          "configurations": {
+            "android": "1:522991040005:android:720eed548548cde7318e6c",
+            "ios": "1:522991040005:ios:83079a15b15fec6a318e6c",
+            "web": "1:522991040005:web:cdbc2212f5d17399318e6c"
+          }
+        }
+      }
+    }
+  }
+}
