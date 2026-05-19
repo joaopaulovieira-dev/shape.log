@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:hive/hive.dart';
+import 'dart:ui' show Rect;
+import 'package:hive_ce/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -43,7 +44,7 @@ class BackupService {
 
   BackupService(this._ref);
 
-  Future<bool> createFullBackup() async {
+  Future<String?> generateFullBackupZip() async {
     try {
       final now = DateTime.now();
       final directory = await getApplicationDocumentsDirectory();
@@ -143,25 +144,16 @@ class BackupService {
       encoder.close();
       await tempJsonFile.delete();
 
-      // 5. Share
-      final result = await Share.shareXFiles([
-        XFile(zipFilePath, mimeType: 'application/zip', name: fileName),
-      ], subject: 'Shape.log Full Backup - $dateStr $timeStr');
-
-      if (result.status == ShareResultStatus.success) {
-        await _ref.read(settingsRepositoryProvider).setLastBackupDate(now);
-        return true;
-      }
-      return false;
+      return zipFilePath;
     } catch (e) {
       print('Backup error: $e');
-      return false;
+      return null;
     }
   }
 
   Future<BackupAnalysis?> pickAndAnalyzeBackup() async {
     try {
-      FilePickerResult? pickResult = await FilePicker.platform.pickFiles(
+      FilePickerResult? pickResult = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['zip'],
       );
@@ -172,14 +164,14 @@ class BackupService {
 
       // Analyze ZIP without extracting everything
       final inputStream = InputFileStream(zipFile.path);
-      final archive = ZipDecoder().decodeBuffer(inputStream);
+      final archive = ZipDecoder().decodeStream(inputStream);
 
       final jsonFile = archive.findFile('backup_data.json');
       if (jsonFile == null) {
         throw Exception('Dados inválidos: "backup_data.json" não encontrado.');
       }
 
-      final jsonString = utf8.decode(jsonFile.content);
+      final jsonString = utf8.decode(jsonFile.content as List<int>);
       final Map<String, dynamic> data = jsonDecode(jsonString);
 
       if (double.parse(data['version'] ?? '0') < 1.0) {
@@ -221,7 +213,7 @@ class BackupService {
       // Actually we decoded it in memory before but we closed the stream.
       // Let's reopen.
       final inputStream = InputFileStream(zipFile.path);
-      final archive = ZipDecoder().decodeBuffer(inputStream);
+      final archive = ZipDecoder().decodeStream(inputStream);
 
       // 3. Prepare Image Directory
       final appDir = await getApplicationDocumentsDirectory();
@@ -242,24 +234,12 @@ class BackupService {
           if (file.name.startsWith('images/')) {
             final fileName = p.basename(file.name);
             final destinationFile = File('${imageDir.path}/$fileName');
-            final content = file.content;
-            if (content is List<int>) {
-              await destinationFile.writeAsBytes(content);
-            } else if (content is InputStreamBase) {
-              final bytes = content.toUint8List();
-              await destinationFile.writeAsBytes(bytes);
-            }
+            await destinationFile.writeAsBytes(file.content as List<int>);
             imageMapping[file.name] = destinationFile.path;
           } else if (file.name.startsWith('library/')) {
             final fileName = p.basename(file.name);
             final destinationFile = File('${libraryDir.path}/$fileName');
-            final content = file.content;
-            if (content is List<int>) {
-              await destinationFile.writeAsBytes(content);
-            } else if (content is InputStreamBase) {
-              final bytes = content.toUint8List();
-              await destinationFile.writeAsBytes(bytes);
-            }
+            await destinationFile.writeAsBytes(file.content as List<int>);
           }
         }
       }

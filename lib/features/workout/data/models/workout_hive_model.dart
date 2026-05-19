@@ -1,4 +1,4 @@
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import '../../domain/entities/workout.dart';
 import 'exercise_model.dart';
 // For encoding scheduledDays if needed, or store as List<int> directly

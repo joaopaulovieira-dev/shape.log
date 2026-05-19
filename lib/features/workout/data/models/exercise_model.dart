@@ -1,4 +1,4 @@
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import '../../domain/entities/exercise.dart';
 import 'exercise_set_history_hive_model.dart';
 

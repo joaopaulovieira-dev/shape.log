@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import '../../data/models/body_measurement_hive_model.dart';
 import '../../data/repositories/body_tracker_repository.dart';
 import '../../domain/entities/body_measurement.dart';

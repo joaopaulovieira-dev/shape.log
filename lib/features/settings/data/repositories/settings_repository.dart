@@ -1,4 +1,4 @@
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../profile/data/models/user_profile_hive_model.dart';
 import '../../../workout/data/models/workout_hive_model.dart';

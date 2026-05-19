@@ -17,7 +17,7 @@ class ImageLibrarySettingsPage extends ConsumerStatefulWidget {
 class _ImageLibrarySettingsPageState
     extends ConsumerState<ImageLibrarySettingsPage> {
   Future<void> _pickAndImportZip() async {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['zip'],
     );

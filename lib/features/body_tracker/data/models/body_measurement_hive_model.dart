@@ -1,4 +1,4 @@
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import '../../domain/entities/body_measurement.dart';
 
 part 'body_measurement_hive_model.g.dart';

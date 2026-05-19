@@ -13,7 +13,7 @@ import 'package:shape_log/features/workout/domain/entities/workout_history.dart'
 import 'package:shape_log/features/reports/presentation/pages/workout_history_details_page.dart';
 
 // Hive imports
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import '../../../../features/workout/data/models/workout_history_hive_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';

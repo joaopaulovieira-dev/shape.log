@@ -135,18 +135,53 @@ class SettingsPage extends ConsumerWidget {
     AppDialogs.showLoadingDialog(context);
 
     try {
-      final success = await ref.read(backupServiceProvider).createFullBackup();
+      final zipFilePath = await ref.read(backupServiceProvider).generateFullBackupZip();
 
       if (context.mounted) {
-        AppDialogs.hideLoadingDialog(context); // Hide loading
+        AppDialogs.hideLoadingDialog(context); // Hide loading as soon as ZIP is generated
       }
 
-      if (success) {
-        SnackbarUtils.showSuccess(context, 'Backup enviado!');
+      if (zipFilePath == null) {
+        if (context.mounted) {
+          SnackbarUtils.showError(context, 'Erro ao gerar o arquivo de backup.');
+        }
+        return;
+      }
+
+      final now = DateTime.now();
+      final dateStr = DateFormat('dd_MM_yyyy').format(now);
+      final timeStr = DateFormat('HH_mm').format(now);
+      final fileName = 'shapelog_backup_$dateStr - $timeStr.zip';
+
+      final size = MediaQuery.sizeOf(context);
+      final sharePositionOrigin = Rect.fromCenter(
+        center: Offset(size.width / 2, size.height / 2),
+        width: 1,
+        height: 1,
+      );
+
+      // Now open Share Sheet outside of modal loading context
+      final result = await Share.shareXFiles(
+        [XFile(zipFilePath, mimeType: 'application/zip', name: fileName)],
+        subject: 'Shape.log Full Backup - $dateStr $timeStr',
+        sharePositionOrigin: sharePositionOrigin,
+      );
+
+      if (result.status == ShareResultStatus.success) {
+        await ref.read(settingsRepositoryProvider).setLastBackupDate(now);
+        if (context.mounted) {
+          SnackbarUtils.showSuccess(context, 'Backup enviado!');
+        }
       }
     } catch (e) {
+      // Just in case loading dialog is still open
+      try {
+        if (context.mounted) {
+          AppDialogs.hideLoadingDialog(context);
+        }
+      } catch (_) {}
+      
       if (context.mounted) {
-        AppDialogs.hideLoadingDialog(context); // Hide loading on error
         SnackbarUtils.showError(context, 'Erro ao realizar backup: $e');
       }
     }

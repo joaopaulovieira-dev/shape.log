@@ -1,4 +1,4 @@
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import '../models/workout_hive_model.dart';
 import '../models/workout_history_hive_model.dart';
 import '../../domain/entities/workout.dart';

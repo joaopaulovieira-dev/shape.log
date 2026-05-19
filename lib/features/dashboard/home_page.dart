@@ -9,7 +9,7 @@ import '../../features/workout/data/services/active_session_service.dart';
 import '../../features/workout/presentation/providers/workout_provider.dart';
 import '../../features/workout/presentation/providers/session_provider.dart';
 import '../../features/workout/domain/entities/workout.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import '../../features/workout/data/models/workout_history_hive_model.dart';
 
 class HomePage extends ConsumerStatefulWidget {

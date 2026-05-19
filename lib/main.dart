@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/router/app_router.dart';
 
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import 'features/workout/data/models/workout_hive_model.dart';
 import 'features/workout/data/models/workout_history_hive_model.dart';
 import 'features/workout/data/models/exercise_model.dart';
