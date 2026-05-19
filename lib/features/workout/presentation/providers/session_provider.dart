@@ -1,9 +1,11 @@
 import 'dart:async';
-
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:audio_session/audio_session.dart';
 import 'package:vibration/vibration.dart';
 import 'package:uuid/uuid.dart';
+import 'package:shape_log/core/services/notification_service.dart';
 
 import '../../domain/entities/workout.dart';
 import '../../domain/entities/exercise.dart';
@@ -78,17 +80,41 @@ class WorkoutSessionState {
   }
 }
 
-class SessionController extends Notifier<WorkoutSessionState> {
+class SessionController extends Notifier<WorkoutSessionState> with WidgetsBindingObserver {
   Timer? _timer;
   final AudioPlayer _audioPlayer = AudioPlayer();
+  DateTime? _restTimerEndTime;
+  bool _isLastSet = false;
 
   @override
   WorkoutSessionState build() {
+    WidgetsBinding.instance.addObserver(this);
     ref.onDispose(() {
+      WidgetsBinding.instance.removeObserver(this);
       _timer?.cancel();
       _audioPlayer.dispose();
     });
     return const WorkoutSessionState();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _handleAppResumed();
+    }
+  }
+
+  void _handleAppResumed() {
+    if (state.isRestTimerRunning && _restTimerEndTime != null) {
+      final remaining = _restTimerEndTime!.difference(DateTime.now()).inSeconds;
+      if (remaining > 0) {
+        state = state.copyWith(
+          restTimerRemaining: remaining,
+        );
+      } else {
+        _triggerRestCompleted();
+      }
+    }
   }
 
   Future<void> startSession(Workout workout) async {
@@ -348,33 +374,71 @@ class SessionController extends Notifier<WorkoutSessionState> {
       }
     }
 
+    _isLastSet = isLastSet;
+    final now = DateTime.now();
+    _restTimerEndTime = now.add(Duration(seconds: durationSeconds));
+
     state = state.copyWith(
       isRestTimerRunning: true,
       restTimerDuration: durationSeconds,
       restTimerRemaining: durationSeconds,
     );
 
+    // Schedule notification
+    NotificationService().scheduleNotification(
+      id: 999,
+      title: "Descanso Concluído!",
+      body: "Hora de voltar para a próxima série!",
+      scheduledDate: _restTimerEndTime!,
+    );
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (state.restTimerRemaining > 0) {
+      final remaining = _restTimerEndTime!.difference(DateTime.now()).inSeconds;
+      if (remaining > 0) {
         state = state.copyWith(
-          restTimerRemaining: state.restTimerRemaining - 1,
+          restTimerRemaining: remaining,
         );
       } else {
-        // Timer finished
-        _triggerAlert();
-        if (isLastSet) {
-          // If it was the last set, auto-advance to next exercise
-          nextExercise();
-        } else {
-          // If not the last set, just stop the timer (stay on current exercise for next set)
-          stopRestTimer();
-        }
+        NotificationService().cancelNotification(999);
+        _triggerRestCompleted();
       }
     });
   }
 
+  void _triggerRestCompleted() {
+    _timer?.cancel();
+    state = state.copyWith(
+      isRestTimerRunning: false,
+      restTimerRemaining: 0,
+    );
+    _triggerAlert();
+    if (_isLastSet) {
+      nextExercise();
+    } else {
+      stopRestTimer();
+    }
+  }
+
   Future<void> _triggerAlert() async {
     try {
+      // Configurar a sessão de áudio para gerenciar o volume corretamente (ducking)
+      final session = await AudioSession.instance;
+      await session.configure(const AudioSessionConfiguration(
+        avAudioSessionCategory: AVAudioSessionCategory.playback,
+        avAudioSessionCategoryOptions: AVAudioSessionCategoryOptions.duckOthers,
+        avAudioSessionMode: AVAudioSessionMode.defaultMode,
+        avAudioSessionRouteSharingPolicy: AVAudioSessionRouteSharingPolicy.defaultPolicy,
+        avAudioSessionSetActiveOptions: AVAudioSessionSetActiveOptions.none,
+        androidAudioAttributes: AndroidAudioAttributes(
+          contentType: AndroidAudioContentType.music,
+          usage: AndroidAudioUsage.media,
+        ),
+        androidAudioFocusGainType: AndroidAudioFocusGainType.gainTransientMayDuck,
+      ));
+
+      // Ativar sessão
+      await session.setActive(true);
+
       // Play using AssetSource (Robust & Standard)
       await _audioPlayer.setVolume(1.0); // Ensure max volume
 
@@ -404,6 +468,10 @@ class SessionController extends Notifier<WorkoutSessionState> {
         if (i < 2) await Future.delayed(const Duration(milliseconds: 800));
       }
 
+      // Pequeno atraso para garantir que o som parou antes de desativar a sessão de áudio
+      await Future.delayed(const Duration(milliseconds: 600));
+      await session.setActive(false);
+
       // 4. Vibrate (Sync with audio: 3x 500ms vibration)
       if (await Vibration.hasVibrator()) {
         Vibration.vibrate(
@@ -417,16 +485,27 @@ class SessionController extends Notifier<WorkoutSessionState> {
   }
 
   void addTime(int seconds) {
-    if (state.isRestTimerRunning) {
+    if (state.isRestTimerRunning && _restTimerEndTime != null) {
+      _restTimerEndTime = _restTimerEndTime!.add(Duration(seconds: seconds));
+      final remaining = _restTimerEndTime!.difference(DateTime.now()).inSeconds;
       state = state.copyWith(
-        restTimerRemaining: state.restTimerRemaining + seconds,
+        restTimerRemaining: remaining > 0 ? remaining : 0,
         restTimerDuration: state.restTimerDuration + seconds,
+      );
+
+      // Re-schedule notification with updated time
+      NotificationService().scheduleNotification(
+        id: 999,
+        title: "Descanso Concluído!",
+        body: "Hora de voltar para a próxima série!",
+        scheduledDate: _restTimerEndTime!,
       );
     }
   }
 
   void stopRestTimer() {
     _timer?.cancel();
+    NotificationService().cancelNotification(999);
     state = state.copyWith(isRestTimerRunning: false);
   }
 

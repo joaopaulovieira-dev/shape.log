@@ -64,6 +64,7 @@ dependencies:
   google_sign_in: ^7.2.0
   cloud_firestore: ^6.4.1
   firebase_storage: ^13.4.1
+  flutter_timezone: ^5.0.2
 
 dev_dependencies:
   flutter_test:

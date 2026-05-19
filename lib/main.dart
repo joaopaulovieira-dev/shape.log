@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/router/app_router.dart';
+import 'core/services/notification_service.dart';
 
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import 'features/workout/data/models/workout_hive_model.dart';
@@ -14,8 +15,13 @@ import 'features/profile/data/models/user_profile_hive_model.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await initializeDateFormatting('pt_BR', null);
+  
+  // Initialize Notifications
+  await NotificationService().init();
+  await NotificationService().requestPermissions();
 
   // Register Adapters
   Hive.registerAdapter(WorkoutTypeHiveAdapter());
