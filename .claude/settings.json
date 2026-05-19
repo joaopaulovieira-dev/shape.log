@@ -3,7 +3,22 @@
     "allow": [
       "Bash(flutter pub *)",
       "Bash(dart pub *)",
-      "Bash(flutter build *)"
+      "Bash(flutter build *)",
+      "Bash(dart analyze *)",
+      "Bash(firebase --version)",
+      "Bash(brew install *)",
+      "Bash(firebase login:list)",
+      "Bash(npm list *)",
+      "Bash(npm install *)",
+      "Bash(firebase login:ci --no-localhost)",
+      "Read(//Users/joaopaulo/.config/firebase/private/**)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('tokens',{}\\).get\\('access_token',''\\)[:30]\\)\")",
+      "Read(//Users/joaopaulo/.config/**)",
+      "Bash(python3 -c ' *)",
+      "Bash(chmod +x /Users/joaopaulo/Developer/shape.log/apply_cors.sh)",
+      "Bash(grep -v \"^$\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
