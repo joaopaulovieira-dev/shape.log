@@ -1,8 +1,12 @@
-# Shape<span style="color: #CCFF00;">.log</span>: A Interface Física para sua I.A.
+# Shape.log — A Interface Física para sua I.A.
 
-Uma aplicação Flutter robusta que atua como o elo definitivo entre o seu planejamento digital e a execução real. Com estética Cyberpunk, o Shape<span style="color: #CCFF00;">.log</span> permite importar treinos via JSON gerados por Inteligência Artificial, monitorar bioimpedância com precisão clínica e gerar relatórios de dados para análise contínua.
+Uma aplicação Flutter robusta que atua como o elo definitivo entre o seu planejamento digital e a execução real. Com estética Cyberpunk, o Shape.log permite importar treinos via JSON gerados por Inteligência Artificial, monitorar bioimpedância com precisão clínica e gerar relatórios de dados para análise contínua.
 
-A I.A. planeja. Você executa. O Shape<span style="color: #CCFF00;">.log</span> conecta.
+A I.A. planeja. Você executa. O Shape.log conecta.
+
+**Versão atual:** `1.2.0`
+
+---
 
 ## 🚀 Funcionalidades Principais
 
@@ -12,59 +16,106 @@ A I.A. planeja. Você executa. O Shape<span style="color: #CCFF00;">.log</span> 
 - **Sanitização Inteligente**: O app gera novos IDs automaticamente, limpa caminhos de imagem externos e reseta datas para evitar conflitos.
 - **Registro de Exercícios**: Adicione exercícios com detalhes de Séries, Repetições, Carga, **Tempo de Descanso** e Técnica.
 - **Timer de Descanso**: Configure o tempo de descanso individual por exercício (padrão 60s), com slider e chips de seleção rápida.
-- **Notificações Sensoriais**: Alerta de fim de descanso com **Som Embutido** (que não interrompe sua música) e **Feedback Tátil** (vibração), garantindo que você nunca perca o início da próxima série.
+- **Notificações Sensoriais**: Alerta de fim de descanso com **Som Embutido** (que não interrompe sua música) e **Feedback Tátil** (vibração).
 - **Histórico de Execução**: Marque treinos como concluídos e acompanhe logs passados.
-- **Ordenação Automática**: Seus treinos são organizados automaticamente em ordem alfabética para fácil acesso.
-- **Interface Polida**: Títulos de treinos longos utilizam efeito *Marquee* (texto deslizante) para visibilidade completa.
+- **Ordenação Automática**: Treinos organizados automaticamente em ordem alfabética.
 - **Genius Focus Mode**: Interface de execução imersiva com grade compacta, histórico de carga (`📈`) acessível e persistência em tempo real.
 - **Smart Timer**: Lógica inteligente que avança exercícios automaticamente e detecta o fim do treino.
+- **Sincronização em Tempo Real**: Ao salvar ou excluir um treino com conta Google ativa, a operação é espelhada imediatamente no Firestore.
 
 ### 2. Monitoramento de Medidas (Body Tracker)
-- **Cyber-Bio Scanner (Mapa Corporal Interativo)**: Interface visual 3D-like onde você toca na parte do corpo (ex: Bíceps, Coxa) para registrar a medida.
-- **Bioimpedância Integrada**: Campo para `reportUrl` que permite armazenar e abrir links de balanças de bioimpedância diretamente no navegador.
-- **Rastreamento de Circunferências**: Suporte completo para medidas de Pescoço, Ombros, Tórax, Cintura, Quadril, Bíceps, Antebraços, Coxas e Panturrilhas.
-- **Card de Medidas Expandível**: Visualize todas as circunferências e detalhes técnicos ao expandir os registros na lista.
+- **Cyber-Bio Scanner (Mapa Corporal Interativo)**: Interface visual 3D-like onde você toca na parte do corpo para registrar a medida.
+- **Bioimpedância Integrada**: Campo para `reportUrl` para armazenar e abrir links de balanças diretamente no navegador.
+- **Rastreamento de Circunferências**: Pescoço, Ombros, Tórax, Cintura, Quadril, Bíceps, Antebraços, Coxas e Panturrilhas.
+- **Card de Medidas Expandível**: Visualize todas as circunferências e detalhes ao expandir registros.
 - **Seleção Multi-imagem**: Adicione múltiplas fotos de progresso simultaneamente via Galeria.
-- **Interface Unificada**: Fluxo de adição de fotos padronizado entre Treinos e Medidas.
-- **Animações Fluidas**: Feedback visual com animações de "scanning" ao selecionar áreas.
-- **Histórico Visual**: Visualize as fotos diretamente no histórico de medidas ao expandir os registros.
-- **Filtros Inteligentes**: Visualize a evolução nos últimos 7, 30 ou 90 dias.
+- **Histórico Visual**: Visualize fotos diretamente no histórico ao expandir registros.
+- **Filtros Inteligentes**: Evolução nos últimos 7, 30 ou 90 dias.
+- **Sincronização em Tempo Real**: Medidas salvas e excluídas são sincronizadas com o Firestore automaticamente.
 
 ### 3. Perfil Biológico (Bio-Data Source of Truth)
-- **Perfil Centralizado**: Armazena dados imutáveis como Altura, Nível de Atividade e Peso Meta.
-- **Foto de Perfil Customizável**: Importe sua própria foto da galeria para personalizar a experiência do "scanner".
-- **Cálculo Automático de IMC**: O app utiliza a altura do seu perfil para recalcular automaticamente o IMC de todos os registros históricos, garantindo precisão sem retrabalho.
-- **Classificação OMS**: Monitoramento rigoroso do IMC seguindo padrões da Organização Mundial da Saúde (incluindo Obesidade I, II e III).
-- **Persistência Local**: Todos os dados são salvos localmente de forma segura e rápida.
+- **Perfil Centralizado**: Armazena dados como Altura, Nível de Atividade e Peso Meta.
+- **Foto de Perfil Customizável**: Importe sua própria foto da galeria.
+- **Cálculo Automático de IMC**: Recalcula automaticamente o IMC de todos os registros históricos.
+- **Classificação OMS**: Monitoramento rigoroso seguindo padrões da OMS.
+- **Persistência Local + Nuvem**: Dados salvos localmente no Hive e espelhados no Firestore.
 
-### 4. Interface e Usabilidade
-- **Design Moderno**: Tema escuro com acentos em `Cyan` e `Purple`, seguindo padrões modernos de UI.
-- **Reatividade Ultra-fluida**: Interface que se auto-atualiza instantaneamente ao salvar novos dados (HIVE Listenables).
-- **Navegação Intuitiva**: Barra de navegação inferior persistente e rotas fluidas.
-- **Inputs Otimizados**: Uso de Sliders, Chips e Segmented Buttons para facilitar a entrada de dados.
-- **Diálogos Padronizados**: Sistema customizado de modais e diálogos para uma experiência visual coesa em todo o app.
+### 4. Autenticação & Sincronização com Firebase (v1.2)
+- **Login com Google**: Autenticação via Google Sign-In integrada ao Firebase Auth.
+- **Modo Convidado (Offline)**: Use o app completamente offline sem conta — dados ficam no Hive local.
+- **Sincronização Bidirecional**:
+  - **Upload pós-login**: Dados locais são enviados ao Firestore após o login com Google.
+  - **Download em novo dispositivo**: Ao logar em um dispositivo diferente, todos os dados da nuvem são restaurados automaticamente.
+- **Operações em Tempo Real**: Salvar ou excluir treinos, histórico e medidas reflete imediatamente no Firestore quando autenticado.
+- **Exclusão Permanente**: Ao deletar um item com conta ativa, ele é removido definitivamente do Firestore (sem soft-delete).
+- **Batch Inteligente**: Upload usa batches independentes por coleção (até 400 ops cada) para não atingir o limite do Firestore, com log por coleção para diagnóstico.
 
-### 5. Biblioteca de Ativos (Assets Library)
+### 5. Backup & Restore Completo
+- **Backup Unificado**: Gera um `.zip` contendo todo o banco de dados (treinos, histórico, perfil, medidas) + imagens customizadas (Asset Library + fotos do Body Tracker).
+- **Portabilidade**: Salve backups no Google Drive, WhatsApp ou localmente.
+- **Restauração Simples**: Importe o `.zip` para restaurar o estado exato do app.
+- **Sincronização Pós-Restore**: Ao restaurar um backup com conta Google ativa, todos os dados são automaticamente enviados ao Firebase, incluindo a biblioteca de imagens.
+- **Loading Contextual**: Tela de progresso dedicada durante o envio dos arquivos ao Firebase após o restore.
+- **Compatibilidade Legada**: Suporte a backups antigos que contêm apenas a biblioteca de imagens.
+
+### 6. Firebase Storage — Imagens na Nuvem (v1.2)
+- **Upload Automático de Imagens**: Fotos de perfil, histórico de treinos e medidas corporais são enviadas ao Firebase Storage durante a sincronização.
+- **Renderização Híbrida**: O app detecta automaticamente se um caminho de imagem é local ou uma URL remota do Firebase, usando `FileImage` ou `NetworkImage` conforme necessário — sem erros ou telas em branco.
+- **Biblioteca de Ativos no Storage**: Durante o restore de backup, a biblioteca de imagens é enviada ao Storage em background (sem bloquear a UI).
+
+### 7. Biblioteca de Ativos (Assets Library)
 - **Importação de Pacotes**: Importe arquivos `.zip` contendo centenas de imagens de equipamentos ou execução.
-- **Super Picker**: Ao adicionar fotos aos exercícios, escolha entre **Câmera**, **Galeria** ou a **Biblioteca Interna**.
-- **Busca Rápida**: Filtre equipamentos pelo nome diretamente no seletor, agilizando a montagem de treinos visuais.
+- **Super Picker**: Ao adicionar fotos, escolha entre **Câmera**, **Galeria** ou a **Biblioteca Interna**.
+- **Busca Rápida**: Filtre equipamentos pelo nome diretamente no seletor.
 
-### 6. Sistema de Backup & Restore Completo
-- **Backup Unificado**: Gera um arquivo `.zip` contendo todo o banco de dados (treinos, histórico, perfil) E todas as custom images (Asset Library + Fotos do Body Tracker).
-- **Portabilidade**: Salve seus backups em qualquer lugar (Google Drive, WhatsApp, Local).
-- **Restauração Simples**: Importe o arquivo zip para restaurar o estado exato do app.
+### 8. Interface e Usabilidade
+- **Design Moderno**: Tema escuro com acentos Neon, seguindo padrões modernos de UI.
+- **Reatividade Ultra-fluida**: Interface que se auto-atualiza instantaneamente (Hive Listenables + Riverpod).
+- **Navegação Intuitiva**: Barra de navegação inferior persistente e rotas fluidas via GoRouter.
+- **Diálogos Padronizados**: Sistema customizado de modais e diálogos — incluindo loading dialog com mensagem descritiva para operações longas.
+- **Correções de Layout**: Todos os `ListTile` dentro de containers coloridos envolvem corretamente um `Material` transparente para evitar artefatos visuais.
 
-### 7. Detalhes de Exercício Premium
-- **Informação Rica**: Visualização clara de Séries, Repetições, Carga e **Descanso**.
-- **Ajuda Interativa**: Ícones de informação com Tooltips explicativos para cada campo.
-- **Integração YouTube**: Card premium com gradiente para "Assistir Tutorial" na tela de detalhes.
-- **YouTube Quick-Play**: No modo de execução (Focus Mode), um botão 'Play' vermelho permite abrir o vídeo tutorial instantaneamente no app do YouTube.
+---
+
+## 🔥 Estrutura no Firebase
+
+```
+Firestore
+└── users/
+    └── {uid}/                        ← perfil do usuário
+        ├── workouts/
+        │   └── {workoutId}           ← treino completo (com exercícios embutidos)
+        ├── history/
+        │   └── {historyId}           ← sessão de treino concluída
+        └── measurements/
+            └── {measurementId}       ← medida corporal
+
+Firebase Storage
+└── users/
+    └── {uid}/
+        ├── profile_picture.png
+        ├── history/{id}_0.png
+        ├── measurements/{id}_0.png
+        └── library/{filename}        ← biblioteca de ativos (via restore)
+```
+
+**Regras do Firebase Storage** (mínimo necessário):
+```
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+```
 
 ---
 
 ## 🤖 Padrão de Importação JSON (AI-Ready)
 
-Para que o sistema de importação funcione corretamente (via arquivo ou texto), o JSON deve seguir a estrutura abaixo. O app é flexível e aceita tanto uma lista direta `[]` quanto um objeto contendo a chave `"workouts"`.
+Para que o sistema de importação funcione corretamente (via arquivo ou texto), o JSON deve seguir a estrutura abaixo. O app aceita tanto uma lista direta `[]` quanto um objeto com a chave `"workouts"`.
 
 ### Exemplo de Estrutura Completa (Híbrido)
 ```json
@@ -85,7 +136,6 @@ Para que o sistema de importação funcione corretamente (via arquivo ou texto),
           "weight": 30.0,
           "restTime": 90,
           "technique": "Cadência 3-0-1",
-          "technique": "Cadência 3-0-1",
           "equipmentNumber": "12",
           "youtubeUrl": "https://www.youtube.com/watch?v=video_id"
         },
@@ -104,34 +154,37 @@ Para que o sistema de importação funcione corretamente (via arquivo ou texto),
 }
 ```
 
-### Especificações Técnicas:
-- **`type`**: "strength" (padrão) ou "cardio".
+### Especificações Técnicas
+- **`type`**: `"strength"` (padrão) ou `"cardio"`.
 - **`scheduledDays`**: Lista de números de 1 (Segunda) a 7 (Domingo).
-- **`expiryDate`**: Data de validade do treino no formato `YYYY-MM-DD` (Opcional).
-- **`reps`**: (Strength) Aceita números (`12`) ou strings para intervalos (`"10-12"`).
-- **`weight`**: (Strength) Valor numérico (double/float) representando o peso em kg.
+- **`expiryDate`**: Data de validade no formato `YYYY-MM-DD` (Opcional).
+- **`reps`**: Aceita números (`12`) ou strings para intervalos (`"10-12"`).
+- **`weight`**: Valor numérico em kg.
 - **`durationMinutes`**: (Cardio) Tempo em minutos.
-- **`intensity`**: (Cardio) String livre para descrever velocidade/zona (ex: "Zona 2").
-- **`restTime`** (ou `restSeconds`): Tempo de descanso em segundos (ex: `60`, `90`). Padrão: 60s.
-- **`youtubeUrl`**: Link completo do vídeo tutorial no YouTube (Opcional).
-- **Sanitização Automática**: Os campos `id`, `imagePaths` e `activeStartTime` são gerados ou resetados pelo app.
+- **`intensity`**: (Cardio) String livre (ex: `"Zona 2"`).
+- **`restTime`** (ou `restSeconds`): Tempo de descanso em segundos. Padrão: `60`.
+- **`youtubeUrl`**: Link completo do tutorial no YouTube (Opcional).
+- **Sanitização Automática**: `id`, `imagePaths` e `activeStartTime` são gerados ou resetados pelo app.
 
 ---
 
-## �🛠 Tecnologias Utilizadas
+## 🛠 Tecnologias Utilizadas
 
-O projeto segue os princípios de **Clean Architecture** para garantir escalabilidade e testabilidade.
+O projeto segue os princípios de **Clean Architecture**.
 
-- **Frontend**: [Flutter](https://flutter.dev) (Dart)
-- **Gerenciamento de Estado**: [Riverpod 2.0](https://riverpod.dev) (Providers, Notifiers, AsyncNotifiers)
-- **Banco de Dados Local**: [Hive](https://docs.hivedb.dev/) (NoSQL, rápido e leve)
-- **Roteamento**: [GoRouter](https://pub.dev/packages/go_router)
-- **Utilitários**:
-  - `intl`: Formatação de datas.
-  - `body_part_selector`: Base para o mapa corporal.
-  - `google_fonts`: Tipografia premium (Inter).
-  - `audioplayers`: Reprodução de sons.
-  - `vibration`: Feedback tátil.
+| Camada | Tecnologia |
+|---|---|
+| Frontend | Flutter (Dart) |
+| Estado | Riverpod 2.0 |
+| Banco local | Hive CE (NoSQL) |
+| Autenticação | Firebase Auth (Google Sign-In) |
+| Banco nuvem | Cloud Firestore |
+| Storage nuvem | Firebase Storage |
+| Roteamento | GoRouter |
+| Tipografia | Google Fonts (Outfit) |
+| Áudio | audioplayers |
+| Feedback tátil | vibration |
+| Datas | intl |
 
 ---
 
@@ -139,42 +192,68 @@ O projeto segue os princípios de **Clean Architecture** para garantir escalabil
 
 ```
 lib/
-├── core/           # Configurações globais (Router, Theme, Constants)
-├── features/       # Módulos funcionais
-│   ├── workout/        # Lógica de Treinos
-│   ├── body_tracker/   # Lógica de Medidas e Mapa Corporal
-│   ├── profile/        # Perfil do Usuário e Dados Biológicos
-│   ├── settings/       # Configurações do App
-│   └── splash/         # Tela de Inicialização e Redirecionamento
-└── main.dart       # Ponto de entrada
+├── core/
+│   ├── constants/       # Cores, temas
+│   ├── presentation/    # Widgets reutilizáveis (AppDialogs, AppModals)
+│   ├── services/        # SyncService, AuthService
+│   └── utils/           # ImagePathResolver, SnackbarUtils
+├── features/
+│   ├── workout/         # Treinos, exercícios, sessão, histórico
+│   ├── body_tracker/    # Medidas corporais e mapa interativo
+│   ├── profile/         # Perfil do usuário
+│   ├── reports/         # Relatórios e análises
+│   ├── settings/        # Backup, restore, biblioteca de ativos
+│   ├── image_library/   # Gerenciamento da biblioteca local de imagens
+│   ├── dashboard/       # Tela inicial
+│   └── splash/          # Splash, welcome e autenticação
+└── main.dart
 ```
 
 ---
 
 ## ▶️ Como Rodar o Projeto
 
-1. **Pré-requisitos**: Certifique-se de ter o [Flutter SDK](https://docs.flutter.dev/get-started/install) instalado.
-2. **Instalar Dependências**:
+1. **Pré-requisitos**: [Flutter SDK](https://docs.flutter.dev/get-started/install) instalado.
+2. **Instalar dependências**:
    ```bash
    flutter pub get
    ```
-3. **Gerar Adaptadores do Hive** (necessário para o banco de dados):
+3. **Gerar adaptadores do Hive**:
    ```bash
    dart run build_runner build --delete-conflicting-outputs
    ```
-4. **Executar**:
+4. **Configurar Firebase**: Adicione os arquivos `google-services.json` (Android) e `GoogleService-Info.plist` (iOS) gerados no Firebase Console.
+5. **Executar**:
    ```bash
    flutter run
    ```
 
 ---
 
-## 📱 Capturas de Tela (Conceito)
+## 📋 Changelog
 
-- **Home**: Dashboard com atalhos.
-- **Treinos**: Lista de rotinas ativas.
-- **Medidas**: Lista expandível com gráfico de IMC.
-- **Scanner**: Modelo corporal interativo.
+### v1.2.0
+- Sincronização bidirecional completa com Firebase (Firestore + Storage)
+- Login com Google + modo convidado offline
+- Exclusão permanente de treinos, histórico e medidas no Firestore
+- Batch uploads por coleção com limite de 400 ops para evitar estouro
+- Renderização híbrida de imagens: local (`FileImage`) e remota (`NetworkImage`) via `ImagePathResolver.resolveToImageProvider`
+- Loading dialog com mensagem descritiva durante sincronização pós-restore
+- Biblioteca de ativos enviada ao Storage em background durante restore
+- Correções de `ListTile` dentro de `DecoratedBox` sem `Material` intermediário
+
+### v1.1.0
+- Sistema de backup e restore completo (`.zip`)
+- Biblioteca de ativos com importação via `.zip`
+- Suporte a exercícios cardio
+- Timer de descanso configurável por exercício
+
+### v1.0.0
+- Lançamento inicial
+- Gestão de treinos e exercícios
+- Body Tracker com mapa corporal interativo
+- Perfil biológico com cálculo de IMC
+- Modo offline com persistência no Hive
 
 ---
 
