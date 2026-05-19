@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -21,7 +22,11 @@ class WorkoutListPage extends ConsumerWidget {
 
     return Scaffold(
       body: routinesAsyncVal.when(
-        data: (routines) => CustomScrollView(
+        data: (routines) {
+          if (kIsWeb) {
+            return _buildWebList(context, ref, routines);
+          }
+          return CustomScrollView(
           slivers: [
             // Modern Header
             SliverAppBar(
@@ -281,10 +286,151 @@ class WorkoutListPage extends ConsumerWidget {
                 }, childCount: routines.length),
               ),
           ],
-        ),
+        );
+        },
         error: (err, stack) => Center(child: Text('Erro: $err')),
         loading: () => const Center(child: CircularProgressIndicator()),
       ),
+    );
+  }
+
+  Widget _buildWebList(BuildContext context, WidgetRef ref, List routines) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(32, 24, 32, 16),
+          child: Row(
+            children: [
+              Text(
+                '${routines.length} treino${routines.length != 1 ? 's' : ''}',
+                style: GoogleFonts.outfit(
+                  color: Colors.white38,
+                  fontSize: 13,
+                ),
+              ),
+              const Spacer(),
+              FilledButton.icon(
+                onPressed: () => _showCreateOptions(context, ref),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(
+                  'Novo Treino',
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (routines.isEmpty)
+          Expanded(
+            child: AppEmptyState(
+              icon: Icons.fitness_center_rounded,
+              title: 'Nenhum treino cadastrado',
+              subtitle: 'Crie ou importe um treino para começar.',
+              actionLabel: 'Criar ou Importar',
+              onActionPressed: () => _showCreateOptions(context, ref),
+            ),
+          )
+        else
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 480,
+                  mainAxisExtent: 130,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                ),
+                itemCount: routines.length,
+                itemBuilder: (context, index) {
+                  final routine = routines[index];
+                  final days = ['', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+                  final dayStr = (routine.scheduledDays as List)
+                      .map((d) => d < days.length ? days[d] : '')
+                      .join(', ');
+                  return InkWell(
+                    onTap: () => context.go('/workouts/${routine.id}'),
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF111111),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                            color: Colors.white.withOpacity(0.07)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  routine.name as String,
+                                  style: GoogleFonts.outfit(
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit_outlined,
+                                        size: 18, color: Colors.white38),
+                                    onPressed: () => context
+                                        .push('/workouts/${routine.id}/edit'),
+                                    tooltip: 'Editar',
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Icon(Icons.fitness_center,
+                                  size: 14, color: Colors.white38),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${(routine.exercises as List).length} exercícios',
+                                style: GoogleFonts.outfit(
+                                    fontSize: 12, color: Colors.white38),
+                              ),
+                              if (dayStr.isNotEmpty) ...[
+                                const SizedBox(width: 12),
+                                Icon(Icons.calendar_today,
+                                    size: 14, color: Colors.white38),
+                                const SizedBox(width: 4),
+                                Text(
+                                  dayStr,
+                                  style: GoogleFonts.outfit(
+                                      fontSize: 12, color: Colors.white38),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+      ],
     );
   }
 

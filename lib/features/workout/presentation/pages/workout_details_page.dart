@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -299,7 +300,7 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    if (workout.activeStartTime == null)
+                    if (!kIsWeb && workout.activeStartTime == null)
                       Container(
                         width: double.infinity,
                         height: 60,
@@ -345,7 +346,7 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                           ),
                         ),
                       )
-                    else
+                    else if (!kIsWeb)
                       Column(
                         children: [
                           SizedBox(

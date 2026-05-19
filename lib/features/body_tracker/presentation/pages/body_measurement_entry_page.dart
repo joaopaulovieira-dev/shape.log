@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../../core/utils/image_path_resolver.dart';
+import '../../../../core/services/web_image_service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
@@ -104,9 +106,11 @@ class _BodyMeasurementEntryPageState
     _forearmRightController.addListener(_updateFilledParts);
     _forearmLeftController.addListener(_updateFilledParts);
 
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) _retrieveLostData();
-    });
+    if (!kIsWeb) {
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) _retrieveLostData();
+      });
+    }
   }
 
   Future<void> _retrieveLostData() async {
@@ -1030,17 +1034,32 @@ class _BodyMeasurementEntryPageState
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           onPressed: () async {
-                            await AppModals.showAppModal(
-                              context: context,
-                              title: 'Selecionar Imagem',
-                              child: const ImageSourceSheet(showLibrary: false),
-                            ).then((files) {
-                              if (files != null && files is List<File>) {
-                                setState(() {
-                                  _imagePaths.addAll(files.map((e) => e.path));
-                                });
+                            if (kIsWeb) {
+                              final url = await WebImageService.pickAndUpload(
+                                WebImageService.measurementPath(
+                                  widget.measurementToEdit?.id ??
+                                      const Uuid().v4(),
+                                  _imagePaths.length,
+                                ),
+                              );
+                              if (url != null) {
+                                setState(() => _imagePaths.add(url));
                               }
-                            });
+                            } else {
+                              await AppModals.showAppModal(
+                                context: context,
+                                title: 'Selecionar Imagem',
+                                child: const ImageSourceSheet(
+                                    showLibrary: false),
+                              ).then((files) {
+                                if (files != null && files is List<File>) {
+                                  setState(() {
+                                    _imagePaths
+                                        .addAll(files.map((e) => e.path));
+                                  });
+                                }
+                              });
+                            }
                           },
                           icon: const Icon(Icons.add_a_photo_outlined),
                           label: Text(

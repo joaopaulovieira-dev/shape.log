@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +11,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/presentation/widgets/app_modals.dart';
 import '../../../image_library/presentation/image_source_sheet.dart';
 import '../../../common/services/image_storage_service.dart';
+import '../../../../core/services/web_image_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:io';
@@ -712,6 +714,14 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   }
 
   Future<void> _pickProfilePhoto() async {
+    if (kIsWeb) {
+      final url = await WebImageService.pickAndUpload(
+        WebImageService.profilePicturePath(),
+      );
+      if (url != null) setState(() => _profilePicturePath = url);
+      return;
+    }
+
     final result = await AppModals.showAppModal(
       context: context,
       title: 'Foto de Perfil',
@@ -725,10 +735,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         XFile(file.path),
         subDir: 'profile_photos',
       );
-
-      setState(() {
-        _profilePicturePath = permanentPath;
-      });
+      setState(() => _profilePicturePath = permanentPath);
     }
   }
 }

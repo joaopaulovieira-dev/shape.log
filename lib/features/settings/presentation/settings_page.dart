@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -81,13 +82,15 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // 3. Data Vault (Backup)
-                  DataVaultCard(
-                    lastBackupDate: lastBackup,
-                    onBackup: () => _handleBackup(context, ref),
-                    onRestore: () => _handleRestore(context, ref),
-                  ),
-                  const SizedBox(height: 24),
+                  // 3. Data Vault (Backup) — só no mobile
+                  if (!kIsWeb) ...[
+                    DataVaultCard(
+                      lastBackupDate: lastBackup,
+                      onBackup: () => _handleBackup(context, ref),
+                      onRestore: () => _handleRestore(context, ref),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
 
                   // 4. General Settings Grid/List
                   const Text(
@@ -101,21 +104,22 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  SettingsMenuItem(
-                    icon: Icons.photo_library,
-                    title: 'Biblioteca de Ativos',
-                    subtitle: 'Gerenciar imagens de equipamentos',
-                    iconColor: Colors.purpleAccent,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const ImageLibrarySettingsPage(),
-                        ),
-                      );
-                    },
-                  ),
+                  if (!kIsWeb)
+                    SettingsMenuItem(
+                      icon: Icons.photo_library,
+                      title: 'Biblioteca de Ativos',
+                      subtitle: 'Gerenciar imagens de equipamentos',
+                      iconColor: Colors.purpleAccent,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const ImageLibrarySettingsPage(),
+                          ),
+                        );
+                      },
+                    ),
                   SettingsMenuItem(
                     icon: Icons.info_outline,
                     title: 'Sobre',

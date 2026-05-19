@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -58,6 +59,10 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
       if (_filterMode == '90_days') return diff <= 90;
       return true;
     }).toList();
+
+    if (kIsWeb) {
+      return _buildWebLayout(context, measurementList);
+    }
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -277,6 +282,207 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
           // Bottom padding
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildWebLayout(BuildContext context, List measurements) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header bar
+          Padding(
+            padding: const EdgeInsets.fromLTRB(32, 24, 32, 16),
+            child: Row(
+              children: [
+                Text(
+                  '${measurements.length} registro${measurements.length != 1 ? 's' : ''}',
+                  style: GoogleFonts.outfit(color: Colors.white38, fontSize: 13),
+                ),
+                const Spacer(),
+                FilledButton.icon(
+                  onPressed: () => context.push('/body-tracker/add'),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: Text('Nova Medida',
+                      style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Table header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF111111),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white.withOpacity(0.07)),
+              ),
+              child: Row(
+                children: [
+                  _WebTableHeader('Data', flex: 2),
+                  _WebTableHeader('Peso (kg)', flex: 1),
+                  _WebTableHeader('IMC', flex: 1),
+                  _WebTableHeader('Cintura (cm)', flex: 1),
+                  _WebTableHeader('Bíceps D/E (cm)', flex: 2),
+                  _WebTableHeader('Ações', flex: 1),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Rows
+          if (measurements.isEmpty)
+            Expanded(
+              child: AppEmptyState(
+                icon: Icons.monitor_weight_outlined,
+                title: 'Nenhuma medida cadastrada',
+                subtitle: 'Adicione sua primeira medida corporal.',
+                actionLabel: 'Adicionar',
+                onActionPressed: () => context.push('/body-tracker/add'),
+              ),
+            )
+          else
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                itemCount: measurements.length,
+                separatorBuilder: (_, i) => const SizedBox(height: 6),
+                itemBuilder: (context, index) {
+                  final m = measurements[index];
+                  final date = m.date as DateTime;
+                  final dateStr =
+                      '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF111111),
+                      borderRadius: BorderRadius.circular(10),
+                      border:
+                          Border.all(color: Colors.white.withOpacity(0.06)),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            dateStr,
+                            style: GoogleFonts.outfit(
+                                color: Colors.white, fontSize: 13),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Text(
+                            '${m.weight}',
+                            style: GoogleFonts.outfit(
+                                color: Colors.white70, fontSize: 13),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Text(
+                            m.bmi != null
+                                ? m.bmi!.toStringAsFixed(1)
+                                : '—',
+                            style: GoogleFonts.outfit(
+                                color: Colors.white70, fontSize: 13),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Text(
+                            '${m.waistCircumference}',
+                            style: GoogleFonts.outfit(
+                                color: Colors.white70, fontSize: 13),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            '${m.bicepsRight} / ${m.bicepsLeft}',
+                            style: GoogleFonts.outfit(
+                                color: Colors.white70, fontSize: 13),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined,
+                                    size: 16, color: Colors.white38),
+                                onPressed: () => context.push(
+                                    '/body-tracker/add',
+                                    extra: m),
+                                tooltip: 'Editar',
+                                visualDensity: VisualDensity.compact,
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline,
+                                    size: 16, color: Colors.redAccent),
+                                onPressed: () async {
+                                  final confirmed =
+                                      await AppDialogs.showConfirmDialog<bool>(
+                                    context: context,
+                                    title: 'Excluir medida?',
+                                    description:
+                                        'Esta ação não pode ser desfeita.',
+                                    confirmText: 'EXCLUIR',
+                                    isDestructive: true,
+                                  );
+                                  if (confirmed == true) {
+                                    ref
+                                        .read(bodyTrackerProvider.notifier)
+                                        .deleteMeasurement(m.id as String);
+                                  }
+                                },
+                                tooltip: 'Excluir',
+                                visualDensity: VisualDensity.compact,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+}
+
+class _WebTableHeader extends StatelessWidget {
+  final String label;
+  final int flex;
+  const _WebTableHeader(this.label, {required this.flex});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      flex: flex,
+      child: Text(
+        label,
+        style: GoogleFonts.outfit(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: Colors.white38,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }

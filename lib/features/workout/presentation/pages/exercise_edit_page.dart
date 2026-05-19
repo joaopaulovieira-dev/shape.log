@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
 import '../../../../core/utils/image_path_resolver.dart';
+import '../../../../core/services/web_image_service.dart';
 import '../../../image_library/presentation/image_source_sheet.dart';
 import '../../../../core/presentation/widgets/app_modals.dart';
 import '../../domain/entities/exercise.dart';
@@ -521,18 +523,28 @@ class _ExerciseEditPageState extends ConsumerState<ExerciseEditPage> {
                   Center(
                     child: OutlinedButton.icon(
                       onPressed: () async {
-                        await AppModals.showAppModal(
-                          context: context,
-                          title: 'Selecionar Imagem',
-                          child: const ImageSourceSheet(),
-                        ).then((files) {
-                          if (files != null && files is List<File>) {
-                            setState(
-                              () =>
-                                  _imagePaths.addAll(files.map((e) => e.path)),
-                            );
-                          }
-                        });
+                        if (kIsWeb) {
+                          final url = await WebImageService.pickAndUpload(
+                            WebImageService.exercisePath(
+                              widget.workoutId,
+                              _imagePaths.length,
+                            ),
+                          );
+                          if (url != null) setState(() => _imagePaths.add(url));
+                        } else {
+                          await AppModals.showAppModal(
+                            context: context,
+                            title: 'Selecionar Imagem',
+                            child: const ImageSourceSheet(),
+                          ).then((files) {
+                            if (files != null && files is List<File>) {
+                              setState(
+                                () => _imagePaths
+                                    .addAll(files.map((e) => e.path)),
+                              );
+                            }
+                          });
+                        }
                       },
                       icon: const Icon(Icons.add_a_photo_outlined, size: 20),
                       label: Text(

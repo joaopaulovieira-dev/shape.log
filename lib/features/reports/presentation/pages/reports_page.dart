@@ -23,6 +23,7 @@ import '../../../../core/utils/image_path_resolver.dart';
 import '../../../image_library/presentation/image_source_sheet.dart';
 import '../../../common/presentation/widgets/full_screen_image_viewer.dart';
 import '../../../common/services/image_storage_service.dart';
+import '../../../../core/services/web_image_service.dart';
 import '../../../../core/presentation/widgets/app_modals.dart';
 import '../../../../core/presentation/widgets/app_empty_state.dart';
 
@@ -788,31 +789,37 @@ class _PhotoManagerDialogState extends State<_PhotoManagerDialog> {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: () async {
-                await AppModals.showAppModal(
-                  context: context,
-                  title: 'Selecionar Imagem',
-                  child: const ImageSourceSheet(showLibrary: false),
-                ).then((files) async {
-                  if (files != null && files is List<File>) {
-                    setState(() => _isLoading = true);
-                    for (final file in files) {
-                      try {
-                        // Create XFile from File
-                        final xFile = XFile(file.path);
-                        final permanentPath = await _imageService.saveImage(
-                          xFile,
-                        );
-                        setState(() {
-                          _currentImages.add(permanentPath);
-                        });
-                      } catch (e) {
-                        debugPrint('Error saving image: $e');
+                if (kIsWeb) {
+                  final url = await WebImageService.pickAndUpload(
+                    WebImageService.historyPath(
+                      widget.history.id,
+                      _currentImages.length,
+                    ),
+                  );
+                  if (url != null) setState(() => _currentImages.add(url));
+                } else {
+                  await AppModals.showAppModal(
+                    context: context,
+                    title: 'Selecionar Imagem',
+                    child: const ImageSourceSheet(showLibrary: false),
+                  ).then((files) async {
+                    if (files != null && files is List<File>) {
+                      setState(() => _isLoading = true);
+                      for (final file in files) {
+                        try {
+                          final xFile = XFile(file.path);
+                          final permanentPath =
+                              await _imageService.saveImage(xFile);
+                          setState(() => _currentImages.add(permanentPath));
+                        } catch (e) {
+                          debugPrint('Error saving image: $e');
+                        }
                       }
+                      await _updateHive();
+                      setState(() => _isLoading = false);
                     }
-                    await _updateHive();
-                    setState(() => _isLoading = false);
-                  }
-                });
+                  });
+                }
               },
               icon: const Icon(Icons.add_a_photo),
               label: const Text('ADICIONAR FOTO'),
