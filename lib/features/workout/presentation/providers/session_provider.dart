@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:audio_session/audio_session.dart';
+import 'package:audio_session/audio_session.dart' as as_session;
 import 'package:vibration/vibration.dart';
 import 'package:uuid/uuid.dart';
 import 'package:shape_log/core/services/notification_service.dart';
@@ -80,7 +80,8 @@ class WorkoutSessionState {
   }
 }
 
-class SessionController extends Notifier<WorkoutSessionState> with WidgetsBindingObserver {
+class SessionController extends Notifier<WorkoutSessionState>
+    with WidgetsBindingObserver {
   Timer? _timer;
   final AudioPlayer _audioPlayer = AudioPlayer();
   DateTime? _restTimerEndTime;
@@ -108,9 +109,7 @@ class SessionController extends Notifier<WorkoutSessionState> with WidgetsBindin
     if (state.isRestTimerRunning && _restTimerEndTime != null) {
       final remaining = _restTimerEndTime!.difference(DateTime.now()).inSeconds;
       if (remaining > 0) {
-        state = state.copyWith(
-          restTimerRemaining: remaining,
-        );
+        state = state.copyWith(restTimerRemaining: remaining);
       } else {
         _triggerRestCompleted();
       }
@@ -395,9 +394,7 @@ class SessionController extends Notifier<WorkoutSessionState> with WidgetsBindin
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       final remaining = _restTimerEndTime!.difference(DateTime.now()).inSeconds;
       if (remaining > 0) {
-        state = state.copyWith(
-          restTimerRemaining: remaining,
-        );
+        state = state.copyWith(restTimerRemaining: remaining);
       } else {
         NotificationService().cancelNotification(999);
         _triggerRestCompleted();
@@ -407,10 +404,7 @@ class SessionController extends Notifier<WorkoutSessionState> with WidgetsBindin
 
   void _triggerRestCompleted() {
     _timer?.cancel();
-    state = state.copyWith(
-      isRestTimerRunning: false,
-      restTimerRemaining: 0,
-    );
+    state = state.copyWith(isRestTimerRunning: false, restTimerRemaining: 0);
     _triggerAlert();
     if (_isLastSet) {
       nextExercise();
@@ -422,19 +416,25 @@ class SessionController extends Notifier<WorkoutSessionState> with WidgetsBindin
   Future<void> _triggerAlert() async {
     try {
       // Configurar a sessão de áudio para gerenciar o volume corretamente (ducking)
-      final session = await AudioSession.instance;
-      await session.configure(const AudioSessionConfiguration(
-        avAudioSessionCategory: AVAudioSessionCategory.playback,
-        avAudioSessionCategoryOptions: AVAudioSessionCategoryOptions.duckOthers,
-        avAudioSessionMode: AVAudioSessionMode.defaultMode,
-        avAudioSessionRouteSharingPolicy: AVAudioSessionRouteSharingPolicy.defaultPolicy,
-        avAudioSessionSetActiveOptions: AVAudioSessionSetActiveOptions.none,
-        androidAudioAttributes: AndroidAudioAttributes(
-          contentType: AndroidAudioContentType.music,
-          usage: AndroidAudioUsage.media,
+      final session = await as_session.AudioSession.instance;
+      await session.configure(
+        const as_session.AudioSessionConfiguration(
+          avAudioSessionCategory: as_session.AVAudioSessionCategory.playback,
+          avAudioSessionCategoryOptions:
+              as_session.AVAudioSessionCategoryOptions.duckOthers,
+          avAudioSessionMode: as_session.AVAudioSessionMode.defaultMode,
+          avAudioSessionRouteSharingPolicy:
+              as_session.AVAudioSessionRouteSharingPolicy.defaultPolicy,
+          avAudioSessionSetActiveOptions:
+              as_session.AVAudioSessionSetActiveOptions.none,
+          androidAudioAttributes: as_session.AndroidAudioAttributes(
+            contentType: as_session.AndroidAudioContentType.music,
+            usage: as_session.AndroidAudioUsage.media,
+          ),
+          androidAudioFocusGainType:
+              as_session.AndroidAudioFocusGainType.gainTransientMayDuck,
         ),
-        androidAudioFocusGainType: AndroidAudioFocusGainType.gainTransientMayDuck,
-      ));
+      );
 
       // Ativar sessão
       await session.setActive(true);

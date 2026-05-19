@@ -1,3 +1,6 @@
+import '../../../../core/services/sync_service.dart';
+import '../models/workout_hive_model.dart';
+import '../models/workout_history_hive_model.dart';
 import '../../domain/entities/workout.dart';
 import '../../domain/entities/workout_history.dart';
 import '../../domain/repositories/workout_repository.dart';
@@ -5,8 +8,9 @@ import '../datasources/workout_local_data_source.dart';
 
 class WorkoutRepositoryImpl implements WorkoutRepository {
   final WorkoutLocalDataSource localDataSource;
+  final SyncService? syncService;
 
-  WorkoutRepositoryImpl({required this.localDataSource});
+  WorkoutRepositoryImpl({required this.localDataSource, this.syncService});
 
   @override
   Future<List<Workout>> getRoutines() async {
@@ -15,12 +19,18 @@ class WorkoutRepositoryImpl implements WorkoutRepository {
 
   @override
   Future<void> saveRoutine(Workout workout) async {
-    return localDataSource.saveRoutine(workout);
+    await localDataSource.saveRoutine(workout);
+    if (syncService != null) {
+      await syncService!.saveWorkout(WorkoutHiveModel.fromEntity(workout));
+    }
   }
 
   @override
   Future<void> deleteRoutine(String id) async {
-    return localDataSource.deleteRoutine(id);
+    await localDataSource.deleteRoutine(id);
+    if (syncService != null) {
+      await syncService!.deleteWorkout(id);
+    }
   }
 
   @override
@@ -30,7 +40,12 @@ class WorkoutRepositoryImpl implements WorkoutRepository {
 
   @override
   Future<void> saveHistory(WorkoutHistory history) async {
-    return localDataSource.saveHistory(history);
+    await localDataSource.saveHistory(history);
+    if (syncService != null) {
+      await syncService!.saveHistory(
+        WorkoutHistoryHiveModel.fromEntity(history),
+      );
+    }
   }
 
   @override

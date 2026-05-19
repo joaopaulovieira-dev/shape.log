@@ -4,6 +4,7 @@ import '../../domain/entities/workout_history.dart';
 import '../../domain/repositories/workout_repository.dart';
 import '../../data/datasources/workout_local_data_source.dart';
 import '../../data/repositories/workout_repository_impl.dart';
+import '../../../../core/services/sync_service.dart';
 
 // Dependency Injection
 
@@ -16,7 +17,11 @@ final workoutLocalDataSourceProvider = Provider<WorkoutLocalDataSource>((ref) {
 
 final workoutRepositoryProvider = Provider<WorkoutRepository>((ref) {
   final localDataSource = ref.watch(workoutLocalDataSourceProvider);
-  return WorkoutRepositoryImpl(localDataSource: localDataSource);
+  final syncService = ref.watch(syncServiceProvider);
+  return WorkoutRepositoryImpl(
+    localDataSource: localDataSource,
+    syncService: syncService,
+  );
 });
 
 // State Management

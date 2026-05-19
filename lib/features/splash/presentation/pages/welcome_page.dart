@@ -10,6 +10,9 @@ import '../../../../core/utils/snackbar_utils.dart';
 import '../../../../core/presentation/widgets/app_dialogs.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/sync_service.dart';
+
 class WelcomePage extends ConsumerWidget {
   const WelcomePage({super.key});
 
@@ -101,27 +104,99 @@ class WelcomePage extends ConsumerWidget {
                       height: 1.5,
                     ),
                   ),
-                  const Spacer(flex: 3),
+                  const Spacer(flex: 2),
 
-                  // Create New Profile Button
+                  // Google Sign-In Button
+                  SizedBox(
+                    height: 60,
+                    child: ElevatedButton(
+                      onPressed: () => _handleGoogleSignIn(context, ref),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 2,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Custom colored G for Google icon representation
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Text(
+                              'G',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'ENTRAR COM O GOOGLE',
+                            style: GoogleFonts.outfit(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Divider OR
+                  Row(
+                    children: [
+                      const Expanded(child: Divider(color: Colors.white24)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'OU',
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const Expanded(child: Divider(color: Colors.white24)),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Create Local Profile Button
                   SizedBox(
                     height: 60,
                     child: ElevatedButton(
                       onPressed: () => context.go('/profile/create'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.black,
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: AppColors.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
+                          side: const BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
                         ),
                         elevation: 0,
                       ),
                       child: Text(
-                        'CRIAR NOVO PERFIL',
+                        'USAR MODO CONVIDADO (OFFLINE)',
                         style: GoogleFonts.outfit(
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
+                          letterSpacing: 0.8,
                         ),
                       ),
                     ),
@@ -134,14 +209,12 @@ class WelcomePage extends ConsumerWidget {
                     child: TextButton.icon(
                       onPressed: () => _handleRestoreBackup(context, ref),
                       icon: const Icon(Icons.restore_page_outlined, size: 20),
-                      label: const Text('RESTAURAR BACKUP'),
+                      label: const Text('RESTAURAR BACKUP LOCAL'),
                       style: TextButton.styleFrom(
-                        foregroundColor: AppColors.primary,
+                        foregroundColor: Colors.grey[400],
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(
-                            color: AppColors.primary.withValues(alpha: 0.2),
-                          ),
+                          side: BorderSide(color: Colors.grey[800]!),
                         ),
                         textStyle: GoogleFonts.outfit(
                           fontSize: 13,
@@ -151,7 +224,7 @@ class WelcomePage extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
@@ -159,6 +232,55 @@ class WelcomePage extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _handleGoogleSignIn(BuildContext context, WidgetRef ref) async {
+    try {
+      AppDialogs.showLoadingDialog(context);
+      final credential = await ref.read(authServiceProvider).signInWithGoogle();
+
+      if (credential != null) {
+        final syncService = ref.read(syncServiceProvider);
+
+        // Se o usuário já tiver dados locais pré-existentes no Hive,
+        // podemos enviá-los ao Firestore (Merge).
+        // Se for um novo dispositivo sem dados locais, podemos baixar o Firestore.
+        // Vamos rodar ambos em sequência de forma inteligente:
+        // Primeiro tentamos fazer o download das informações salvas na nuvem.
+        await syncService.downloadDataFromFirestore();
+
+        // Em seguida, se houver dados locais que não estavam na nuvem, enviamos (Merge)
+        await syncService.uploadLocalDataToFirestore();
+
+        // Recarrega os dados do perfil local
+        ref.invalidate(userProfileProvider);
+        ref.invalidate(routineListProvider);
+
+        if (context.mounted) {
+          AppDialogs.hideLoadingDialog(context);
+
+          // Verificar se o perfil agora existe localmente
+          final repo = ref.read(userProfileRepositoryProvider);
+          final profile = await repo.getProfile();
+
+          if (profile != null) {
+            context.go('/');
+          } else {
+            // Se o perfil ainda é nulo, redirecionamos para criação do perfil
+            context.go('/profile/create');
+          }
+        }
+      } else {
+        if (context.mounted) {
+          AppDialogs.hideLoadingDialog(context);
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        AppDialogs.hideLoadingDialog(context);
+        SnackbarUtils.showError(context, 'Erro ao entrar com Google: $e');
+      }
+    }
   }
 
   Future<void> _handleRestoreBackup(BuildContext context, WidgetRef ref) async {

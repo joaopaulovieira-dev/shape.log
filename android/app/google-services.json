@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "522991040005",
+    "project_id": "shape-log-app",
+    "storage_bucket": "shape-log-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:522991040005:android:720eed548548cde7318e6c",
+        "android_client_info": {
+          "package_name": "com.shapelog.shape_log"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBaCMdyMn41RENzY9dMsz4HMWHfVljRkWc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

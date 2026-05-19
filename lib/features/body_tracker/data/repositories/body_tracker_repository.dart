@@ -4,10 +4,13 @@ import 'package:path_provider/path_provider.dart';
 import '../models/body_measurement_hive_model.dart';
 import '../../domain/entities/body_measurement.dart';
 
+import '../../../../core/services/sync_service.dart';
+
 class BodyTrackerRepository {
   final Box<BodyMeasurementHiveModel> _box;
+  final SyncService? _syncService;
 
-  BodyTrackerRepository(this._box);
+  BodyTrackerRepository(this._box, [this._syncService]);
 
   Future<void> saveMeasurement(BodyMeasurement measurement) async {
     // handled in the provider or UI, but let's robustify it here.
@@ -58,6 +61,9 @@ class BodyTrackerRepository {
 
     final hiveModel = BodyMeasurementHiveModel.fromEntity(updatedMeasurement);
     await _box.put(updatedMeasurement.id, hiveModel);
+    if (_syncService != null) {
+      await _syncService.saveMeasurement(hiveModel);
+    }
   }
 
   Future<void> deleteMeasurement(String id) async {

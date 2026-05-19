@@ -3,6 +3,7 @@ import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import '../../data/models/body_measurement_hive_model.dart';
 import '../../data/repositories/body_tracker_repository.dart';
 import '../../domain/entities/body_measurement.dart';
+import '../../../../core/services/sync_service.dart';
 
 // Access the Hive Box
 final bodymeasurementsBoxProvider = Provider<Box<BodyMeasurementHiveModel>>((
@@ -14,7 +15,8 @@ final bodymeasurementsBoxProvider = Provider<Box<BodyMeasurementHiveModel>>((
 // Access the Repository
 final bodyTrackerRepositoryProvider = Provider<BodyTrackerRepository>((ref) {
   final box = ref.watch(bodymeasurementsBoxProvider);
-  return BodyTrackerRepository(box);
+  final syncService = ref.watch(syncServiceProvider);
+  return BodyTrackerRepository(box, syncService);
 });
 
 // Notifier to manage the list of measurements

@@ -12,13 +12,16 @@ import 'features/workout/data/models/exercise_set_history_hive_model.dart';
 import 'features/body_tracker/data/models/body_measurement_hive_model.dart';
 import 'features/profile/data/models/user_profile_hive_model.dart';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await Hive.initFlutter();
   await initializeDateFormatting('pt_BR', null);
-  
+
   // Initialize Notifications
   await NotificationService().init();
   await NotificationService().requestPermissions();

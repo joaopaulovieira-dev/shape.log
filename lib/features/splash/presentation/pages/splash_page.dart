@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../profile/presentation/providers/user_profile_provider.dart';
+import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/sync_service.dart';
 
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
@@ -72,6 +74,17 @@ class _SplashPageState extends ConsumerState<SplashPage>
     await Future.delayed(const Duration(milliseconds: 3500));
 
     if (mounted) {
+      try {
+        final auth = ref.read(authServiceProvider);
+        if (auth.currentUser != null) {
+          final syncService = ref.read(syncServiceProvider);
+          // Tenta baixar dados mais recentes da nuvem em background
+          await syncService.downloadDataFromFirestore();
+        }
+      } catch (e) {
+        print('Erro ao sincronizar na splash: $e');
+      }
+
       final repo = ref.read(userProfileRepositoryProvider);
       final profile = await repo.getProfile();
 

@@ -2,7 +2,8 @@ class DailyLog {
   final String id; // usually date string YYYY-MM-DD
   final DateTime date;
   final int waterIntake; // in ml, goal 4000
-  final Map<String, bool> supplements; // { 'Creatine': true, 'Whey': false ... }
+  final Map<String, bool>
+  supplements; // { 'Creatine': true, 'Whey': false ... }
   final bool workoutCompleted;
   final String? workoutId; // Reference to the Workout document if needed
 

@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/user_profile.dart';
 import '../../data/repositories/user_profile_repository.dart';
 
+import '../../../../core/services/sync_service.dart';
+
 // Repository Provider
 final userProfileRepositoryProvider = Provider<UserProfileRepository>((ref) {
-  return UserProfileRepository();
+  final syncService = ref.watch(syncServiceProvider);
+  return UserProfileRepository(syncService);
 });
 
 // Notifier

@@ -5,18 +5,10 @@ class ExerciseSet {
   final double weight;
   final String notes;
 
-  ExerciseSet({
-    required this.name,
-    required this.weight,
-    this.notes = '',
-  });
+  ExerciseSet({required this.name, required this.weight, this.notes = ''});
 
   Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'weight': weight,
-      'notes': notes,
-    };
+    return {'name': name, 'weight': weight, 'notes': notes};
   }
 
   factory ExerciseSet.fromJson(Map<String, dynamic> json) {
@@ -32,16 +24,10 @@ class CardioSession {
   final String type;
   final int durationMinutes;
 
-  CardioSession({
-    required this.type,
-    required this.durationMinutes,
-  });
+  CardioSession({required this.type, required this.durationMinutes});
 
   Map<String, dynamic> toJson() {
-    return {
-      'type': type,
-      'durationMinutes': durationMinutes,
-    };
+    return {'type': type, 'durationMinutes': durationMinutes};
   }
 
   factory CardioSession.fromJson(Map<String, dynamic> json) {

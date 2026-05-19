@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart'; // Add this import
+import 'package:share_plus/share_plus.dart';
 import '../../profile/presentation/providers/user_profile_provider.dart';
 import '../../body_tracker/presentation/providers/body_tracker_provider.dart';
 import '../../workout/presentation/providers/workout_provider.dart';
@@ -135,15 +136,22 @@ class SettingsPage extends ConsumerWidget {
     AppDialogs.showLoadingDialog(context);
 
     try {
-      final zipFilePath = await ref.read(backupServiceProvider).generateFullBackupZip();
+      final zipFilePath = await ref
+          .read(backupServiceProvider)
+          .generateFullBackupZip();
 
       if (context.mounted) {
-        AppDialogs.hideLoadingDialog(context); // Hide loading as soon as ZIP is generated
+        AppDialogs.hideLoadingDialog(
+          context,
+        ); // Hide loading as soon as ZIP is generated
       }
 
       if (zipFilePath == null) {
         if (context.mounted) {
-          SnackbarUtils.showError(context, 'Erro ao gerar o arquivo de backup.');
+          SnackbarUtils.showError(
+            context,
+            'Erro ao gerar o arquivo de backup.',
+          );
         }
         return;
       }
@@ -180,7 +188,7 @@ class SettingsPage extends ConsumerWidget {
           AppDialogs.hideLoadingDialog(context);
         }
       } catch (_) {}
-      
+
       if (context.mounted) {
         SnackbarUtils.showError(context, 'Erro ao realizar backup: $e');
       }

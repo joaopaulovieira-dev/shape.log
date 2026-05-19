@@ -32,8 +32,9 @@ class ImageLibraryService {
               lowerName.endsWith('.jpeg') ||
               lowerName.endsWith('.png') ||
               lowerName.endsWith('.webp')) {
-            await File(path.join(libraryPath, filename))
-                .writeAsBytes(file.content as List<int>);
+            await File(
+              path.join(libraryPath, filename),
+            ).writeAsBytes(file.content as List<int>);
             importedCount++;
           }
         }
