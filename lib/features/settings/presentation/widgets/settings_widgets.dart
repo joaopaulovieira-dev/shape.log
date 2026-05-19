@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
 import 'package:shape_log/features/profile/domain/entities/user_profile.dart';
 import 'package:shape_log/features/profile/domain/enums/gender.dart';
-import 'dart:io';
+import '../../../../core/utils/image_path_resolver.dart';
 
 // 1. Profile Hero Card
 class ProfileHeroCard extends StatelessWidget {
@@ -66,7 +66,9 @@ class ProfileHeroCard extends StatelessWidget {
                   image: hasPhoto
                       ? DecorationImage(
                           image: FileImage(
-                            File(userProfile!.profilePicturePath!),
+                            ImagePathResolver.resolveToFile(
+                              userProfile!.profilePicturePath!,
+                            ),
                           ),
                           fit: BoxFit.cover,
                         )
@@ -421,23 +423,28 @@ class SettingsMenuItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
-            shape: BoxShape.circle,
+      child: Material(
+        color: Colors.transparent,
+        clipBehavior: Clip.antiAlias,
+        borderRadius: BorderRadius.circular(16),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          leading: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: iconColor),
           ),
-          child: Icon(icon, color: iconColor),
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          subtitle: Text(
+            subtitle,
+            style: TextStyle(color: Colors.grey[400], fontSize: 12),
+          ),
+          trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+          onTap: onTap,
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(color: Colors.grey[400], fontSize: 12),
-        ),
-        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-        onTap: onTap,
       ),
     );
   }

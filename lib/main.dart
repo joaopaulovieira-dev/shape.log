@@ -15,12 +15,14 @@ import 'features/profile/data/models/user_profile_hive_model.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'core/utils/image_path_resolver.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await Hive.initFlutter();
   await initializeDateFormatting('pt_BR', null);
+  await ImagePathResolver.init();
 
   // Initialize Notifications
   await NotificationService().init();

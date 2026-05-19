@@ -13,6 +13,7 @@ import '../../../common/services/image_storage_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:io';
+import '../../../../core/utils/image_path_resolver.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
   final bool isFirstRun; // If true, don't show "Cancel" button, force save
@@ -183,7 +184,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                   radius: 50,
                                   backgroundColor: const Color(0xFF2A2A2A),
                                   backgroundImage: _profilePicturePath != null
-                                      ? FileImage(File(_profilePicturePath!))
+                                      ? FileImage(ImagePathResolver.resolveToFile(_profilePicturePath!))
                                       : null,
                                   child: _profilePicturePath == null
                                       ? const Icon(

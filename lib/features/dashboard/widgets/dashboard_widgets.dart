@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:shape_log/core/utils/image_path_resolver.dart';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -289,7 +289,7 @@ class LastSessionRecap extends StatelessWidget {
           if (hasImage)
             Positioned.fill(
               child: Image.file(
-                File(lastSession!.imagePaths!.first),
+                ImagePathResolver.resolveToFile(lastSession!.imagePaths!.first),
                 fit: BoxFit.cover,
                 color: Colors.black.withOpacity(0.7), // Darken
                 colorBlendMode: BlendMode.darken,

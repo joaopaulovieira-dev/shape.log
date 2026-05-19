@@ -1,4 +1,4 @@
-import 'dart:io';
+import '../../../../core/utils/image_path_resolver.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -403,7 +403,11 @@ class MeasurementCard extends StatelessWidget {
                           color: Colors.white.withOpacity(0.1),
                         ),
                         image: DecorationImage(
-                          image: FileImage(File(measurement.imagePaths[index])),
+                          image: FileImage(
+                            ImagePathResolver.resolveToFile(
+                              measurement.imagePaths[index],
+                            ),
+                          ),
                           fit: BoxFit.cover,
                         ),
                       ),

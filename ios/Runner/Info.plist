@@ -9,8 +9,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<!-- TODO: Substituir pelo seu REVERSED_CLIENT_ID do arquivo GoogleService-Info.plist quando o login Google estiver ativado no console -->
-				<string>com.googleusercontent.apps.522991040005-placeholder</string>
+				<string>com.googleusercontent.apps.522991040005-kqtn92ai8l8g95guvrl053hb8s7laen</string>
 			</array>
 		</dict>
 	</array>

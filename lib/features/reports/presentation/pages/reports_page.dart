@@ -17,6 +17,7 @@ import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import '../../../../features/workout/data/models/workout_history_hive_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import '../../../../core/utils/image_path_resolver.dart';
 import '../../../image_library/presentation/image_source_sheet.dart';
 import '../../../common/presentation/widgets/full_screen_image_viewer.dart';
 import '../../../common/services/image_storage_service.dart';
@@ -602,7 +603,7 @@ class _HistoryTab extends ConsumerWidget {
                                                 borderRadius:
                                                     BorderRadius.circular(6),
                                                 child: Image.file(
-                                                  File(h.imagePaths[i]),
+                                                  ImagePathResolver.resolveToFile(h.imagePaths[i]),
                                                   width: 40,
                                                   height: 40,
                                                   fit: BoxFit.cover,
@@ -765,7 +766,7 @@ class _PhotoManagerDialogState extends State<_PhotoManagerDialog> {
                             },
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: Image.file(File(path), fit: BoxFit.cover),
+                              child: Image.file(ImagePathResolver.resolveToFile(path), fit: BoxFit.cover),
                             ),
                           ),
                           Positioned(

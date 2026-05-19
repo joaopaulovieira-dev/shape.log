@@ -1,10 +1,10 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/utils/image_path_resolver.dart';
 
 import '../providers/workout_provider.dart';
 import '../../domain/entities/exercise.dart';
@@ -110,7 +110,7 @@ class ExerciseDetailsPage extends ConsumerWidget {
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(24),
                                     child: Image.file(
-                                      File(path),
+                                      ImagePathResolver.resolveToFile(path),
                                       fit: BoxFit.contain,
                                       errorBuilder: (ctx, err, stack) =>
                                           const Center(

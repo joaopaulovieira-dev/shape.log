@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'dart:io';
 import 'package:uuid/uuid.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/utils/image_path_resolver.dart';
 
 import '../../domain/entities/workout.dart';
 import '../../domain/entities/exercise.dart';
@@ -429,7 +429,9 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                                 ? ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
                                     child: Image.file(
-                                      File(ex.imagePaths.first),
+                                      ImagePathResolver.resolveToFile(
+                                        ex.imagePaths.first,
+                                      ),
                                       fit: BoxFit.cover,
                                       errorBuilder: (ctx, err, stack) =>
                                           const Icon(

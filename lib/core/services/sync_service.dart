@@ -1,9 +1,9 @@
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../utils/image_path_resolver.dart';
 
 import '../../features/workout/data/models/workout_hive_model.dart';
 import '../../features/workout/data/models/workout_history_hive_model.dart';
@@ -252,7 +252,7 @@ class SyncService {
 
   // Upload genérico de arquivo local para o Firebase Storage
   Future<String?> uploadFile(String localPath, String storagePath) async {
-    final file = File(localPath);
+    final file = ImagePathResolver.resolveToFile(localPath);
     if (!file.existsSync()) return null;
 
     try {

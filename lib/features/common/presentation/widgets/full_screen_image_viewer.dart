@@ -1,4 +1,4 @@
-import 'dart:io';
+import '../../../../core/utils/image_path_resolver.dart';
 import 'package:flutter/material.dart';
 
 class FullScreenImageViewer extends StatefulWidget {
@@ -47,7 +47,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                 maxScale: 4.0,
                 child: Center(
                   child: Image.file(
-                    File(widget.imagePaths[index]),
+                    ImagePathResolver.resolveToFile(widget.imagePaths[index]),
                     fit: BoxFit.contain,
                   ),
                 ),

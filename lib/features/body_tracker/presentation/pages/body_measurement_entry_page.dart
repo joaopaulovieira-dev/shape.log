@@ -1,4 +1,5 @@
 import 'dart:io';
+import '../../../../core/utils/image_path_resolver.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
@@ -993,7 +994,7 @@ class _BodyMeasurementEntryPageState
                                       ),
                                       image: DecorationImage(
                                         image: FileImage(
-                                          File(_imagePaths[index]),
+                                          ImagePathResolver.resolveToFile(_imagePaths[index]),
                                         ),
                                         fit: BoxFit.cover,
                                       ),

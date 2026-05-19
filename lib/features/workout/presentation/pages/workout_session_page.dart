@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +18,7 @@ import '../../../common/services/image_storage_service.dart';
 import '../../../../core/presentation/widgets/app_dialogs.dart';
 import '../../../../core/presentation/widgets/app_modals.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/utils/image_path_resolver.dart';
 
 class WorkoutSessionPage extends ConsumerStatefulWidget {
   final Workout workout;
@@ -580,7 +580,9 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                             ),
                                       child: exercise.imagePaths.isNotEmpty
                                           ? Image.file(
-                                              File(exercise.imagePaths.first),
+                                              ImagePathResolver.resolveToFile(
+                                                exercise.imagePaths.first,
+                                              ),
                                               fit: BoxFit.contain,
                                               errorBuilder: (_, _, _) =>
                                                   const Icon(
@@ -1414,7 +1416,9 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
                                   color: Colors.white.withOpacity(0.05),
                                 ),
                                 image: DecorationImage(
-                                  image: FileImage(File(path)),
+                                  image: FileImage(
+                                    ImagePathResolver.resolveToFile(path),
+                                  ),
                                   fit: BoxFit.cover,
                                 ),
                               ),

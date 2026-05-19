@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
+import '../../../../core/utils/image_path_resolver.dart';
 import '../../../image_library/presentation/image_source_sheet.dart';
 import '../../../../core/presentation/widgets/app_modals.dart';
 import '../../domain/entities/exercise.dart';
@@ -469,7 +470,7 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
                                     color: Colors.white.withOpacity(0.05),
                                   ),
                                   image: DecorationImage(
-                                    image: FileImage(File(_imagePaths[index])),
+                                    image: FileImage(ImagePathResolver.resolveToFile(_imagePaths[index])),
                                     fit: BoxFit.cover,
                                   ),
                                 ),
