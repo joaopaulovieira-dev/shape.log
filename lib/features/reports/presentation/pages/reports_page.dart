@@ -54,25 +54,27 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: kIsWeb
-          ? ref.watch(historyListProvider).when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-              error: (e, _) => _buildWebLayout(<WorkoutHistory>[]),
-              data: (list) {
-                final sorted = [...list]
-                  ..sort((a, b) => b.completedDate.compareTo(a.completedDate));
-                return _buildWebLayout(sorted);
-              },
-            )
+          ? ref
+                .watch(historyListProvider)
+                .when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => _buildWebLayout(<WorkoutHistory>[]),
+                  data: (list) {
+                    final sorted = [...list]
+                      ..sort(
+                        (a, b) => b.completedDate.compareTo(a.completedDate),
+                      );
+                    return _buildWebLayout(sorted);
+                  },
+                )
           : ValueListenableBuilder<Box<WorkoutHistoryHiveModel>>(
               valueListenable: Hive.box<WorkoutHistoryHiveModel>(
                 'history_log',
               ).listenable(),
               builder: (context, box, _) {
-                final historyList =
-                    box.values.map((e) => e.toEntity()).toList()
-                      ..sort(
-                          (a, b) => b.completedDate.compareTo(a.completedDate));
+                final historyList = box.values.map((e) => e.toEntity()).toList()
+                  ..sort((a, b) => b.completedDate.compareTo(a.completedDate));
                 return _buildBody(historyList);
               },
             ),
@@ -94,11 +96,15 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
-                Text('HUB',
-                    style: GoogleFonts.outfit(
-                      fontSize: 11, color: Colors.white38,
-                      fontWeight: FontWeight.w600, letterSpacing: 1.2,
-                    )),
+                Text(
+                  'HUB',
+                  style: GoogleFonts.outfit(
+                    fontSize: 11,
+                    color: Colors.white38,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 _WebTabButton(
                   icon: Icons.bar_chart,
@@ -139,61 +145,52 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
 
   Widget _buildBody(List<WorkoutHistory> historyList) {
     return NestedScrollView(
-            headerSliverBuilder: (context, innerBoxIsScrolled) {
-              return [
-                SliverAppBar(
-                  expandedHeight: 120.0,
-                  floating: true,
-                  pinned: true,
-                  backgroundColor: AppColors.background,
-                  flexibleSpace: FlexibleSpaceBar(
-                    centerTitle: true,
-                    titlePadding: const EdgeInsets.only(bottom: 16),
-                    title: Text(
-                      'Intelligence Hub',
-                      style: GoogleFonts.outfit(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+      headerSliverBuilder: (context, innerBoxIsScrolled) {
+        return [
+          SliverAppBar(
+            expandedHeight: 120.0,
+            floating: true,
+            pinned: true,
+            backgroundColor: AppColors.background,
+            flexibleSpace: FlexibleSpaceBar(
+              centerTitle: true,
+              titlePadding: const EdgeInsets.only(bottom: 16),
+              title: Text(
+                'Intelligence Hub',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 8,
-                    ),
-                    child: _buildHubSelector(),
-                  ),
-                ),
-              ];
-            },
-            body: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: ScaleTransition(
-                    scale: Tween<double>(
-                      begin: 0.98,
-                      end: 1.0,
-                    ).animate(animation),
-                    child: child,
-                  ),
-                );
-              },
-              child: _currentMode == HubMode.analytics
-                  ? _AnalyticsTab(
-                      key: const ValueKey('analytics'),
-                      history: historyList,
-                    )
-                  : _HistoryTab(
-                      key: const ValueKey('logs'),
-                      history: historyList,
-                    ),
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: _buildHubSelector(),
+            ),
+          ),
+        ];
+      },
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.98, end: 1.0).animate(animation),
+              child: child,
             ),
           );
+        },
+        child: _currentMode == HubMode.analytics
+            ? _AnalyticsTab(
+                key: const ValueKey('analytics'),
+                history: historyList,
+              )
+            : _HistoryTab(key: const ValueKey('logs'), history: historyList),
+      ),
+    );
   }
 
   Widget _buildHubSelector() {
@@ -342,12 +339,15 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
               _filterMode == 'all'
                   ? 'Tudo'
                   : _filterMode == '30_days'
-                      ? '30 Dias'
-                      : _filterMode == '90_days'
-                          ? '90 Dias'
-                          : '7 Dias',
+                  ? '30 Dias'
+                  : _filterMode == '90_days'
+                  ? '90 Dias'
+                  : '7 Dias',
               style: GoogleFonts.outfit(
-                  color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             const SizedBox(width: 4),
             const Icon(Icons.arrow_drop_down, color: Colors.grey, size: 16),
@@ -372,9 +372,15 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(mainAxisAlignment: MainAxisAlignment.end, children: [filterWidget]),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [filterWidget],
+          ),
           const SizedBox(height: 24),
-          VolumeLoadChart(history: filteredHistory, isAllTime: _filterMode == 'all'),
+          VolumeLoadChart(
+            history: filteredHistory,
+            isAllTime: _filterMode == 'all',
+          ),
           const SizedBox(height: 24),
           ConsistencyHeatmap(history: filteredHistory),
           const SizedBox(height: 24),
@@ -386,18 +392,17 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
   }
 
   // ── Web analytics layout — grid 2 colunas ──────────────────────────────────
-  Widget _buildWebAnalytics(
-      List<WorkoutHistory> history, Widget filterWidget) {
+  Widget _buildWebAnalytics(List<WorkoutHistory> history, Widget filterWidget) {
     // Métricas de resumo
     final totalSessions = history.length;
     final avgDuration = totalSessions == 0
         ? 0
         : (history.fold(0, (s, h) => s + h.durationMinutes) / totalSessions)
-            .round();
+              .round();
     final avgCompletion = totalSessions == 0
         ? 0.0
         : history.fold(0.0, (s, h) => s + h.completionPercentage) /
-            totalSessions;
+              totalSessions;
     final totalVolume = history.fold(0.0, (sum, h) {
       for (final ex in h.exercises) {
         if (ex.type == ExerciseTypeEntity.weight) {
@@ -413,59 +418,73 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
       return sum;
     });
 
-    Widget kpi(String label, String value, IconData icon, Color c) =>
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF111111),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withOpacity(0.07)),
-            ),
-            child: Row(children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: c.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: c, size: 16),
+    Widget kpi(String label, String value, IconData icon, Color c) => Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF111111),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withOpacity(0.07)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: c.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(8),
               ),
-              const SizedBox(width: 12),
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(value,
-                    style: GoogleFonts.outfit(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white)),
-                Text(label,
-                    style: GoogleFonts.outfit(
-                        fontSize: 11, color: Colors.white38)),
-              ]),
-            ]),
-          ),
-        );
+              child: Icon(icon, color: c, size: 16),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: GoogleFonts.outfit(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  label,
+                  style: GoogleFonts.outfit(
+                    fontSize: 11,
+                    color: Colors.white38,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
 
     Widget card(String title, Widget child) => Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFF111111),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white.withOpacity(0.07)),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111111),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withOpacity(0.07)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.outfit(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title,
-                  style: GoogleFonts.outfit(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white)),
-              const SizedBox(height: 16),
-              child,
-            ],
-          ),
-        );
+          const SizedBox(height: 16),
+          child,
+        ],
+      ),
+    );
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(28),
@@ -475,23 +494,35 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
           // Filtro + KPIs
           Row(
             children: [
-              kpi('Sessões', '$totalSessions', Icons.fitness_center,
-                  AppColors.primary),
-              const SizedBox(width: 12),
-              kpi('Duração média', '${avgDuration}min', Icons.timer_outlined,
-                  Colors.blueAccent),
-              const SizedBox(width: 12),
-              kpi('Conclusão média',
-                  '${avgCompletion.toStringAsFixed(0)}%',
-                  Icons.check_circle_outline, Colors.tealAccent),
+              kpi(
+                'Sessões',
+                '$totalSessions',
+                Icons.fitness_center,
+                AppColors.primary,
+              ),
               const SizedBox(width: 12),
               kpi(
-                  'Volume total',
-                  totalVolume >= 1000
-                      ? '${(totalVolume / 1000).toStringAsFixed(1)}t'
-                      : '${totalVolume.toStringAsFixed(0)}kg',
-                  Icons.bar_chart,
-                  Colors.purpleAccent),
+                'Duração média',
+                '${avgDuration}min',
+                Icons.timer_outlined,
+                Colors.blueAccent,
+              ),
+              const SizedBox(width: 12),
+              kpi(
+                'Conclusão média',
+                '${avgCompletion.toStringAsFixed(0)}%',
+                Icons.check_circle_outline,
+                Colors.tealAccent,
+              ),
+              const SizedBox(width: 12),
+              kpi(
+                'Volume total',
+                totalVolume >= 1000
+                    ? '${(totalVolume / 1000).toStringAsFixed(1)}t'
+                    : '${totalVolume.toStringAsFixed(0)}kg',
+                Icons.bar_chart,
+                Colors.purpleAccent,
+              ),
               const SizedBox(width: 16),
               filterWidget,
             ],
@@ -504,17 +535,21 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
             children: [
               Expanded(
                 flex: 6,
-                child: card('Volume de Treino',
-                    VolumeLoadChart(
-                      history: history,
-                      isAllTime: _filterMode == 'all',
-                    )),
+                child: card(
+                  'Volume de Treino',
+                  VolumeLoadChart(
+                    history: history,
+                    isAllTime: _filterMode == 'all',
+                  ),
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 flex: 4,
-                child: card('Consistência Semanal',
-                    ConsistencyHeatmap(history: history)),
+                child: card(
+                  'Consistência Semanal',
+                  ConsistencyHeatmap(history: history),
+                ),
               ),
             ],
           ),
@@ -526,8 +561,10 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
             children: [
               Expanded(
                 flex: 4,
-                child: card('Balanço Muscular',
-                    BalancePieChart(history: history)),
+                child: card(
+                  'Balanço Muscular',
+                  BalancePieChart(history: history),
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -542,8 +579,10 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
           const SizedBox(height: 16),
 
           // Linha 3: Top exercícios (largura total)
-          card('Top Exercícios por Frequência',
-              _TopExercisesChart(history: history)),
+          card(
+            'Top Exercícios por Frequência',
+            _TopExercisesChart(history: history),
+          ),
         ],
       ),
     );
@@ -790,10 +829,20 @@ class _HistoryTab extends ConsumerWidget {
                                               child: ClipRRect(
                                                 borderRadius:
                                                     BorderRadius.circular(6),
-                                                child: ImagePathResolver.isRemote(h.imagePaths[i])
-                                                    ? Image.network(h.imagePaths[i], width: 40, height: 40, fit: BoxFit.cover)
+                                                child:
+                                                    ImagePathResolver.isRemote(
+                                                      h.imagePaths[i],
+                                                    )
+                                                    ? Image.network(
+                                                        h.imagePaths[i],
+                                                        width: 40,
+                                                        height: 40,
+                                                        fit: BoxFit.cover,
+                                                      )
                                                     : Image.file(
-                                                        ImagePathResolver.resolveToFile(h.imagePaths[i]),
+                                                        ImagePathResolver.resolveToFile(
+                                                          h.imagePaths[i],
+                                                        ),
                                                         width: 40,
                                                         height: 40,
                                                         fit: BoxFit.cover,
@@ -848,24 +897,32 @@ class _HistoryTab extends ConsumerWidget {
                     final measurements = ref.read(bodyTrackerProvider);
                     final user = await ref.read(userProfileProvider.future);
                     final report = WorkoutReportService().generateGeneralReport(
-                        history, measurements, user);
+                      history,
+                      measurements,
+                      user,
+                    );
                     await Clipboard.setData(ClipboardData(text: report));
                     if (context.mounted) {
                       SnackbarUtils.showSuccess(
-                          context, 'Dossiê copiado para IA!');
+                        context,
+                        'Dossiê copiado para IA!',
+                      );
                     }
                   } catch (e) {
                     debugPrint('Report error: $e');
                   }
                 },
                 icon: const Icon(Icons.auto_awesome, size: 16),
-                label: Text('Exportar Dossiê IA',
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+                label: Text(
+                  'Exportar Dossiê IA',
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+                ),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.black,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ],
@@ -881,14 +938,16 @@ class _HistoryTab extends ConsumerWidget {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: Colors.white.withOpacity(0.07)),
             ),
-            child: Row(children: [
-              _HCol('Data/Hora', flex: 2),
-              _HCol('Treino', flex: 3),
-              _HCol('Duração', flex: 1),
-              _HCol('Conclusão', flex: 2),
-              _HCol('Esforço', flex: 1),
-              _HCol('', flex: 1),
-            ]),
+            child: Row(
+              children: [
+                _HCol('Data/Hora', flex: 2),
+                _HCol('Treino', flex: 3),
+                _HCol('Duração', flex: 1),
+                _HCol('Conclusão', flex: 2),
+                _HCol('Esforço', flex: 1),
+                _HCol('', flex: 1),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 6),
@@ -917,20 +976,23 @@ class _HistoryTab extends ConsumerWidget {
                 final pctColor = pct >= 80
                     ? AppColors.primary
                     : pct >= 50
-                        ? Colors.orangeAccent
-                        : Colors.redAccent;
+                    ? Colors.orangeAccent
+                    : Colors.redAccent;
 
                 return InkWell(
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (_) => WorkoutHistoryDetailsPage(history: h)),
+                      builder: (_) => WorkoutHistoryDetailsPage(history: h),
+                    ),
                   ),
                   borderRadius: BorderRadius.circular(10),
                   hoverColor: Colors.white.withOpacity(0.03),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                     decoration: BoxDecoration(
                       color: isFirst
                           ? AppColors.primary.withOpacity(0.05)
@@ -942,86 +1004,118 @@ class _HistoryTab extends ConsumerWidget {
                             : Colors.white.withOpacity(0.06),
                       ),
                     ),
-                    child: Row(children: [
-                      Expanded(
-                        flex: 2,
-                        child: Text(dateStr,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            dateStr,
                             style: GoogleFonts.outfit(
-                                color: Colors.white54, fontSize: 12)),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: Row(children: [
-                          Text(h.workoutName,
-                              style: GoogleFonts.outfit(
+                              color: Colors.white54,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: Row(
+                            children: [
+                              Text(
+                                h.workoutName,
+                                style: GoogleFonts.outfit(
                                   color: Colors.white,
                                   fontSize: 13,
                                   fontWeight: isFirst
                                       ? FontWeight.w600
-                                      : FontWeight.w400),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                          if (isFirst) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 5, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(4),
+                                      : FontWeight.w400,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              child: Text('RECENTE',
-                                  style: GoogleFonts.outfit(
+                              if (isFirst) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5,
+                                    vertical: 1,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'RECENTE',
+                                    style: GoogleFonts.outfit(
                                       fontSize: 8,
                                       color: AppColors.primary,
                                       fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.5)),
-                            ),
-                          ],
-                        ]),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Text('${h.durationMinutes}min',
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Text(
+                            '${h.durationMinutes}min',
                             style: GoogleFonts.outfit(
-                                color: Colors.white70, fontSize: 13)),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Row(children: [
-                          SizedBox(
-                            width: 80,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(3),
-                              child: LinearProgressIndicator(
-                                value: (pct / 100).clamp(0.0, 1.0),
-                                backgroundColor:
-                                    Colors.white.withOpacity(0.08),
-                                valueColor:
-                                    AlwaysStoppedAnimation(pctColor),
-                                minHeight: 6,
-                              ),
+                              color: Colors.white70,
+                              fontSize: 13,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Text('${pct.toStringAsFixed(0)}%',
-                              style: GoogleFonts.outfit(
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 80,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(3),
+                                  child: LinearProgressIndicator(
+                                    value: (pct / 100).clamp(0.0, 1.0),
+                                    backgroundColor: Colors.white.withOpacity(
+                                      0.08,
+                                    ),
+                                    valueColor: AlwaysStoppedAnimation(
+                                      pctColor,
+                                    ),
+                                    minHeight: 6,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${pct.toStringAsFixed(0)}%',
+                                style: GoogleFonts.outfit(
                                   color: pctColor,
                                   fontSize: 12,
-                                  fontWeight: FontWeight.w600)),
-                        ]),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Text(_getRpeEmoji(h.rpe),
-                            style: const TextStyle(fontSize: 18)),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: const Icon(Icons.chevron_right,
-                            color: Colors.white24, size: 16),
-                      ),
-                    ]),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Text(
+                            _getRpeEmoji(h.rpe),
+                            style: const TextStyle(fontSize: 18),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: const Icon(
+                            Icons.chevron_right,
+                            color: Colors.white24,
+                            size: 16,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -1039,14 +1133,17 @@ class _HCol extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Expanded(
-        flex: flex,
-        child: Text(label,
-            style: GoogleFonts.outfit(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: Colors.white38,
-                letterSpacing: 0.4)),
-      );
+    flex: flex,
+    child: Text(
+      label,
+      style: GoogleFonts.outfit(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: Colors.white38,
+        letterSpacing: 0.4,
+      ),
+    ),
+  );
 }
 
 class _PhotoManagerDialog extends StatefulWidget {
@@ -1178,7 +1275,10 @@ class _PhotoManagerDialogState extends State<_PhotoManagerDialog> {
                               borderRadius: BorderRadius.circular(8),
                               child: ImagePathResolver.isRemote(path)
                                   ? Image.network(path, fit: BoxFit.cover)
-                                  : Image.file(ImagePathResolver.resolveToFile(path), fit: BoxFit.cover),
+                                  : Image.file(
+                                      ImagePathResolver.resolveToFile(path),
+                                      fit: BoxFit.cover,
+                                    ),
                             ),
                           ),
                           Positioned(
@@ -1229,8 +1329,9 @@ class _PhotoManagerDialogState extends State<_PhotoManagerDialog> {
                       for (final file in files) {
                         try {
                           final xFile = XFile(file.path);
-                          final permanentPath =
-                              await _imageService.saveImage(xFile);
+                          final permanentPath = await _imageService.saveImage(
+                            xFile,
+                          );
                           setState(() => _currentImages.add(permanentPath));
                         } catch (e) {
                           debugPrint('Error saving image: $e');
@@ -1292,16 +1393,17 @@ class _WebTabButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: [
-              Icon(icon,
-                  size: 16,
-                  color: selected ? AppColors.primary : Colors.white38),
+              Icon(
+                icon,
+                size: 16,
+                color: selected ? AppColors.primary : Colors.white38,
+              ),
               const SizedBox(width: 10),
               Text(
                 label,
                 style: GoogleFonts.outfit(
                   fontSize: 14,
-                  fontWeight:
-                      selected ? FontWeight.w600 : FontWeight.w400,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                   color: selected ? Colors.white : Colors.white54,
                 ),
               ),
@@ -1324,12 +1426,16 @@ class _SessionDurationChart extends StatelessWidget {
     final data = history.take(12).toList().reversed.toList();
     if (data.isEmpty) {
       return const Center(
-          child: Text('Sem dados',
-              style: TextStyle(color: Colors.white24, fontSize: 13)));
+        child: Text(
+          'Sem dados',
+          style: TextStyle(color: Colors.white24, fontSize: 13),
+        ),
+      );
     }
 
-    final maxDur =
-        data.map((h) => h.durationMinutes).reduce((a, b) => a > b ? a : b);
+    final maxDur = data
+        .map((h) => h.durationMinutes)
+        .reduce((a, b) => a > b ? a : b);
 
     return SizedBox(
       height: 160,
@@ -1348,14 +1454,17 @@ class _SessionDurationChart extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text('${h.durationMinutes}',
-                      style: GoogleFonts.outfit(
-                          fontSize: 9,
-                          color: isLast ? AppColors.primary : Colors.white38,
-                          fontWeight: FontWeight.w600)),
+                  Text(
+                    '${h.durationMinutes}',
+                    style: GoogleFonts.outfit(
+                      fontSize: 9,
+                      color: isLast ? AppColors.primary : Colors.white38,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   Container(
-                    height: (130 * frac).clamp(6.0, 130.0),
+                    height: (130 * frac).clamp(6.0, 120.0),
                     decoration: BoxDecoration(
                       color: isLast
                           ? AppColors.primary
@@ -1364,11 +1473,13 @@ class _SessionDurationChart extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Text(label,
-                      style: GoogleFonts.outfit(
-                          fontSize: 8,
-                          color:
-                              isLast ? Colors.white54 : Colors.white24)),
+                  Text(
+                    label,
+                    style: GoogleFonts.outfit(
+                      fontSize: 8,
+                      color: isLast ? Colors.white54 : Colors.white24,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1397,8 +1508,11 @@ class _TopExercisesChart extends StatelessWidget {
 
     if (freq.isEmpty) {
       return const Center(
-          child: Text('Sem dados',
-              style: TextStyle(color: Colors.white24, fontSize: 13)));
+        child: Text(
+          'Sem dados',
+          style: TextStyle(color: Colors.white24, fontSize: 13),
+        ),
+      );
     }
 
     final sorted = freq.entries.toList()
@@ -1426,50 +1540,59 @@ class _TopExercisesChart extends StatelessWidget {
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 10),
-          child: Row(children: [
-            SizedBox(
-              width: 160,
-              child: Text(
-                name,
-                style: GoogleFonts.outfit(
-                    fontSize: 12, color: Colors.white70),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Stack(children: [
-                Container(
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.06),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                FractionallySizedBox(
-                  widthFactor: frac.clamp(0.0, 1.0),
-                  child: Container(
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: c,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-              ]),
-            ),
-            const SizedBox(width: 10),
-            SizedBox(
-              width: 32,
-              child: Text('$count×',
+          child: Row(
+            children: [
+              SizedBox(
+                width: 160,
+                child: Text(
+                  name,
                   style: GoogleFonts.outfit(
-                      fontSize: 11,
-                      color: c,
-                      fontWeight: FontWeight.w700),
-                  textAlign: TextAlign.right),
-            ),
-          ]),
+                    fontSize: 12,
+                    color: Colors.white70,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Stack(
+                  children: [
+                    Container(
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    FractionallySizedBox(
+                      widthFactor: frac.clamp(0.0, 1.0),
+                      child: Container(
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: c,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 32,
+                child: Text(
+                  '$count×',
+                  style: GoogleFonts.outfit(
+                    fontSize: 11,
+                    color: c,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  textAlign: TextAlign.right,
+                ),
+              ),
+            ],
+          ),
         );
       }).toList(),
     );

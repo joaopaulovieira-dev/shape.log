@@ -18,7 +18,9 @@
       "Bash(chmod +x /Users/joaopaulo/Developer/shape.log/apply_cors.sh)",
       "Bash(grep -v \"^$\")",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(head -288 /Users/joaopaulo/Developer/shape.log/lib/features/body_tracker/presentation/pages/body_tracker_page.dart)",
+      "Bash(mv /tmp/bt_top.dart /Users/joaopaulo/Developer/shape.log/lib/features/body_tracker/presentation/pages/body_tracker_page.dart)"
     ]
   }
 }

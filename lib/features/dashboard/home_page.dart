@@ -153,9 +153,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     error: (e, st) =>
                         _buildHistoryContent([], allWorkouts, userName),
                     data: (entities) => _buildHistoryContent(
-                      entities
-                          .map(WorkoutHistoryHiveModel.fromEntity)
-                          .toList(),
+                      entities.map(WorkoutHistoryHiveModel.fromEntity).toList(),
                       allWorkouts,
                       userName,
                     ),
@@ -165,8 +163,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                   valueListenable: Hive.box<WorkoutHistoryHiveModel>(
                     'history_log',
                   ).listenable(),
-                  builder: (context, box, _) =>
-                      _buildHistoryContent(box.values.toList(), allWorkouts, userName),
+                  builder: (context, box, _) => _buildHistoryContent(
+                    box.values.toList(),
+                    allWorkouts,
+                    userName,
+                  ),
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -289,43 +290,47 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     // ── Métricas calculadas ─────────────────────────────────────────
     final thisMonthSessions = history
-        .where((h) =>
-            h.completedDate.month == now.month &&
-            h.completedDate.year == now.year)
+        .where(
+          (h) =>
+              h.completedDate.month == now.month &&
+              h.completedDate.year == now.year,
+        )
         .toList();
 
     final avgDuration = history.isEmpty
         ? 0
         : (history.fold(0, (s, h) => s + h.durationMinutes) / history.length)
-            .round();
+              .round();
 
     final avgCompletion = history.isEmpty
         ? 0.0
         : history.fold(0.0, (s, h) => s + h.completionPercentage) /
-            history.length;
+              history.length;
 
     // Streak: semanas consecutivas com pelo menos 1 treino
     int streak = 0;
     for (int w = 0; w < 52; w++) {
-      final weekStart =
-          now.subtract(Duration(days: now.weekday - 1 + w * 7));
+      final weekStart = now.subtract(Duration(days: now.weekday - 1 + w * 7));
       final weekEnd = weekStart.add(const Duration(days: 6));
-      final had = history.any((h) =>
-          !h.completedDate.isBefore(weekStart) &&
-          !h.completedDate.isAfter(weekEnd));
+      final had = history.any(
+        (h) =>
+            !h.completedDate.isBefore(weekStart) &&
+            !h.completedDate.isAfter(weekEnd),
+      );
       if (!had) break;
       streak++;
     }
 
     // Frequência por semana (últimas 8 semanas)
     final weekCounts = List.generate(8, (i) {
-      final start = now
-          .subtract(Duration(days: now.weekday - 1 + (7 - i) * 7));
+      final start = now.subtract(Duration(days: now.weekday - 1 + (7 - i) * 7));
       final end = start.add(const Duration(days: 6));
       return history
-          .where((h) =>
-              !h.completedDate.isBefore(start) &&
-              !h.completedDate.isAfter(end))
+          .where(
+            (h) =>
+                !h.completedDate.isBefore(start) &&
+                !h.completedDate.isAfter(end),
+          )
           .length;
     });
 
@@ -352,18 +357,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Dashboard',
-                    style: GoogleFonts.outfit(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  Text(
                     '${_weekdayLabel(now.weekday)}, ${now.day} de ${_monthLabel(now.month)} · Visão geral do seu progresso',
                     style: GoogleFonts.outfit(
-                        fontSize: 13, color: Colors.white38),
+                      fontSize: 13,
+                      color: Colors.white38,
+                    ),
                   ),
                 ],
               ),
@@ -371,13 +369,16 @@ class _HomePageState extends ConsumerState<HomePage> {
               FilledButton.icon(
                 onPressed: () => context.go('/workouts'),
                 icon: const Icon(Icons.fitness_center, size: 16),
-                label: Text('Ver Treinos',
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                label: Text(
+                  'Ver Treinos',
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                ),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.black,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ],
@@ -391,7 +392,9 @@ class _HomePageState extends ConsumerState<HomePage> {
               _KpiCard(
                 label: 'Treinos este mês',
                 value: '${thisMonthSessions.length}',
-                sub: history.isEmpty ? 'Sem histórico' : 'de ${history.length} no total',
+                sub: history.isEmpty
+                    ? 'Sem histórico'
+                    : 'de ${history.length} no total',
                 icon: Icons.fitness_center_rounded,
                 color: AppColors.primary,
                 trend: _trendLabel(history, now),
@@ -421,8 +424,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                 sub: streak == 0
                     ? 'Comece esta semana!'
                     : streak == 1
-                        ? 'semana consecutiva'
-                        : 'semanas consecutivas',
+                    ? 'semana consecutiva'
+                    : 'semanas consecutivas',
                 icon: Icons.local_fire_department_rounded,
                 color: Colors.orangeAccent,
               ),
@@ -459,9 +462,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                   child: history.isEmpty
                       ? Padding(
                           padding: const EdgeInsets.all(16),
-                          child: Text('Nenhuma sessão registrada.',
-                              style: GoogleFonts.outfit(
-                                  color: Colors.white38, fontSize: 13)),
+                          child: Text(
+                            'Nenhuma sessão registrada.',
+                            style: GoogleFonts.outfit(
+                              color: Colors.white38,
+                              fontSize: 13,
+                            ),
+                          ),
                         )
                       : Column(
                           children: history.take(5).map((h) {
@@ -471,7 +478,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                             final pct = h.completionPercentage;
                             return Padding(
                               padding: const EdgeInsets.symmetric(
-                                  vertical: 8, horizontal: 4),
+                                vertical: 8,
+                                horizontal: 4,
+                              ),
                               child: Row(
                                 children: [
                                   Container(
@@ -481,8 +490,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                                       color: pct >= 80
                                           ? AppColors.primary
                                           : pct >= 50
-                                              ? Colors.orangeAccent
-                                              : Colors.redAccent,
+                                          ? Colors.orangeAccent
+                                          : Colors.redAccent,
                                       shape: BoxShape.circle,
                                     ),
                                   ),
@@ -491,9 +500,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                                     child: Text(
                                       h.workoutName,
                                       style: GoogleFonts.outfit(
-                                          fontSize: 13,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w500),
+                                        fontSize: 13,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -501,13 +511,17 @@ class _HomePageState extends ConsumerState<HomePage> {
                                   Text(
                                     dateStr,
                                     style: GoogleFonts.outfit(
-                                        fontSize: 11, color: Colors.white38),
+                                      fontSize: 11,
+                                      color: Colors.white38,
+                                    ),
                                   ),
                                   const SizedBox(width: 10),
                                   Text(
                                     '${h.durationMinutes}m',
                                     style: GoogleFonts.outfit(
-                                        fontSize: 11, color: Colors.white38),
+                                      fontSize: 11,
+                                      color: Colors.white38,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -551,87 +565,119 @@ class _HomePageState extends ConsumerState<HomePage> {
                       ? null
                       : TextButton(
                           onPressed: () => context.go('/workouts'),
-                          child: Text('Ver todos',
-                              style: GoogleFonts.outfit(
-                                  fontSize: 12, color: AppColors.primary)),
+                          child: Text(
+                            'Ver todos',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              color: AppColors.primary,
+                            ),
+                          ),
                         ),
                   child: allWorkouts.isEmpty
                       ? Padding(
                           padding: const EdgeInsets.all(16),
-                          child: Text('Nenhuma rotina cadastrada.',
-                              style: GoogleFonts.outfit(
-                                  color: Colors.white38, fontSize: 13)),
+                          child: Text(
+                            'Nenhuma rotina cadastrada.',
+                            style: GoogleFonts.outfit(
+                              color: Colors.white38,
+                              fontSize: 13,
+                            ),
+                          ),
                         )
                       : Column(
                           children:
-                              (todayScheduled.isNotEmpty ? todayScheduled : allWorkouts)
+                              (todayScheduled.isNotEmpty
+                                      ? todayScheduled
+                                      : allWorkouts)
                                   .take(4)
                                   .map((w) {
-                            final days = const [
-                              '', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'
-                            ];
-                            final dayStr = w.scheduledDays
-                                .map((d) => days[d.clamp(1, 7)])
-                                .join(' · ');
-                            return InkWell(
-                              onTap: () =>
-                                  context.go('/workouts/${w.id}'),
-                              borderRadius: BorderRadius.circular(8),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 10, horizontal: 4),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 36,
-                                      height: 36,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primary
-                                            .withOpacity(0.1),
-                                        borderRadius:
-                                            BorderRadius.circular(8),
-                                      ),
-                                      child: const Icon(
-                                        Icons.fitness_center,
-                                        color: AppColors.primary,
-                                        size: 18,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(w.name,
+                                    final days = const [
+                                      '',
+                                      'Seg',
+                                      'Ter',
+                                      'Qua',
+                                      'Qui',
+                                      'Sex',
+                                      'Sáb',
+                                      'Dom',
+                                    ];
+                                    final dayStr = w.scheduledDays
+                                        .map((d) => days[d.clamp(1, 7)])
+                                        .join(' · ');
+                                    return InkWell(
+                                      onTap: () =>
+                                          context.go('/workouts/${w.id}'),
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 10,
+                                          horizontal: 4,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 36,
+                                              height: 36,
+                                              decoration: BoxDecoration(
+                                                color: AppColors.primary
+                                                    .withOpacity(0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: const Icon(
+                                                Icons.fitness_center,
+                                                color: AppColors.primary,
+                                                size: 18,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    w.name,
+                                                    style: GoogleFonts.outfit(
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: Colors.white,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                  if (dayStr.isNotEmpty)
+                                                    Text(
+                                                      dayStr,
+                                                      style: GoogleFonts.outfit(
+                                                        fontSize: 11,
+                                                        color: Colors.white38,
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                            Text(
+                                              '${w.exercises.length} ex',
                                               style: GoogleFonts.outfit(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Colors.white),
-                                              maxLines: 1,
-                                              overflow:
-                                                  TextOverflow.ellipsis),
-                                          if (dayStr.isNotEmpty)
-                                            Text(dayStr,
-                                                style: GoogleFonts.outfit(
-                                                    fontSize: 11,
-                                                    color: Colors.white38)),
-                                        ],
+                                                fontSize: 11,
+                                                color: Colors.white38,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            const Icon(
+                                              Icons.chevron_right,
+                                              color: Colors.white24,
+                                              size: 16,
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                    Text(
-                                      '${w.exercises.length} ex',
-                                      style: GoogleFonts.outfit(
-                                          fontSize: 11, color: Colors.white38),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Icon(Icons.chevron_right,
-                                        color: Colors.white24, size: 16),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                                    );
+                                  })
+                                  .toList(),
                         ),
                 ),
               ),
@@ -643,33 +689,63 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _emptyChart() => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Center(
-          child: Text('Sem dados suficientes',
-              style: GoogleFonts.outfit(color: Colors.white24, fontSize: 13)),
-        ),
-      );
+    padding: const EdgeInsets.all(24),
+    child: Center(
+      child: Text(
+        'Sem dados suficientes',
+        style: GoogleFonts.outfit(color: Colors.white24, fontSize: 13),
+      ),
+    ),
+  );
 
   String _weekdayLabel(int wd) {
-    const l = ['', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+    const l = [
+      '',
+      'Segunda',
+      'Terça',
+      'Quarta',
+      'Quinta',
+      'Sexta',
+      'Sábado',
+      'Domingo',
+    ];
     return l[wd.clamp(1, 7)];
   }
 
   String _monthLabel(int m) {
-    const l = ['', 'jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+    const l = [
+      '',
+      'jan',
+      'fev',
+      'mar',
+      'abr',
+      'mai',
+      'jun',
+      'jul',
+      'ago',
+      'set',
+      'out',
+      'nov',
+      'dez',
+    ];
     return l[m.clamp(1, 12)];
   }
 
   String _trendLabel(List<WorkoutHistoryHiveModel> history, DateTime now) {
     final prev = history
-        .where((h) =>
-            h.completedDate.month == (now.month == 1 ? 12 : now.month - 1) &&
-            h.completedDate.year == (now.month == 1 ? now.year - 1 : now.year))
+        .where(
+          (h) =>
+              h.completedDate.month == (now.month == 1 ? 12 : now.month - 1) &&
+              h.completedDate.year ==
+                  (now.month == 1 ? now.year - 1 : now.year),
+        )
         .length;
     final curr = history
-        .where((h) =>
-            h.completedDate.month == now.month &&
-            h.completedDate.year == now.year)
+        .where(
+          (h) =>
+              h.completedDate.month == now.month &&
+              h.completedDate.year == now.year,
+        )
         .length;
     if (prev == 0) return 'primeiro mês';
     final diff = curr - prev;
@@ -794,14 +870,20 @@ class _KpiCard extends StatelessWidget {
                 const Spacer(),
                 if (trend != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.06),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       trend!,
-                      style: GoogleFonts.outfit(fontSize: 9, color: Colors.white38),
+                      style: GoogleFonts.outfit(
+                        fontSize: 9,
+                        color: Colors.white38,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -819,11 +901,18 @@ class _KpiCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 2),
-            Text(label,
-                style: GoogleFonts.outfit(
-                    fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white70)),
-            Text(sub,
-                style: GoogleFonts.outfit(fontSize: 11, color: Colors.white38)),
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.white70,
+              ),
+            ),
+            Text(
+              sub,
+              style: GoogleFonts.outfit(fontSize: 11, color: Colors.white38),
+            ),
           ],
         ),
       ),
@@ -862,14 +951,21 @@ class _DashCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title,
-                        style: GoogleFonts.outfit(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white)),
-                    Text(subtitle,
-                        style: GoogleFonts.outfit(
-                            fontSize: 11, color: Colors.white38)),
+                    Text(
+                      title,
+                      style: GoogleFonts.outfit(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.outfit(
+                        fontSize: 11,
+                        color: Colors.white38,
+                      ),
+                    ),
                   ],
                 ),
                 const Spacer(),
@@ -934,8 +1030,8 @@ class _WeeklyBarChart extends StatelessWidget {
                     color: isLast
                         ? AppColors.primary
                         : val == 0
-                            ? Colors.white.withOpacity(0.06)
-                            : AppColors.primary.withOpacity(0.35),
+                        ? Colors.white.withOpacity(0.06)
+                        : AppColors.primary.withOpacity(0.35),
                     borderRadius: BorderRadius.circular(6),
                   ),
                 ),
