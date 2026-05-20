@@ -32,6 +32,18 @@ class WorkoutDetailsPage extends ConsumerStatefulWidget {
 }
 
 class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
+  bool _isRefreshing = false;
+
+  Future<void> _handleRefresh() async {
+    setState(() => _isRefreshing = true);
+    ref.invalidate(routineListProvider);
+    await ref.read(routineListProvider.future);
+    if (mounted) {
+      setState(() => _isRefreshing = false);
+      SnackbarUtils.showSuccess(context, 'Treino atualizado!');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final routinesAsync = ref.watch(routineListProvider);
@@ -86,18 +98,22 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
 
         return Scaffold(
           backgroundColor: Colors.black,
-          body: RefreshIndicator(
+          body: Stack(
+            children: [
+              RefreshIndicator(
             color: AppColors.primary,
             backgroundColor: const Color(0xFF1E1E1E),
-            onRefresh: () async {
-              ref.invalidate(routineListProvider);
-              await ref.read(routineListProvider.future);
-            },
+            displacement: 60,
+            edgeOffset: kToolbarHeight,
+            onRefresh: _handleRefresh,
             child: CustomScrollView(
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
             slivers: [
               SliverAppBar(
                 expandedHeight: 120.0,
-                floating: true,
+                floating: false,
                 pinned: true,
                 backgroundColor: AppColors.background,
                 leading: IconButton(
@@ -521,6 +537,20 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
               ),
             ],
           ),
+          ),
+              // Barra de progresso visível no topo durante refresh
+              if (_isRefreshing)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: LinearProgressIndicator(
+                    backgroundColor: Colors.transparent,
+                    valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                    minHeight: 3,
+                  ),
+                ),
+            ],
           ),
         );
       },

@@ -729,14 +729,58 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                 Row(
                                   children: [
                                     Expanded(
-                                      child: _buildInputCard(
-                                        context,
-                                        label: "TEMPO (min)",
-                                        controller: _cardioDurationController,
-                                        focusNode: _cardioDurationFocus,
-                                        onChanged: _onFieldChanged,
-                                        largeFont: true,
-                                        showSavedFeedback: _showSavedFeedback,
+                                      child: Stack(
+                                        children: [
+                                          _buildInputCard(
+                                            context,
+                                            label: "TEMPO (min)",
+                                            controller:
+                                                _cardioDurationController,
+                                            focusNode: _cardioDurationFocus,
+                                            onChanged: _onFieldChanged,
+                                            largeFont: true,
+                                            showSavedFeedback:
+                                                _showSavedFeedback,
+                                          ),
+                                          Positioned(
+                                            top: 8,
+                                            right: 8,
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                final mins = double.tryParse(
+                                                    _cardioDurationController
+                                                        .text);
+                                                showDialog(
+                                                  context: context,
+                                                  barrierDismissible: false,
+                                                  builder: (_) =>
+                                                      _CardioTimerDialog(
+                                                    targetMinutes: mins,
+                                                  ),
+                                                );
+                                              },
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.all(6),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.primary
+                                                      .withOpacity(0.15),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                    color: AppColors.primary
+                                                        .withOpacity(0.4),
+                                                  ),
+                                                ),
+                                                child: const Icon(
+                                                  Icons.timer_outlined,
+                                                  color: AppColors.primary,
+                                                  size: 18,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -1708,6 +1752,223 @@ class _RestTimerDialog extends ConsumerWidget {
                       ),
                     ),
                   ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Cronômetro de Cardio ──────────────────────────────────────────────────────
+
+class _CardioTimerDialog extends StatefulWidget {
+  final double? targetMinutes;
+  const _CardioTimerDialog({this.targetMinutes});
+
+  @override
+  State<_CardioTimerDialog> createState() => _CardioTimerDialogState();
+}
+
+class _CardioTimerDialogState extends State<_CardioTimerDialog> {
+  late final Stopwatch _stopwatch;
+  Timer? _ticker;
+  bool _running = false;
+
+  int get _targetSeconds =>
+      ((widget.targetMinutes ?? 0) * 60).round();
+
+  @override
+  void initState() {
+    super.initState();
+    _stopwatch = Stopwatch();
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    _stopwatch.stop();
+    super.dispose();
+  }
+
+  void _play() {
+    _stopwatch.start();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+    setState(() => _running = true);
+  }
+
+  void _pause() {
+    _stopwatch.stop();
+    _ticker?.cancel();
+    setState(() => _running = false);
+  }
+
+  void _stop() {
+    _stopwatch.stop();
+    _stopwatch.reset();
+    _ticker?.cancel();
+    setState(() => _running = false);
+  }
+
+  String _format(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final elapsed = _stopwatch.elapsed;
+    final elapsedSec = elapsed.inSeconds;
+    final hasTarget = _targetSeconds > 0;
+    final progress = hasTarget
+        ? (elapsedSec / _targetSeconds).clamp(0.0, 1.0)
+        : null;
+    final done = hasTarget && elapsedSec >= _targetSeconds;
+
+    return Dialog(
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(28),
+        side: BorderSide(color: Colors.white.withOpacity(0.06), width: 1.5),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Título
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.timer_outlined,
+                    color: AppColors.primary, size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  'CRONÔMETRO CARDIO',
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[500],
+                    letterSpacing: 1.5,
+                  ),
+                ),
+              ],
+            ),
+            if (hasTarget)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'Meta: ${widget.targetMinutes!.toStringAsFixed(0)} min',
+                  style: GoogleFonts.outfit(
+                      fontSize: 11, color: Colors.white38),
+                ),
+              ),
+            const SizedBox(height: 28),
+
+            // Círculo de progresso
+            SizedBox(
+              height: 180,
+              width: 180,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CircularProgressIndicator(
+                    value: progress,
+                    strokeWidth: 8,
+                    backgroundColor: Colors.white.withOpacity(0.05),
+                    color: done ? Colors.greenAccent : AppColors.primary,
+                    strokeCap: StrokeCap.round,
+                  ),
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _format(elapsed),
+                          style: GoogleFonts.outfit(
+                            fontSize: 52,
+                            fontWeight: FontWeight.bold,
+                            color: done ? Colors.greenAccent : Colors.white,
+                          ),
+                        ),
+                        if (hasTarget && !done)
+                          Text(
+                            '−${_format(Duration(seconds: (_targetSeconds - elapsedSec).clamp(0, _targetSeconds)))}',
+                            style: GoogleFonts.outfit(
+                              fontSize: 14,
+                              color: Colors.white38,
+                            ),
+                          ),
+                        if (done)
+                          Text(
+                            'CONCLUÍDO ✓',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.greenAccent,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // Botões play / pause / stop
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Stop
+                IconButton(
+                  onPressed: _stop,
+                  icon: const Icon(Icons.stop_rounded),
+                  color: Colors.white38,
+                  iconSize: 36,
+                  tooltip: 'Parar e zerar',
+                ),
+                const SizedBox(width: 16),
+                // Play / Pause
+                GestureDetector(
+                  onTap: _running ? _pause : _play,
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.4),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      _running
+                          ? Icons.pause_rounded
+                          : Icons.play_arrow_rounded,
+                      color: Colors.black,
+                      size: 40,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Fechar
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded),
+                  color: Colors.white38,
+                  iconSize: 36,
+                  tooltip: 'Fechar',
                 ),
               ],
             ),
