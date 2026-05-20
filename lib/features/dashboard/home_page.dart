@@ -139,6 +139,16 @@ class _HomePageState extends ConsumerState<HomePage> {
     final userProfileAsync = ref.watch(userProfileProvider);
     final userName = userProfileAsync.value?.name.split(' ').first ?? 'Atleta';
 
+    // Limpa o card de retomar quando a sessão é cancelada
+    ref.listen(sessionProvider, (prev, next) {
+      if (prev?.activeWorkout != null && next.activeWorkout == null) {
+        setState(() {
+          _activeWorkout = null;
+          _sessionData = null;
+        });
+      }
+    });
+
     return Scaffold(
       backgroundColor: Colors.black, // Standard background
       body: _isLoadingSession

@@ -467,9 +467,19 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.close, color: Colors.white),
-                    onPressed: () {
-                      ref.read(sessionProvider.notifier).exitSession();
-                      context.pop();
+                    onPressed: () async {
+                      final confirmed = await AppDialogs.showConfirmDialog<bool>(
+                        context: context,
+                        title: 'Cancelar treino?',
+                        description:
+                            'O progresso desta sessão será perdido. Tem certeza que deseja sair?',
+                        confirmText: 'CANCELAR TREINO',
+                        isDestructive: true,
+                      );
+                      if (confirmed == true && context.mounted) {
+                        await ref.read(sessionProvider.notifier).exitSession();
+                        if (context.mounted) context.pop();
+                      }
                     },
                   ),
                   Expanded(

@@ -538,10 +538,10 @@ class SessionController extends Notifier<WorkoutSessionState>
     return history;
   }
 
-  void exitSession() {
+  Future<void> exitSession() async {
     stopRestTimer();
-    ref.read(activeSessionServiceProvider).clearSession();
     state = const WorkoutSessionState();
+    await ref.read(activeSessionServiceProvider).clearSession();
   }
 
   void _saveSessionState() {
