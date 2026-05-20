@@ -17,6 +17,7 @@ import 'widgets/settings_widgets.dart';
 import '../../../../core/presentation/widgets/app_dialogs.dart';
 import '../../../../core/services/sync_service.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/utils/image_path_resolver.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -38,8 +39,19 @@ class SettingsPage extends ConsumerWidget {
     final measurementCount = measurements.length;
     final lastBackup = settingsRepo.getLastBackupDate();
 
+    if (kIsWeb) {
+      return _buildWebSettings(
+        context, ref,
+        userProfile: userProfile,
+        isLoggedIn: isLoggedIn,
+        workoutCount: workoutCount,
+        historyCount: historyCount,
+        measurementCount: measurementCount,
+      );
+    }
+
     return Scaffold(
-      backgroundColor: Colors.black, // Ensure background matches other screens
+      backgroundColor: Colors.black,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -480,5 +492,279 @@ class SettingsPage extends ConsumerWidget {
         SnackbarUtils.showError(context, 'Erro ao deslogar: $e');
       }
     }
+  }
+
+  // ── Layout web SaaS ───────────────────────────────────────────────────────
+  Widget _buildWebSettings(
+    BuildContext context,
+    WidgetRef ref, {
+    required dynamic userProfile,
+    required bool isLoggedIn,
+    required int workoutCount,
+    required int historyCount,
+    required int measurementCount,
+  }) {
+    final name = userProfile?.name ?? '—';
+    final pic = userProfile?.profilePicturePath;
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Perfil ───────────────────────────────────────────────────
+            _SectionLabel('CONTA'),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: _cardDeco(),
+              child: Row(
+                children: [
+                  // Avatar
+                  CircleAvatar(
+                    radius: 36,
+                    backgroundColor: AppColors.primary.withOpacity(0.15),
+                    backgroundImage: pic != null
+                        ? ImagePathResolver.resolveToImageProvider(pic)
+                        : null,
+                    child: pic == null
+                        ? Text(
+                            name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                            style: GoogleFonts.outfit(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: GoogleFonts.outfit(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          isLoggedIn ? 'Conta Google conectada' : 'Modo convidado',
+                          style: GoogleFonts.outfit(
+                              fontSize: 13, color: Colors.white38),
+                        ),
+                      ],
+                    ),
+                  ),
+                  FilledButton.icon(
+                    onPressed: () => context.push('/profile/edit'),
+                    icon: const Icon(Icons.edit_outlined, size: 16),
+                    label: Text('Editar perfil',
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF1E1E1E),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
+            // ── Stats ─────────────────────────────────────────────────────
+            _SectionLabel('DADOS'),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                _WebStatCard(
+                    icon: Icons.fitness_center,
+                    label: 'Treinos',
+                    value: '$workoutCount',
+                    color: AppColors.primary),
+                const SizedBox(width: 16),
+                _WebStatCard(
+                    icon: Icons.history,
+                    label: 'Histórico',
+                    value: '$historyCount',
+                    color: Colors.blueAccent),
+                const SizedBox(width: 16),
+                _WebStatCard(
+                    icon: Icons.monitor_weight_outlined,
+                    label: 'Medidas',
+                    value: '$measurementCount',
+                    color: Colors.purpleAccent),
+              ],
+            ),
+
+            const SizedBox(height: 32),
+
+            // ── Sistema ───────────────────────────────────────────────────
+            _SectionLabel('SISTEMA'),
+            const SizedBox(height: 12),
+            Container(
+              decoration: _cardDeco(),
+              child: Column(
+                children: [
+                  _WebMenuItem(
+                    icon: Icons.info_outline,
+                    title: 'Sobre',
+                    subtitle: 'Versão 1.2.0 · Shape.log',
+                    iconColor: Colors.tealAccent,
+                    onTap: () => _showAboutDialog(context),
+                  ),
+                  if (isLoggedIn) ...[
+                    Divider(
+                        height: 1,
+                        color: Colors.white.withOpacity(0.07)),
+                    _WebMenuItem(
+                      icon: Icons.logout_rounded,
+                      title: 'Sair da conta',
+                      subtitle: 'Desconectar conta Google',
+                      iconColor: Colors.redAccent,
+                      onTap: () => _handleLogout(context, ref),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  BoxDecoration _cardDeco() => BoxDecoration(
+        color: const Color(0xFF111111),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withOpacity(0.07)),
+      );
+}
+
+// ── Widgets auxiliares ─────────────────────────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  final String text;
+  const _SectionLabel(this.text);
+  @override
+  Widget build(BuildContext context) => Text(
+        text,
+        style: GoogleFonts.outfit(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: Colors.white38,
+          letterSpacing: 1.2,
+        ),
+      );
+}
+
+class _WebStatCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+  const _WebStatCard(
+      {required this.icon,
+      required this.label,
+      required this.value,
+      required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF111111),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white.withOpacity(0.07)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(value,
+                    style: GoogleFonts.outfit(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white)),
+                Text(label,
+                    style:
+                        GoogleFonts.outfit(fontSize: 12, color: Colors.white38)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WebMenuItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color iconColor;
+  final VoidCallback onTap;
+  const _WebMenuItem(
+      {required this.icon,
+      required this.title,
+      required this.subtitle,
+      required this.iconColor,
+      required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      hoverColor: Colors.white.withOpacity(0.04),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: iconColor, size: 18),
+            ),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.w600, color: Colors.white)),
+                Text(subtitle,
+                    style: GoogleFonts.outfit(
+                        fontSize: 12, color: Colors.white38)),
+              ],
+            ),
+            const Spacer(),
+            const Icon(Icons.chevron_right, color: Colors.white24, size: 18),
+          ],
+        ),
+      ),
+    );
   }
 }

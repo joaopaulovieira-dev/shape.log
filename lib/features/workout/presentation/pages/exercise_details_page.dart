@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,6 +42,10 @@ class ExerciseDetailsPage extends ConsumerWidget {
 
         final exercise = workout.exercises[exerciseIndex];
         final mediaList = exercise.imagePaths;
+
+        if (kIsWeb) {
+          return _buildWebLayout(context, exercise, mediaList, workout.id);
+        }
 
         return Scaffold(
           backgroundColor: Colors.black,
@@ -416,4 +421,209 @@ class ExerciseDetailsPage extends ConsumerWidget {
       ),
     );
   }
+
+  // ── Web layout ─────────────────────────────────────────────────────────────
+  Widget _buildWebLayout(
+    BuildContext context,
+    Exercise exercise,
+    List<String> mediaList,
+    String workoutId,
+  ) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Column(
+        children: [
+          // Top bar
+          Container(
+            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            color: const Color(0xFF0A0A0A),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white54, size: 20),
+                  onPressed: () => context.pop(),
+                  tooltip: 'Voltar',
+                ),
+                const SizedBox(width: 8),
+                if (exercise.equipmentNumber != null &&
+                    exercise.equipmentNumber!.isNotEmpty)
+                  Text('#${exercise.equipmentNumber} ',
+                      style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary)),
+                Text(
+                  exercise.name,
+                  style: GoogleFonts.outfit(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: () => context.push(
+                    '/workouts/$workoutId/exercises/$exerciseIndex/edit'),
+                  icon: const Icon(Icons.edit_outlined, size: 16),
+                  label: Text('Editar', style: GoogleFonts.outfit()),
+                  style: TextButton.styleFrom(foregroundColor: Colors.white54),
+                ),
+              ],
+            ),
+          ),
+          Container(height: 1, color: Colors.white.withOpacity(0.06)),
+          // Conteúdo em duas colunas
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Esquerda — galeria de imagens
+                SizedBox(
+                  width: 400,
+                  child: mediaList.isEmpty
+                      ? Container(
+                          color: const Color(0xFF111111),
+                          child: const Center(
+                            child: Icon(Icons.fitness_center,
+                                color: AppColors.primary, size: 64),
+                          ),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(24),
+                          itemCount: mediaList.length,
+                          separatorBuilder: (_, i) => const SizedBox(height: 12),
+                          itemBuilder: (context, i) {
+                            final path = mediaList[i];
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: AspectRatio(
+                                aspectRatio: 16 / 9,
+                                child: ImagePathResolver.isRemote(path)
+                                    ? Image.network(path, fit: BoxFit.cover,
+                                        errorBuilder: (c, e, s) => Container(
+                                            color: const Color(0xFF1E1E1E),
+                                            child: const Icon(Icons.broken_image,
+                                                color: Colors.white38)))
+                                    : Image.file(
+                                        ImagePathResolver.resolveToFile(path),
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (c, e, s) => Container(
+                                            color: const Color(0xFF1E1E1E),
+                                            child: const Icon(Icons.broken_image,
+                                                color: Colors.white38))),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+                Container(width: 1, color: Colors.white.withOpacity(0.06)),
+                // Direita — informações
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Stats
+                        _webSectionLabel('ESTATÍSTICAS'),
+                        const SizedBox(height: 12),
+                        if (exercise.type == ExerciseTypeEntity.cardio) ...[
+                          _webStat('Duração',
+                              '${exercise.cardioDurationMinutes?.toInt() ?? 0} min'),
+                          const SizedBox(height: 8),
+                          if (exercise.cardioIntensity?.isNotEmpty == true)
+                            _webStat('Intensidade', exercise.cardioIntensity!),
+                        ] else ...[
+                          _webStat('Séries', '${exercise.sets}'),
+                          const SizedBox(height: 8),
+                          _webStat('Repetições', '${exercise.reps}'),
+                          const SizedBox(height: 8),
+                          _webStat('Carga', '${exercise.weight} kg'),
+                        ],
+                        const SizedBox(height: 8),
+                        _webStat('Descanso', '${exercise.restTimeSeconds}s'),
+
+                        if (exercise.technique?.isNotEmpty == true) ...[
+                          const SizedBox(height: 24),
+                          _webSectionLabel('TÉCNICA'),
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF111111),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                  color: Colors.white.withOpacity(0.07)),
+                            ),
+                            child: Text(exercise.technique!,
+                                style: GoogleFonts.outfit(
+                                    fontSize: 14, color: Colors.white70,
+                                    height: 1.6)),
+                          ),
+                        ],
+
+                        if (exercise.youtubeUrl?.isNotEmpty == true) ...[
+                          const SizedBox(height: 24),
+                          _webSectionLabel('TUTORIAL'),
+                          const SizedBox(height: 12),
+                          FilledButton.icon(
+                            onPressed: () async {
+                              final uri = Uri.parse(exercise.youtubeUrl!);
+                              if (await canLaunchUrl(uri)) launchUrl(uri);
+                            },
+                            icon: const Icon(Icons.play_circle_outline, size: 18),
+                            label: Text('Assistir no YouTube',
+                                style: GoogleFonts.outfit(
+                                    fontWeight: FontWeight.w600)),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Colors.red.shade700,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _webSectionLabel(String text) => Text(
+        text,
+        style: GoogleFonts.outfit(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: Colors.white38,
+            letterSpacing: 1.2),
+      );
+
+  Widget _webStat(String label, String value) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF111111),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.white.withOpacity(0.07)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label,
+                style: GoogleFonts.outfit(fontSize: 13, color: Colors.white54)),
+            Text(value,
+                style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white)),
+          ],
+        ),
+      );
 }

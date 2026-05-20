@@ -56,11 +56,11 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           ? ref.watch(historyListProvider).when(
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
-              error: (e, _) => _buildBody(<WorkoutHistory>[]),
+              error: (e, _) => _buildWebLayout(<WorkoutHistory>[]),
               data: (list) {
                 final sorted = [...list]
                   ..sort((a, b) => b.completedDate.compareTo(a.completedDate));
-                return _buildBody(sorted);
+                return _buildWebLayout(sorted);
               },
             )
           : ValueListenableBuilder<Box<WorkoutHistoryHiveModel>>(
@@ -75,6 +75,64 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                 return _buildBody(historyList);
               },
             ),
+    );
+  }
+
+  // ── Web layout ────────────────────────────────────────────────────────────
+  Widget _buildWebLayout(List<WorkoutHistory> history) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Row(
+        children: [
+          // Sidebar com tabs
+          Container(
+            width: 200,
+            color: const Color(0xFF0A0A0A),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                Text('HUB',
+                    style: GoogleFonts.outfit(
+                      fontSize: 11, color: Colors.white38,
+                      fontWeight: FontWeight.w600, letterSpacing: 1.2,
+                    )),
+                const SizedBox(height: 12),
+                _WebTabButton(
+                  icon: Icons.bar_chart,
+                  label: 'Analytics',
+                  selected: _currentMode == HubMode.analytics,
+                  onTap: () => setState(() => _currentMode = HubMode.analytics),
+                ),
+                const SizedBox(height: 4),
+                _WebTabButton(
+                  icon: Icons.list_alt,
+                  label: 'Histórico',
+                  selected: _currentMode == HubMode.logs,
+                  onTap: () => setState(() => _currentMode = HubMode.logs),
+                ),
+              ],
+            ),
+          ),
+          Container(width: 1, color: Colors.white.withOpacity(0.06)),
+          // Conteúdo
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: _currentMode == HubMode.analytics
+                  ? _AnalyticsTab(
+                      key: const ValueKey('analytics_web'),
+                      history: history,
+                    )
+                  : _HistoryTab(
+                      key: const ValueKey('logs_web'),
+                      history: history,
+                    ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -835,6 +893,55 @@ class _PhotoManagerDialogState extends State<_PhotoManagerDialog> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _WebTabButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _WebTabButton({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected
+          ? AppColors.primary.withOpacity(0.12)
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        hoverColor: Colors.white.withOpacity(0.05),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              Icon(icon,
+                  size: 16,
+                  color: selected ? AppColors.primary : Colors.white38),
+              const SizedBox(width: 10),
+              Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  fontWeight:
+                      selected ? FontWeight.w600 : FontWeight.w400,
+                  color: selected ? Colors.white : Colors.white54,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

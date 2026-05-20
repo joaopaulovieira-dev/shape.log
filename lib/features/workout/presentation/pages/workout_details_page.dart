@@ -80,6 +80,10 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
         final isExpired =
             workout.expiryDate != null && workout.expiryDate!.isBefore(now);
 
+        if (kIsWeb) {
+          return _buildWebLayout(context, workout, daysStr, isExpired, now);
+        }
+
         return Scaffold(
           backgroundColor: Colors.black,
           body: CustomScrollView(
@@ -693,6 +697,197 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
     }
   }
 
+  // ── Layout web SaaS ───────────────────────────────────────────────────────
+  Widget _buildWebLayout(
+    BuildContext context,
+    Workout workout,
+    String daysStr,
+    bool isExpired,
+    DateTime now,
+  ) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Column(
+        children: [
+          // Top bar
+          Container(
+            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            color: const Color(0xFF0A0A0A),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white54, size: 20),
+                  onPressed: () => context.pop(),
+                  tooltip: 'Voltar',
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  workout.name,
+                  style: GoogleFonts.outfit(
+                    fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white,
+                  ),
+                ),
+                if (isExpired) ...[
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text('VENCIDO',
+                        style: GoogleFonts.outfit(
+                            fontSize: 10, color: AppColors.error,
+                            fontWeight: FontWeight.w700, letterSpacing: 1)),
+                  ),
+                ],
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: () => context.push('/workouts/${workout.id}/edit'),
+                  icon: const Icon(Icons.edit_outlined, size: 16),
+                  label: Text('Editar', style: GoogleFonts.outfit()),
+                  style: TextButton.styleFrom(foregroundColor: Colors.white54),
+                ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: () async {
+                    final confirmed = await AppDialogs.showConfirmDialog<bool>(
+                      context: context,
+                      title: 'Excluir Treino',
+                      description: 'Tem certeza que deseja excluir este treino?',
+                      confirmText: 'EXCLUIR',
+                      isDestructive: true,
+                    );
+                    if (confirmed == true) {
+                      await ref.read(workoutRepositoryProvider).deleteRoutine(workout.id);
+                      ref.invalidate(routineListProvider);
+                      if (context.mounted) context.pop();
+                    }
+                  },
+                  icon: const Icon(Icons.delete_outline, size: 16),
+                  label: Text('Excluir', style: GoogleFonts.outfit()),
+                  style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+                ),
+              ],
+            ),
+          ),
+          Container(height: 1, color: Colors.white.withOpacity(0.06)),
+          // Conteúdo em duas colunas
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Coluna esquerda — informações do treino
+                SizedBox(
+                  width: 300,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _WebInfoCard(label: 'Dias', value: daysStr.isEmpty ? 'Sem agendamento' : daysStr),
+                        const SizedBox(height: 12),
+                        _WebInfoCard(label: 'Duração alvo', value: '${workout.targetDurationMinutes} min'),
+                        if (workout.expiryDate != null) ...[
+                          const SizedBox(height: 12),
+                          _WebInfoCard(
+                            label: 'Validade',
+                            value: DateFormat('dd/MM/yyyy').format(workout.expiryDate!),
+                            valueColor: isExpired ? AppColors.error : null,
+                          ),
+                        ],
+                        if (workout.notes.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          _WebInfoCard(label: 'Notas', value: workout.notes),
+                        ],
+                        const SizedBox(height: 24),
+                        Text('${workout.exercises.length} exercício${workout.exercises.length != 1 ? 's' : ''}',
+                            style: GoogleFonts.outfit(fontSize: 12, color: Colors.white38)),
+                      ],
+                    ),
+                  ),
+                ),
+                Container(width: 1, color: Colors.white.withOpacity(0.06)),
+                // Coluna direita — lista de exercícios
+                Expanded(
+                  child: workout.exercises.isEmpty
+                      ? Center(
+                          child: Text('Nenhum exercício.',
+                              style: GoogleFonts.outfit(color: Colors.white38)))
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(24),
+                          itemCount: workout.exercises.length,
+                          separatorBuilder: (_, i) => const SizedBox(height: 8),
+                          itemBuilder: (context, index) {
+                            final ex = workout.exercises[index];
+                            final thumb = ex.imagePaths.isNotEmpty ? ex.imagePaths.first : null;
+                            return InkWell(
+                              onTap: () => context.push(
+                                '/workouts/${workout.id}/exercises/$index'),
+                              borderRadius: BorderRadius.circular(12),
+                              hoverColor: Colors.white.withOpacity(0.03),
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF111111),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.white.withOpacity(0.07)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    // Thumbnail
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Container(
+                                        width: 48, height: 48,
+                                        color: const Color(0xFF1E1E1E),
+                                        child: thumb != null
+                                            ? (ImagePathResolver.isRemote(thumb)
+                                                ? Image.network(thumb, fit: BoxFit.cover,
+                                                    errorBuilder: (ctx, err, st) =>
+                                                        const Icon(Icons.fitness_center, color: AppColors.primary, size: 24))
+                                                : Image.file(ImagePathResolver.resolveToFile(thumb), fit: BoxFit.cover,
+                                                    errorBuilder: (ctx, err, st) =>
+                                                        const Icon(Icons.fitness_center, color: AppColors.primary, size: 24)))
+                                            : const Icon(Icons.fitness_center, color: AppColors.primary, size: 24),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(ex.name,
+                                              style: GoogleFonts.outfit(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white, fontSize: 14)),
+                                          Text(
+                                            ex.type.name == 'cardio'
+                                                ? '${ex.cardioDurationMinutes?.toInt() ?? 0} min · ${ex.cardioIntensity ?? ''}'
+                                                : '${ex.sets} séries × ${ex.reps} reps · ${ex.weight} kg',
+                                            style: GoogleFonts.outfit(
+                                                fontSize: 12, color: Colors.white38),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Icon(Icons.chevron_right, color: Colors.white24, size: 18),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -723,6 +918,39 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _WebInfoCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? valueColor;
+  const _WebInfoCard({required this.label, required this.value, this.valueColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111111),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withOpacity(0.07)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              style: GoogleFonts.outfit(fontSize: 11, color: Colors.white38, letterSpacing: 0.5)),
+          const SizedBox(height: 4),
+          Text(value,
+              style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: valueColor ?? Colors.white)),
+        ],
+      ),
     );
   }
 }
