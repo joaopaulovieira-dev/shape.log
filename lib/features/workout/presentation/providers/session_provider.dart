@@ -499,7 +499,7 @@ class SessionController extends Notifier<WorkoutSessionState>
     // Calculate completion percentage
     final total = workout.exercises.length;
     final completed = state.completedExerciseNames.length;
-    final percentage = total > 0 ? (completed / total) : 0.0;
+    final percentage = total > 0 ? (completed / total) * 100 : 0.0;
 
     // Create new list of exercises with set history populated
     final historyExercises = workout.exercises.map((ex) {

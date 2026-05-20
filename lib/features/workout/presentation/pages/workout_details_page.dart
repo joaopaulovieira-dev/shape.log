@@ -460,19 +460,10 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                             child: ex.imagePaths.isNotEmpty
                                 ? ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
-                                    child: ImagePathResolver.isRemote(ex.imagePaths.first)
-                                        ? Image.network(ex.imagePaths.first, fit: BoxFit.cover)
-                                        : Image.file(
-                                            ImagePathResolver.resolveToFile(
-                                              ex.imagePaths.first,
-                                            ),
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (ctx, err, stack) =>
-                                                const Icon(
-                                                  Icons.broken_image,
-                                                  color: Colors.grey,
-                                                ),
-                                          ),
+                                    child: AppCachedImage(
+                                      path: ex.imagePaths.first,
+                                      fit: BoxFit.cover,
+                                    ),
                                   )
                                 : const Icon(
                                     Icons.fitness_center,
@@ -567,7 +558,7 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
 
     final completedCount = workout.exercises.where((e) => e.isCompleted).length;
     final totalCount = workout.exercises.length;
-    final percentage = totalCount == 0 ? 0.0 : (completedCount / totalCount);
+    final percentage = totalCount == 0 ? 0.0 : (completedCount / totalCount) * 100;
 
     final history = WorkoutHistory(
       id: const Uuid().v4(),
@@ -881,13 +872,7 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                                         width: 48, height: 48,
                                         color: const Color(0xFF1E1E1E),
                                         child: thumb != null
-                                            ? (ImagePathResolver.isRemote(thumb)
-                                                ? Image.network(thumb, fit: BoxFit.cover,
-                                                    errorBuilder: (ctx, err, st) =>
-                                                        const Icon(Icons.fitness_center, color: AppColors.primary, size: 24))
-                                                : Image.file(ImagePathResolver.resolveToFile(thumb), fit: BoxFit.cover,
-                                                    errorBuilder: (ctx, err, st) =>
-                                                        const Icon(Icons.fitness_center, color: AppColors.primary, size: 24)))
+                                            ? AppCachedImage(path: thumb, fit: BoxFit.cover)
                                             : const Icon(Icons.fitness_center, color: AppColors.primary, size: 24),
                                       ),
                                     ),

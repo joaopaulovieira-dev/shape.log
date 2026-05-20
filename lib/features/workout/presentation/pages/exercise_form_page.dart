@@ -144,8 +144,289 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
     Navigator.pop(context, exercise);
   }
 
+  // ── Web Layout ─────────────────────────────────────────────────────────────
+
+  Widget _buildWebLayout(BuildContext context) {
+    final isEdit = widget.initialExercise != null;
+    final restLabel =
+        '${(_restTime ~/ 60).toString().padLeft(2, '0')}:${(_restTime % 60).toString().padLeft(2, '0')}';
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF080808),
+      body: Column(
+        children: [
+          // Top bar
+          Container(
+            height: 60,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0A0A0A),
+              border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.06))),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back, color: Colors.white70, size: 20),
+                  tooltip: 'Voltar',
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  isEdit ? 'Editar Exercício' : 'Novo Exercício',
+                  style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                const Spacer(),
+                FilledButton.icon(
+                  onPressed: _save,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  icon: const Icon(Icons.check, size: 18),
+                  label: Text('Salvar', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(28),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1000),
+                  child: Form(
+                    key: _formKey,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ── Coluna esquerda: dados principais ─────────────
+                        Expanded(
+                          flex: 5,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Tipo
+                              _webCard(
+                                label: 'TIPO DE EXERCÍCIO',
+                                child: SegmentedButton<ExerciseTypeEntity>(
+                                  style: SegmentedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF1A1A1A),
+                                    selectedBackgroundColor: AppColors.primary,
+                                    selectedForegroundColor: Colors.black,
+                                    foregroundColor: Colors.white70,
+                                    side: BorderSide(color: Colors.white.withOpacity(0.06)),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                  segments: const [
+                                    ButtonSegment(value: ExerciseTypeEntity.weight, label: Text('Musculação'), icon: Icon(Icons.fitness_center)),
+                                    ButtonSegment(value: ExerciseTypeEntity.cardio, label: Text('Cardio'), icon: Icon(Icons.directions_run)),
+                                  ],
+                                  selected: {_selectedType},
+                                  onSelectionChanged: (s) => setState(() => _selectedType = s.first),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Dados do exercício
+                              _webCard(
+                                label: 'DADOS DO EXERCÍCIO',
+                                child: Column(
+                                  children: [
+                                    TextFormField(
+                                      controller: _nameController,
+                                      style: GoogleFonts.outfit(color: Colors.white),
+                                      textCapitalization: TextCapitalization.words,
+                                      decoration: _buildDecoration('Nome do Exercício', Icons.title),
+                                      validator: (v) => v!.isEmpty ? 'Informe um nome' : null,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    if (_selectedType == ExerciseTypeEntity.weight) ...[
+                                      Row(children: [
+                                        Expanded(child: TextFormField(controller: _setsController, style: GoogleFonts.outfit(color: Colors.white), keyboardType: TextInputType.number, decoration: _buildDecoration('Séries', Icons.reorder))),
+                                        const SizedBox(width: 12),
+                                        Expanded(child: TextFormField(controller: _repsController, style: GoogleFonts.outfit(color: Colors.white), keyboardType: TextInputType.number, decoration: _buildDecoration('Reps', Icons.repeat))),
+                                        const SizedBox(width: 12),
+                                        Expanded(child: TextFormField(controller: _weightController, style: GoogleFonts.outfit(color: Colors.white), keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: _buildDecoration('Carga (kg)', Icons.fitness_center))),
+                                      ]),
+                                    ] else ...[
+                                      Row(children: [
+                                        Expanded(child: TextFormField(controller: _setsController, style: GoogleFonts.outfit(color: Colors.white), keyboardType: TextInputType.number, decoration: _buildDecoration('Séries', Icons.reorder))),
+                                        const SizedBox(width: 12),
+                                        Expanded(child: TextFormField(controller: _cardioDurationController, style: GoogleFonts.outfit(color: Colors.white), keyboardType: TextInputType.number, decoration: _buildDecoration('Tempo (min)', Icons.timer_outlined))),
+                                      ]),
+                                      const SizedBox(height: 12),
+                                      TextFormField(controller: _cardioIntensityController, style: GoogleFonts.outfit(color: Colors.white), decoration: _buildDecoration('Intensidade / Velocidade', Icons.speed_outlined, hintText: 'Ex: 8km/h ou Moderado')),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Descanso
+                              _webCard(
+                                label: 'TEMPO DE DESCANSO',
+                                trailing: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                  decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
+                                  child: Text(restLabel, style: GoogleFonts.outfit(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: [30, 45, 60, 90, 120, 180].map((time) {
+                                        final isSelected = _restTime == time;
+                                        return ChoiceChip(
+                                          label: Text(time >= 60 ? '${time ~/ 60}m' : '${time}s'),
+                                          selected: isSelected,
+                                          selectedColor: AppColors.primary,
+                                          checkmarkColor: Colors.black,
+                                          labelStyle: GoogleFonts.outfit(color: isSelected ? Colors.black : Colors.white70, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
+                                          backgroundColor: Colors.white.withOpacity(0.05),
+                                          side: BorderSide(color: isSelected ? AppColors.primary : Colors.white.withOpacity(0.08)),
+                                          onSelected: (s) { if (s) setState(() => _restTime = time); },
+                                        );
+                                      }).toList(),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    SliderTheme(
+                                      data: SliderTheme.of(context).copyWith(
+                                        trackHeight: 4,
+                                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
+                                        activeTrackColor: AppColors.primary,
+                                        inactiveTrackColor: Colors.white.withOpacity(0.1),
+                                        thumbColor: AppColors.primary,
+                                      ),
+                                      child: Slider(value: _restTime.toDouble(), min: 0, max: 300, divisions: 60, onChanged: (v) => setState(() => _restTime = v.toInt())),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(width: 20),
+
+                        // ── Coluna direita: info adicional + imagens ──────
+                        Expanded(
+                          flex: 4,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _webCard(
+                                label: 'INFORMAÇÕES ADICIONAIS',
+                                child: Column(
+                                  children: [
+                                    TextFormField(controller: _equipController, style: GoogleFonts.outfit(color: Colors.white), decoration: _buildDecoration('Equipamento nº (Opcional)', Icons.grid_3x3, hintText: 'Número da máquina')),
+                                    const SizedBox(height: 12),
+                                    TextFormField(controller: _urlController, style: GoogleFonts.outfit(color: Colors.white), keyboardType: TextInputType.url, decoration: _buildDecoration('YouTube link (Opcional)', Icons.video_library_outlined)),
+                                    const SizedBox(height: 12),
+                                    TextFormField(controller: _techniqueController, style: GoogleFonts.outfit(color: Colors.white), maxLines: 4, decoration: _buildDecoration('Técnica / Observações', Icons.lightbulb_outline)),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              _webCard(
+                                label: 'GALERIA DE IMAGENS',
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (_imagePaths.isNotEmpty) ...[
+                                      SizedBox(
+                                        height: 120,
+                                        child: ListView.separated(
+                                          scrollDirection: Axis.horizontal,
+                                          itemCount: _imagePaths.length,
+                                          separatorBuilder: (_, _) => const SizedBox(width: 10),
+                                          itemBuilder: (ctx, i) => Stack(
+                                            children: [
+                                              Container(
+                                                width: 120,
+                                                height: 120,
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  border: Border.all(color: Colors.white.withOpacity(0.06)),
+                                                  image: DecorationImage(image: ImagePathResolver.resolveToImageProvider(_imagePaths[i]), fit: BoxFit.cover),
+                                                ),
+                                              ),
+                                              Positioned(
+                                                top: 4, right: 4,
+                                                child: GestureDetector(
+                                                  onTap: () => setState(() => _imagePaths.removeAt(i)),
+                                                  child: Container(padding: const EdgeInsets.all(4), decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle), child: const Icon(Icons.close, size: 12, color: Colors.white)),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                    ],
+                                    OutlinedButton.icon(
+                                      onPressed: () async {
+                                        final url = await WebImageService.pickAndUpload(WebImageService.folderExercises);
+                                        if (url != null) setState(() => _imagePaths.add(url));
+                                      },
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppColors.primary,
+                                        side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                                      ),
+                                      icon: const Icon(Icons.add_photo_alternate_outlined),
+                                      label: Text('Adicionar Imagem', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _webCard({required String label, required Widget child, Widget? trailing}) =>
+      Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF111111),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withOpacity(0.06)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(label, style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white38, letterSpacing: 1.2)),
+                if (trailing != null) ...[const Spacer(), trailing],
+              ],
+            ),
+            const SizedBox(height: 16),
+            child,
+          ],
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) return _buildWebLayout(context);
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Form(

@@ -375,22 +375,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                 ],
               ),
-              const Spacer(),
-              FilledButton.icon(
-                onPressed: () => context.go('/workouts'),
-                icon: const Icon(Icons.fitness_center, size: 16),
-                label: Text(
-                  'Ver Treinos',
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
             ],
           ),
 
@@ -454,6 +438,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 child: _DashCard(
                   title: 'Frequência Semanal',
                   subtitle: 'Últimas 8 semanas',
+                  hint: 'Número de treinos realizados em cada uma das últimas 8 semanas. Barras mais altas indicam semanas de maior consistência. Use para identificar quedas de ritmo e planejar recuperação.',
                   child: SizedBox(
                     height: 180,
                     child: history.isEmpty
@@ -469,6 +454,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 child: _DashCard(
                   title: 'Atividade Recente',
                   subtitle: 'Últimas sessões',
+                  hint: 'As últimas sessões de treino registradas, com data, nome do treino e percentual de conclusão. Permite acompanhar rapidamente se você está mantendo a regularidade.',
                   child: history.isEmpty
                       ? Padding(
                           padding: const EdgeInsets.all(16),
@@ -555,6 +541,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 child: _DashCard(
                   title: 'Preferência por Dia',
                   subtitle: 'Baseado no histórico',
+                  hint: 'Distribuição dos seus treinos por dia da semana ao longo de todo o histórico. Revela quais dias você mais treina e quais costuma pular — útil para ajustar o planejamento semanal.',
                   child: history.isEmpty
                       ? _emptyChart()
                       : _DayDistributionChart(data: dayDist),
@@ -568,6 +555,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   title: todayScheduled.isEmpty
                       ? 'Rotinas Cadastradas'
                       : 'Treinos de Hoje',
+                  hint: 'Exibe os treinos agendados para hoje com base nos dias configurados em cada rotina. Quando não há treino para hoje, lista todas as rotinas cadastradas.',
                   subtitle: todayScheduled.isEmpty
                       ? '${allWorkouts.length} rotina${allWorkouts.length != 1 ? 's' : ''}'
                       : '${todayScheduled.length} agendado${todayScheduled.length != 1 ? 's' : ''}',
@@ -935,12 +923,14 @@ class _DashCard extends StatelessWidget {
   final String subtitle;
   final Widget child;
   final Widget? action;
+  final String? hint;
 
   const _DashCard({
     required this.title,
     required this.subtitle,
     required this.child,
     this.action,
+    this.hint,
   });
 
   @override
@@ -961,13 +951,61 @@ class _DashCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: GoogleFonts.outfit(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          title,
+                          style: GoogleFonts.outfit(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                        if (hint != null) ...[
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: () => showDialog(
+                              context: context,
+                              builder: (dialogContext) => Dialog(
+                                backgroundColor: const Color(0xFF1A1A1A),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                child: SizedBox(
+                                  width: 420,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(24),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Icon(Icons.info_outline, color: AppColors.primary, size: 20),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Text(title, style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(hint!, style: GoogleFonts.outfit(fontSize: 14, color: Colors.white70, height: 1.6)),
+                                        const SizedBox(height: 20),
+                                        Align(
+                                          alignment: Alignment.centerRight,
+                                          child: TextButton(
+                                            onPressed: () => Navigator.pop(dialogContext),
+                                            child: Text('Fechar', style: GoogleFonts.outfit(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            child: const Icon(Icons.help_outline_rounded, size: 15, color: Colors.white24),
+                          ),
+                        ],
+                      ],
                     ),
                     Text(
                       subtitle,

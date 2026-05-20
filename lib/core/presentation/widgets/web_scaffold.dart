@@ -7,40 +7,21 @@ import '../../constants/app_colors.dart';
 import '../../services/auth_service.dart';
 import '../../../features/profile/presentation/providers/user_profile_provider.dart';
 
-class WebScaffold extends ConsumerWidget {
+class WebScaffold extends ConsumerStatefulWidget {
   final Widget child;
 
   const WebScaffold({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final location = GoRouterState.of(context).uri.toString();
-    final pageInfo = _pageInfo(location);
+  ConsumerState<WebScaffold> createState() => _WebScaffoldState();
+}
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF080808),
-      body: Row(
-        children: [
-          _WebSidebar(currentLocation: location),
-          // Divisor vertical
-          Container(width: 1, color: Colors.white.withOpacity(0.06)),
-          // Área principal
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _WebTopBar(title: pageInfo.$1, subtitle: pageInfo.$2),
-                Container(height: 1, color: Colors.white.withOpacity(0.06)),
-                Expanded(child: child),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+class _WebScaffoldState extends ConsumerState<WebScaffold> {
+  bool _collapsed = false;
 
-  /// Retorna (título, subtítulo) com base na rota
+  static const double _expandedWidth = 240;
+  static const double _collapsedWidth = 64;
+
   (String, String) _pageInfo(String location) {
     if (location == '/') return ('Dashboard', 'Visão geral dos seus dados');
     if (location.startsWith('/workouts')) return ('Treinos', 'Gerencie suas rotinas de treino');
@@ -49,22 +30,115 @@ class WebScaffold extends ConsumerWidget {
     if (location.startsWith('/settings')) return ('Configurações', 'Backup, perfil e preferências');
     return ('Shape.log', '');
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final location = GoRouterState.of(context).uri.toString();
+    final pageInfo = _pageInfo(location);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF080808),
+      body: Row(
+        children: [
+          // Sidebar animada
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeInOut,
+            width: _collapsed ? _collapsedWidth : _expandedWidth,
+            clipBehavior: Clip.hardEdge,
+            decoration: const BoxDecoration(),
+            child: _WebSidebar(
+              currentLocation: location,
+              collapsed: _collapsed,
+              onToggle: () => setState(() => _collapsed = !_collapsed),
+            ),
+          ),
+          Container(width: 1, color: Colors.white.withOpacity(0.06)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _WebTopBar(
+                  title: pageInfo.$1,
+                  subtitle: pageInfo.$2,
+                ),
+                Container(height: 1, color: Colors.white.withOpacity(0.06)),
+                Expanded(child: widget.child),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────
 
 class _WebSidebar extends ConsumerWidget {
   final String currentLocation;
+  final bool collapsed;
+  final VoidCallback onToggle;
 
-  const _WebSidebar({required this.currentLocation});
+  const _WebSidebar({
+    required this.currentLocation,
+    required this.collapsed,
+    required this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(userProfileProvider);
     final profile = profileAsync.asData?.value;
 
+    if (collapsed) {
+      // Modo ícone-only
+      return Container(
+        color: const Color(0xFF0A0A0A),
+        child: Column(
+          children: [
+            const SizedBox(height: 16),
+            // Logo + botão expandir
+            Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  'assets/icon/logo_fundopreto.png',
+                  width: 32,
+                  height: 32,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Tooltip(
+              message: 'Expandir menu',
+              child: InkWell(
+                onTap: onToggle,
+                borderRadius: BorderRadius.circular(8),
+                child: const Padding(
+                  padding: EdgeInsets.all(8),
+                  child: Icon(Icons.chevron_right, color: Colors.white38, size: 18),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Divider(color: Colors.white.withOpacity(0.06), indent: 8, endIndent: 8),
+            const SizedBox(height: 8),
+            _IconNavItem(icon: Icons.dashboard_outlined, activeIcon: Icons.dashboard, route: '/', isActive: currentLocation == '/'),
+            _IconNavItem(icon: Icons.fitness_center_outlined, activeIcon: Icons.fitness_center, route: '/workouts', isActive: currentLocation.startsWith('/workouts')),
+            _IconNavItem(icon: Icons.monitor_weight_outlined, activeIcon: Icons.monitor_weight, route: '/body-tracker', isActive: currentLocation.startsWith('/body-tracker')),
+            _IconNavItem(icon: Icons.assessment_outlined, activeIcon: Icons.assessment, route: '/reports', isActive: currentLocation.startsWith('/reports')),
+            const Spacer(),
+            Divider(color: Colors.white.withOpacity(0.06), indent: 8, endIndent: 8),
+            _IconNavItem(icon: Icons.settings_outlined, activeIcon: Icons.settings, route: '/settings', isActive: currentLocation.startsWith('/settings')),
+            const SizedBox(height: 16),
+          ],
+        ),
+      );
+    }
+
     return Container(
-      width: 240,
       color: const Color(0xFF0A0A0A),
       child: Column(
         children: [
@@ -73,34 +147,46 @@ class _WebSidebar extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
             child: Row(
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.fitness_center,
-                    color: Colors.black,
-                    size: 18,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    'assets/icon/logo_fundopreto.png',
+                    width: 32,
+                    height: 32,
+                    fit: BoxFit.cover,
                   ),
                 ),
                 const SizedBox(width: 10),
-                RichText(
-                  text: TextSpan(
-                    style: GoogleFonts.outfit(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    children: [
-                      const TextSpan(text: 'Shape'),
-                      TextSpan(
-                        text: '.log',
-                        style: TextStyle(color: AppColors.primary),
+                Flexible(
+                  child: RichText(
+                    overflow: TextOverflow.clip,
+                    maxLines: 1,
+                    text: TextSpan(
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
-                    ],
+                      children: [
+                        const TextSpan(text: 'Shape'),
+                        TextSpan(
+                          text: '.log',
+                          style: TextStyle(color: AppColors.primary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Tooltip(
+                  message: 'Recolher menu',
+                  child: InkWell(
+                    onTap: onToggle,
+                    borderRadius: BorderRadius.circular(8),
+                    child: const Padding(
+                      padding: EdgeInsets.all(6),
+                      child: Icon(Icons.chevron_left, color: Colors.white24, size: 18),
+                    ),
                   ),
                 ),
               ],
@@ -226,13 +312,17 @@ class _NavItem extends StatelessWidget {
                   color: isActive ? AppColors.primary : Colors.white38,
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  label,
-                  style: GoogleFonts.outfit(
-                    fontSize: 14,
-                    fontWeight:
-                        isActive ? FontWeight.w600 : FontWeight.w400,
-                    color: isActive ? Colors.white : Colors.white54,
+                Flexible(
+                  child: Text(
+                    label,
+                    overflow: TextOverflow.clip,
+                    maxLines: 1,
+                    style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      fontWeight:
+                          isActive ? FontWeight.w600 : FontWeight.w400,
+                      color: isActive ? Colors.white : Colors.white54,
+                    ),
                   ),
                 ),
                 if (isActive) ...[
@@ -307,10 +397,24 @@ class _UserTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(
-                  Icons.more_horiz,
-                  color: Colors.white24,
-                  size: 16,
+                Flexible(
+                  child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    'Sair',
+                    overflow: TextOverflow.clip,
+                    maxLines: 1,
+                    style: GoogleFonts.outfit(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white38,
+                    ),
+                  ),
+                ),
                 ),
               ],
             ),
@@ -371,13 +475,16 @@ class _WebTopBar extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const _WebTopBar({required this.title, required this.subtitle});
+  const _WebTopBar({
+    required this.title,
+    required this.subtitle,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       color: const Color(0xFF0A0A0A),
       child: Row(
         children: [
@@ -423,6 +530,60 @@ class _WebTopBar extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Ícone de navegação compacto (sidebar recolhido) ─────────────────────────
+
+class _IconNavItem extends StatelessWidget {
+  final IconData icon;
+  final IconData activeIcon;
+  final String route;
+  final bool isActive;
+
+  const _IconNavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.route,
+    required this.isActive,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
+      child: Tooltip(
+        message: route == '/'
+            ? 'Dashboard'
+            : route.startsWith('/workouts')
+                ? 'Treinos'
+                : route.startsWith('/body-tracker')
+                    ? 'Medidas'
+                    : route.startsWith('/reports')
+                        ? 'Relatórios'
+                        : 'Configurações',
+        preferBelow: false,
+        child: Material(
+          color: isActive
+              ? AppColors.primary.withOpacity(0.12)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => context.go(route),
+            hoverColor: Colors.white.withOpacity(0.05),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Icon(
+                isActive ? activeIcon : icon,
+                size: 20,
+                color: isActive ? AppColors.primary : Colors.white38,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

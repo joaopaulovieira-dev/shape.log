@@ -4,7 +4,7 @@ Uma aplicação Flutter robusta que atua como o elo definitivo entre o seu plane
 
 A I.A. planeja. Você executa. O Shape.log conecta.
 
-**Versão atual:** `1.2.0`
+**Versão atual:** `1.3.0`
 
 ---
 
@@ -279,6 +279,18 @@ O script `apply_cors.sh` na raiz do projeto executa CORS + build + deploy em seq
 ---
 
 ## 📋 Changelog
+
+### v1.3.0
+- Dashboard web SaaS com KPIs, gráfico de frequência semanal, atividade recente e preferência por dia
+- Sidebar colapsável com animação suave e ícone da logo real
+- Telas web adaptadas: Nova Medição, Editar Treino, Novo Exercício
+- Mapa corporal interativo na tela de Nova Medição na web
+- Layout anatômico dos campos de medida (topo → base, bilateral lado a lado)
+- Ícones de ajuda (?) com explicação contextual em Analytics e Dashboard
+- Coluna RPE (X/5) no histórico de treinos
+- Correção do percentual de conclusão no histórico (estava sempre 1%)
+- Imagens de exercícios disponíveis offline via cache persistente em disco (CachedNetworkImage)
+- Logo real do app substituindo ícone genérico no menu e login web
 
 ### v1.2.0
 - Sincronização bidirecional completa com Firebase (Firestore + Storage)

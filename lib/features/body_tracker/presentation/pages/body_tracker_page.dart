@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -286,13 +288,12 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
     );
   }
 
-
   // ─────────────────────────────────────────────────────────────────────────
   // Web layout SaaS
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildWebLayout(BuildContext context, List measurements) {
-    final latest  = measurements.isNotEmpty ? measurements.first  : null;
-    final prev    = measurements.length > 1  ? measurements[1]    : null;
+    final latest = measurements.isNotEmpty ? measurements.first : null;
+    final prev = measurements.length > 1 ? measurements[1] : null;
 
     double? delta(double? Function(dynamic) fn) {
       if (latest == null || prev == null) return null;
@@ -317,172 +318,230 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
           Container(
             width: 300,
             color: const Color(0xFF0A0A0A),
-            child: Column(children: [
-              // Botão
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: () => context.push('/body-tracker/add'),
-                    icon: const Icon(Icons.add, size: 18),
-                    label: Text('Nova Medida',
-                        style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Column(
+              children: [
+                // Botão
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () => context.push('/body-tracker/add'),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: Text(
+                        'Nova Medida',
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                  child: latest == null
-                      ? const Padding(
-                          padding: EdgeInsets.only(top: 40),
-                          child: Center(
-                            child: Text('Nenhuma medida ainda.',
-                                style: TextStyle(color: Colors.white24)),
-                          ),
-                        )
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // KPI Cards
-                            _SideLabel('ÚLTIMA MEDIDA'),
-                            const SizedBox(height: 10),
-                            _MiniKpi('Peso',
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                    child: latest == null
+                        ? const Padding(
+                            padding: EdgeInsets.only(top: 40),
+                            child: Center(
+                              child: Text(
+                                'Nenhuma medida ainda.',
+                                style: TextStyle(color: Colors.white24),
+                              ),
+                            ),
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // KPI Cards
+                              _SideLabel('ÚLTIMA MEDIDA'),
+                              const SizedBox(height: 10),
+                              _MiniKpi(
+                                'Peso',
                                 '${(latest.weight as double?)?.toStringAsFixed(1) ?? '—'} kg',
-                                delta((m) => m.weight), 'kg', invert: true),
-                            const SizedBox(height: 8),
-                            _MiniKpi('IMC',
+                                delta((m) => m.weight),
+                                'kg',
+                                invert: true,
+                              ),
+                              const SizedBox(height: 8),
+                              _MiniKpi(
+                                'IMC',
                                 (latest.bmi as double?) != null
                                     ? (latest.bmi as double).toStringAsFixed(1)
                                     : '—',
-                                delta((m) => m.bmi), '', invert: true),
-                            if (latest.fatPercentage != null) ...[
-                              const SizedBox(height: 8),
-                              _MiniKpi('Gordura',
+                                delta((m) => m.bmi),
+                                '',
+                                invert: true,
+                              ),
+                              if (latest.fatPercentage != null) ...[
+                                const SizedBox(height: 8),
+                                _MiniKpi(
+                                  'Gordura',
                                   '${(latest.fatPercentage as double).toStringAsFixed(1)}%',
-                                  delta((m) => m.fatPercentage), '%',
-                                  invert: true),
-                            ],
-                            if (latest.muscleMassKg != null) ...[
-                              const SizedBox(height: 8),
-                              _MiniKpi('Massa muscular',
-                                  '${(latest.muscleMassKg as double).toStringAsFixed(1)} kg',
-                                  delta((m) => m.muscleMassKg), 'kg',
-                                  invert: false),
-                            ],
-                            if (latest.waterPercentage != null) ...[
-                              const SizedBox(height: 8),
-                              _MiniKpi('Água corporal',
-                                  '${(latest.waterPercentage as double).toStringAsFixed(1)}%',
-                                  null, '%', invert: false),
-                            ],
-                            const SizedBox(height: 24),
-
-                            // Sparkline evolução peso
-                            if (weightHistory.length > 1) ...[
-                              _SideLabel('EVOLUÇÃO DO PESO'),
-                              const SizedBox(height: 10),
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF111111),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                      color: Colors.white.withOpacity(0.07)),
+                                  delta((m) => m.fatPercentage),
+                                  '%',
+                                  invert: true,
                                 ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    SizedBox(
+                              ],
+                              if (latest.muscleMassKg != null) ...[
+                                const SizedBox(height: 8),
+                                _MiniKpi(
+                                  'Massa muscular',
+                                  '${(latest.muscleMassKg as double).toStringAsFixed(1)} kg',
+                                  delta((m) => m.muscleMassKg),
+                                  'kg',
+                                  invert: false,
+                                ),
+                              ],
+                              if (latest.waterPercentage != null) ...[
+                                const SizedBox(height: 8),
+                                _MiniKpi(
+                                  'Água corporal',
+                                  '${(latest.waterPercentage as double).toStringAsFixed(1)}%',
+                                  null,
+                                  '%',
+                                  invert: false,
+                                ),
+                              ],
+                              const SizedBox(height: 24),
+
+                              // Sparkline evolução peso
+                              if (weightHistory.length > 1) ...[
+                                _SideLabel('EVOLUÇÃO DO PESO'),
+                                const SizedBox(height: 10),
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF111111),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.07),
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      SizedBox(
                                         height: 80,
                                         child: _WeightSparkline(
-                                            data: weightHistory)),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
+                                          data: weightHistory,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
                                             'Início: ${weightHistory.first.toStringAsFixed(1)} kg',
                                             style: GoogleFonts.outfit(
-                                                fontSize: 10,
-                                                color: Colors.white38)),
-                                        Text(
+                                              fontSize: 10,
+                                              color: Colors.white38,
+                                            ),
+                                          ),
+                                          Text(
                                             'Atual: ${weightHistory.last.toStringAsFixed(1)} kg',
                                             style: GoogleFonts.outfit(
-                                                fontSize: 10,
-                                                color: AppColors.primary,
-                                                fontWeight: FontWeight.w600)),
-                                      ],
-                                    ),
-                                  ],
+                                              fontSize: 10,
+                                              color: AppColors.primary,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 24),
-                            ],
+                                const SizedBox(height: 24),
+                              ],
 
-                            // Circunferências vs anterior
-                            _SideLabel('CIRCUNFERÊNCIAS'),
-                            const SizedBox(height: 10),
-                            ...[
-                              ('Cintura', (dynamic m) => m.waistCircumference as double?),
-                              ('Tórax',   (dynamic m) => m.chestCircumference as double?),
-                              ('Quadril', (dynamic m) => m.hipsCircumference  as double?),
-                              ('Bíceps D',(dynamic m) => m.bicepsRight        as double?),
-                              ('Coxa D',  (dynamic m) => m.thighRight         as double?),
-                            ].map((pair) {
-                              final val = pair.$2(latest);
-                              if (val == null) return const SizedBox.shrink();
-                              final d = prev != null
-                                  ? (() {
-                                      final p = pair.$2(prev);
-                                      return p != null ? val - p : null;
-                                    })()
-                                  : null;
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 7),
-                                child: Row(children: [
-                                  Text(pair.$1,
-                                      style: GoogleFonts.outfit(
+                              // Circunferências vs anterior
+                              _SideLabel('CIRCUNFERÊNCIAS'),
+                              const SizedBox(height: 10),
+                              ...[
+                                (
+                                  'Cintura',
+                                  (dynamic m) =>
+                                      m.waistCircumference as double?,
+                                ),
+                                (
+                                  'Tórax',
+                                  (dynamic m) =>
+                                      m.chestCircumference as double?,
+                                ),
+                                (
+                                  'Quadril',
+                                  (dynamic m) => m.hipsCircumference as double?,
+                                ),
+                                (
+                                  'Bíceps D',
+                                  (dynamic m) => m.bicepsRight as double?,
+                                ),
+                                (
+                                  'Coxa D',
+                                  (dynamic m) => m.thighRight as double?,
+                                ),
+                              ].map((pair) {
+                                final val = pair.$2(latest);
+                                if (val == null) return const SizedBox.shrink();
+                                final d = prev != null
+                                    ? (() {
+                                        final p = pair.$2(prev);
+                                        return p != null ? val - p : null;
+                                      })()
+                                    : null;
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 7),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        pair.$1,
+                                        style: GoogleFonts.outfit(
                                           fontSize: 12,
-                                          color: Colors.white54)),
-                                  const Spacer(),
-                                  Text('${val.toStringAsFixed(1)} cm',
-                                      style: GoogleFonts.outfit(
+                                          color: Colors.white54,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      Text(
+                                        '${val.toStringAsFixed(1)} cm',
+                                        style: GoogleFonts.outfit(
                                           fontSize: 12,
                                           color: Colors.white,
-                                          fontWeight: FontWeight.w600)),
-                                  if (d != null) ...[
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      '${d > 0 ? '+' : ''}${d.toStringAsFixed(1)}',
-                                      style: GoogleFonts.outfit(
-                                        fontSize: 10,
-                                        color: d < 0
-                                            ? AppColors.primary
-                                            : d > 0
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      if (d != null) ...[
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          '${d > 0 ? '+' : ''}${d.toStringAsFixed(1)}',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 10,
+                                            color: d < 0
+                                                ? AppColors.primary
+                                                : d > 0
                                                 ? Colors.redAccent
                                                 : Colors.white24,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ]),
-                              );
-                            }),
-                          ],
-                        ),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
+                  ),
                 ),
-              ),
-            ]),
+              ],
+            ),
           ),
 
           Container(width: 1, color: Colors.white.withOpacity(0.06)),
@@ -497,7 +556,9 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
                   child: Text(
                     '${measurements.length} registro${measurements.length != 1 ? 's' : ''}',
                     style: GoogleFonts.outfit(
-                        color: Colors.white38, fontSize: 13),
+                      color: Colors.white38,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
                 // Header tabela
@@ -505,22 +566,25 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 28),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF0D0D0D),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                          color: Colors.white.withOpacity(0.07)),
+                      border: Border.all(color: Colors.white.withOpacity(0.07)),
                     ),
-                    child: Row(children: [
-                      _Col('Data',       flex: 2),
-                      _Col('Peso (kg)',  flex: 1),
-                      _Col('IMC',        flex: 1),
-                      _Col('Cintura cm', flex: 1),
-                      _Col('Bíceps D/E', flex: 2),
-                      _Col('Gordura %',  flex: 1),
-                      _Col('',           flex: 1),
-                    ]),
+                    child: Row(
+                      children: [
+                        _Col('Data', flex: 2),
+                        _Col('Peso (kg)', flex: 1),
+                        _Col('IMC', flex: 1),
+                        _Col('Cintura cm', flex: 1),
+                        _Col('Bíceps D/E', flex: 2),
+                        _Col('Gordura %', flex: 1),
+                        _Col('', flex: 1),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -533,8 +597,7 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
                       title: 'Nenhuma medida',
                       subtitle: 'Adicione sua primeira medida corporal.',
                       actionLabel: 'Adicionar',
-                      onActionPressed: () =>
-                          context.push('/body-tracker/add'),
+                      onActionPressed: () => context.push('/body-tracker/add'),
                     ),
                   )
                 else
@@ -542,12 +605,11 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(28, 0, 28, 24),
                       itemCount: measurements.length,
-                      separatorBuilder: (_, i) =>
-                          const SizedBox(height: 5),
+                      separatorBuilder: (_, i) => const SizedBox(height: 5),
                       itemBuilder: (context, index) {
-                        final m    = measurements[index];
+                        final m = measurements[index];
                         final isFirst = index == 0;
-                        final d    = m.date as DateTime;
+                        final d = m.date as DateTime;
                         final dateStr =
                             '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 
@@ -556,15 +618,21 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
                         Color bmiColor = Colors.white38;
                         String bmiLabel = bmi?.toStringAsFixed(1) ?? '—';
                         if (bmi != null) {
-                          if (bmi < 18.5)       bmiColor = Colors.blueAccent;
-                          else if (bmi < 25.0)  bmiColor = AppColors.primary;
-                          else if (bmi < 30.0)  bmiColor = Colors.orangeAccent;
-                          else                  bmiColor = Colors.redAccent;
+                          if (bmi < 18.5)
+                            bmiColor = Colors.blueAccent;
+                          else if (bmi < 25.0)
+                            bmiColor = AppColors.primary;
+                          else if (bmi < 30.0)
+                            bmiColor = Colors.orangeAccent;
+                          else
+                            bmiColor = Colors.redAccent;
                         }
 
                         return Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 14),
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
                           decoration: BoxDecoration(
                             color: isFirst
                                 ? AppColors.primary.withOpacity(0.05)
@@ -576,130 +644,174 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
                                   : Colors.white.withOpacity(0.06),
                             ),
                           ),
-                          child: Row(children: [
-                            Expanded(
-                              flex: 2,
-                              child: Row(children: [
-                                Text(dateStr,
-                                    style: GoogleFonts.outfit(
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      dateStr,
+                                      style: GoogleFonts.outfit(
                                         color: Colors.white,
                                         fontSize: 13,
                                         fontWeight: isFirst
                                             ? FontWeight.w600
-                                            : FontWeight.w400)),
-                                if (isFirst) ...[
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 6, vertical: 1),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primary
-                                          .withOpacity(0.15),
-                                      borderRadius:
-                                          BorderRadius.circular(4),
+                                            : FontWeight.w400,
+                                      ),
                                     ),
-                                    child: Text('ATUAL',
-                                        style: GoogleFonts.outfit(
-                                          fontSize: 8,
-                                          color: AppColors.primary,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: 0.5,
-                                        )),
-                                  ),
-                                ],
-                              ]),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: Text(
-                                '${(m.weight as double?)?.toStringAsFixed(1) ?? '—'}',
-                                style: GoogleFonts.outfit(
-                                    color: Colors.white, fontSize: 13),
+                                    if (isFirst) ...[
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 1,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary.withOpacity(
+                                            0.15,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'ATUAL',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 8,
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: Row(children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: bmiColor.withOpacity(0.12),
-                                    borderRadius: BorderRadius.circular(5),
+                              Expanded(
+                                flex: 1,
+                                child: Text(
+                                  (m.weight as double?)?.toStringAsFixed(1) ??
+                                      '—',
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white,
+                                    fontSize: 13,
                                   ),
-                                  child: Text(bmiLabel,
-                                      style: GoogleFonts.outfit(
+                                ),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: bmiColor.withOpacity(0.12),
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                      child: Text(
+                                        bmiLabel,
+                                        style: GoogleFonts.outfit(
                                           fontSize: 12,
                                           color: bmiColor,
-                                          fontWeight: FontWeight.w600)),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ]),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: Text(
-                                '${(m.waistCircumference as double?)?.toStringAsFixed(1) ?? '—'}',
-                                style: GoogleFonts.outfit(
-                                    color: Colors.white70, fontSize: 13),
                               ),
-                            ),
-                            Expanded(
-                              flex: 2,
-                              child: Text(
-                                '${(m.bicepsRight as double?)?.toStringAsFixed(1) ?? '—'} / ${(m.bicepsLeft as double?)?.toStringAsFixed(1) ?? '—'}',
-                                style: GoogleFonts.outfit(
-                                    color: Colors.white70, fontSize: 13),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: Text(
-                                (m.fatPercentage as double?) != null
-                                    ? '${(m.fatPercentage as double).toStringAsFixed(1)}%'
-                                    : '—',
-                                style: GoogleFonts.outfit(
-                                    color: Colors.white70, fontSize: 13),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: Row(children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit_outlined,
-                                      size: 15, color: Colors.white38),
-                                  onPressed: () => context
-                                      .push('/body-tracker/add', extra: m),
-                                  tooltip: 'Editar',
-                                  visualDensity: VisualDensity.compact,
+                              Expanded(
+                                flex: 1,
+                                child: Text(
+                                  (m.waistCircumference as double?)
+                                          ?.toStringAsFixed(1) ??
+                                      '—',
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white70,
+                                    fontSize: 13,
+                                  ),
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline,
-                                      size: 15, color: Colors.redAccent),
-                                  onPressed: () async {
-                                    final ok =
-                                        await AppDialogs.showConfirmDialog<
-                                            bool>(
-                                      context: context,
-                                      title: 'Excluir medida?',
-                                      description:
-                                          'Esta ação não pode ser desfeita.',
-                                      confirmText: 'EXCLUIR',
-                                      isDestructive: true,
-                                    );
-                                    if (ok == true) {
-                                      ref
-                                          .read(
-                                              bodyTrackerProvider.notifier)
-                                          .deleteMeasurement(
-                                              m.id as String);
-                                    }
-                                  },
-                                  tooltip: 'Excluir',
-                                  visualDensity: VisualDensity.compact,
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  '${(m.bicepsRight as double?)?.toStringAsFixed(1) ?? '—'} / ${(m.bicepsLeft as double?)?.toStringAsFixed(1) ?? '—'}',
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white70,
+                                    fontSize: 13,
+                                  ),
                                 ),
-                              ]),
-                            ),
-                          ]),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Text(
+                                  (m.fatPercentage as double?) != null
+                                      ? '${(m.fatPercentage as double).toStringAsFixed(1)}%'
+                                      : '—',
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white70,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Row(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.edit_outlined,
+                                        size: 15,
+                                        color: Colors.white38,
+                                      ),
+                                      onPressed: () => context.push(
+                                        '/body-tracker/add',
+                                        extra: m,
+                                      ),
+                                      tooltip: 'Editar',
+                                      visualDensity: VisualDensity.compact,
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete_outline,
+                                        size: 15,
+                                        color: Colors.redAccent,
+                                      ),
+                                      onPressed: () async {
+                                        final ok =
+                                            await AppDialogs.showConfirmDialog<
+                                              bool
+                                            >(
+                                              context: context,
+                                              title: 'Excluir medida?',
+                                              description:
+                                                  'Esta ação não pode ser desfeita.',
+                                              confirmText: 'EXCLUIR',
+                                              isDestructive: true,
+                                            );
+                                        if (ok == true) {
+                                          ref
+                                              .read(
+                                                bodyTrackerProvider.notifier,
+                                              )
+                                              .deleteMeasurement(
+                                                m.id as String,
+                                              );
+                                        }
+                                      },
+                                      tooltip: 'Excluir',
+                                      visualDensity: VisualDensity.compact,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         );
                       },
                     ),
@@ -713,14 +825,17 @@ class _BodyTrackerPageState extends ConsumerState<BodyTrackerPage> {
   }
 
   Widget _SideLabel(String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 0),
-        child: Text(text,
-            style: GoogleFonts.outfit(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: Colors.white24,
-                letterSpacing: 1.2)),
-      );
+    padding: const EdgeInsets.only(bottom: 0),
+    child: Text(
+      text,
+      style: GoogleFonts.outfit(
+        fontSize: 10,
+        fontWeight: FontWeight.w700,
+        color: Colors.white24,
+        letterSpacing: 1.2,
+      ),
+    ),
+  );
 }
 
 // ── Widgets auxiliares ─────────────────────────────────────────────────────────
@@ -732,8 +847,13 @@ class _MiniKpi extends StatelessWidget {
   final String unit;
   final bool invert;
 
-  const _MiniKpi(this.label, this.value, this.delta, this.unit,
-      {required this.invert});
+  const _MiniKpi(
+    this.label,
+    this.value,
+    this.delta,
+    this.unit, {
+    required this.invert,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -742,8 +862,7 @@ class _MiniKpi extends StatelessWidget {
     if (delta != null && delta != 0) {
       final improved = invert ? delta! < 0 : delta! > 0;
       deltaColor = improved ? AppColors.primary : Colors.redAccent;
-      deltaStr =
-          '${delta! > 0 ? '+' : ''}${delta!.toStringAsFixed(1)}$unit';
+      deltaStr = '${delta! > 0 ? '+' : ''}${delta!.toStringAsFixed(1)}$unit';
     }
 
     return Container(
@@ -753,24 +872,34 @@ class _MiniKpi extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.white.withOpacity(0.07)),
       ),
-      child: Row(children: [
-        Text(label,
-            style: GoogleFonts.outfit(fontSize: 12, color: Colors.white54)),
-        const Spacer(),
-        Text(value,
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.outfit(fontSize: 12, color: Colors.white54),
+          ),
+          const Spacer(),
+          Text(
+            value,
             style: GoogleFonts.outfit(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: Colors.white)),
-        if (deltaStr != null) ...[
-          const SizedBox(width: 6),
-          Text(deltaStr,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+          if (deltaStr != null) ...[
+            const SizedBox(width: 6),
+            Text(
+              deltaStr,
               style: GoogleFonts.outfit(
-                  fontSize: 10,
-                  color: deltaColor,
-                  fontWeight: FontWeight.w600)),
+                fontSize: 10,
+                color: deltaColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ],
-      ]),
+      ),
     );
   }
 }
@@ -782,14 +911,17 @@ class _Col extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Expanded(
-        flex: flex,
-        child: Text(label,
-            style: GoogleFonts.outfit(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: Colors.white38,
-                letterSpacing: 0.4)),
-      );
+    flex: flex,
+    child: Text(
+      label,
+      style: GoogleFonts.outfit(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: Colors.white38,
+        letterSpacing: 0.4,
+      ),
+    ),
+  );
 }
 
 // ── Sparkline do peso ──────────────────────────────────────────────────────────
@@ -821,7 +953,8 @@ class _SparklinePainter extends CustomPainter {
 
     double x(int i) => size.width * i / (data.length - 1);
     double y(double v) =>
-        size.height - (size.height * 0.1) -
+        size.height -
+        (size.height * 0.1) -
         ((v - minY) / rangeY) * (size.height * 0.8);
 
     final path = Path();
@@ -849,7 +982,8 @@ class _SparklinePainter extends CustomPainter {
       fillPath,
       Paint()
         ..shader = gradient.createShader(
-            Rect.fromLTWH(0, 0, size.width, size.height))
+          Rect.fromLTWH(0, 0, size.width, size.height),
+        )
         ..style = PaintingStyle.fill,
     );
 

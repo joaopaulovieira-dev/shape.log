@@ -657,8 +657,368 @@ class _BodyMeasurementEntryPageState
     );
   }
 
+  // ── Web Layout ────────────────────────────────────────────────────────────
+
+  Widget _buildWebLayout(BuildContext context) {
+    final isEdit = widget.measurementToEdit != null;
+    return Scaffold(
+      backgroundColor: const Color(0xFF080808),
+      body: Column(
+        children: [
+          // Top bar
+          Container(
+            height: 60,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0A0A0A),
+              border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.06))),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () => context.pop(),
+                  icon: const Icon(Icons.arrow_back, color: Colors.white70, size: 20),
+                  tooltip: 'Voltar',
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  isEdit ? 'Editar Medidas' : 'Nova Medição',
+                  style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                const Spacer(),
+                FilledButton.icon(
+                  onPressed: _saveMeasurement,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  icon: const Icon(Icons.check, size: 18),
+                  label: Text('Salvar', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+
+          // Scrollable content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 900),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // ── Informações Básicas ─────────────────────────
+                        _webSectionTitle('Informações Básicas'),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => _selectDate(context),
+                                child: AbsorbPointer(
+                                  child: TextFormField(
+                                    controller: _dateController,
+                                    style: GoogleFonts.outfit(color: Colors.white),
+                                    decoration: _buildDecoration(label: 'Data', icon: Icons.calendar_today),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _weightController,
+                                style: GoogleFonts.outfit(color: Colors.white),
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                decoration: _buildDecoration(label: 'Peso (kg)', icon: Icons.scale_outlined),
+                                validator: (v) => v == null || v.isEmpty ? '?' : null,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              flex: 2,
+                              child: TextFormField(
+                                controller: _reportUrlController,
+                                style: GoogleFonts.outfit(color: Colors.white),
+                                keyboardType: TextInputType.url,
+                                decoration: _buildDecoration(
+                                  label: 'Link do Relatório',
+                                  icon: Icons.link,
+                                  hintText: 'Bioimpedância...',
+                                  suffixIcon: IconButton(
+                                    icon: const Icon(Icons.paste, color: AppColors.primary, size: 20),
+                                    onPressed: () async {
+                                      final data = await Clipboard.getData(Clipboard.kTextPlain);
+                                      if (data?.text != null) setState(() => _reportUrlController.text = data!.text!);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        if (_currentBMI > 0) ...[
+                          const SizedBox(height: 24),
+                          _webSectionTitle('Índice de Massa Corporal'),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: _webCardDecoration(),
+                            child: BMIGauge(bmiValue: _currentBMI),
+                          ),
+                        ],
+
+                        // ── Grupo 1: Medidas de Fita ────────────────────
+                        const SizedBox(height: 24),
+                        _webSectionTitle('Grupo 1: Medidas de Fita (cm)'),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: _webCardDecoration(),
+                          child: IntrinsicHeight(
+                            child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Corpo humano interativo
+                              SizedBox(
+                                width: 220,
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          _selectedSide == BodySide.front ? 'Frente' : 'Costas',
+                                          style: GoogleFonts.outfit(fontSize: 12, color: Colors.white38),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        GestureDetector(
+                                          onTap: () => setState(() {
+                                            _selectedSide = _selectedSide == BodySide.front ? BodySide.back : BodySide.front;
+                                          }),
+                                          child: Icon(
+                                            _selectedSide == BodySide.front ? Icons.flip_camera_android : Icons.accessibility_new,
+                                            color: AppColors.primary,
+                                            size: 18,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Expanded(
+                                      child: BodyPartSelector(
+                                        bodyParts: _filledParts,
+                                        onSelectionUpdated: _onBodyPartsSelected,
+                                        side: _selectedSide,
+                                        mirrored: false,
+                                        selectedColor: AppColors.primary,
+                                        unselectedColor: Colors.white.withOpacity(0.05),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 24),
+                              // Campos dispostos como o corpo humano (topo → base)
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    _webBodyRow(center: _webField('Pescoço', _neckController, Icons.straighten, centered: true)),
+                                    const SizedBox(height: 12),
+                                    _webBodyRow(center: _webField('Ombros', _shouldersController, Icons.straighten, centered: true)),
+                                    const SizedBox(height: 12),
+                                    _webBodyRow(center: _webField('Peitoral', _chestController, Icons.straighten, centered: true)),
+                                    const SizedBox(height: 12),
+                                    _webBodyRow(left: _webField('Bíceps (Esq.)', _bicepsLeftController, Icons.straighten, centered: true), right: _webField('Bíceps (Dir.)', _bicepsRightController, Icons.straighten, centered: true)),
+                                    const SizedBox(height: 12),
+                                    _webBodyRow(center: _webField('Cintura', _waistController, Icons.straighten, centered: true)),
+                                    const SizedBox(height: 12),
+                                    _webBodyRow(left: _webField('Antebraço (Esq.)', _forearmLeftController, Icons.straighten, centered: true), right: _webField('Antebraço (Dir.)', _forearmRightController, Icons.straighten, centered: true)),
+                                    const SizedBox(height: 12),
+                                    _webBodyRow(center: _webField('Quadril', _hipsController, Icons.straighten, centered: true)),
+                                    const SizedBox(height: 12),
+                                    _webBodyRow(left: _webField('Coxa (Esq.)', _thighLeftController, Icons.straighten, centered: true), right: _webField('Coxa (Dir.)', _thighRightController, Icons.straighten, centered: true)),
+                                    const SizedBox(height: 12),
+                                    _webBodyRow(left: _webField('Panturrilha (Esq.)', _calvesLeftController, Icons.straighten, centered: true), right: _webField('Panturrilha (Dir.)', _calvesRightController, Icons.straighten, centered: true)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )),
+                        ),
+
+                        // ── Grupo 2: Bioimpedância Core ─────────────────
+                        const SizedBox(height: 24),
+                        _webSectionTitle('Grupo 2: Bioimpedância (Core)'),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: _webCardDecoration(),
+                          child: _webMeasureGrid([
+                            _webField('Gordura (%)', _fatPercentageController, Icons.percent),
+                            _webField('Massa gorda (kg)', _fatMassKgController, Icons.monitor_weight_outlined),
+                            _webField('Massa muscular (kg)', _muscleMassKgController, Icons.fitness_center_outlined),
+                            _webField('Gordura visceral', _visceralFatController, Icons.favorite_border),
+                            _webField('BMR (Kcal)', _bmrController, Icons.local_fire_department_outlined),
+                            _webField('Água (%)', _waterPercentageController, Icons.water_drop_outlined),
+                            _webField('Idade metabólica', _bodyAgeController, Icons.access_time),
+                          ]),
+                        ),
+
+                        // ── Grupo 3: Bioimpedância Segmentada ───────────
+                        const SizedBox(height: 24),
+                        _webSectionTitle('Grupo 3: Bioimpedância (Segmentada)'),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: _webCardDecoration(),
+                          child: _webMeasureGrid([
+                            _webField('Gordura subcutânea (%)', _subcutaneousFatController, Icons.percent),
+                            _webField('Músculo Braço Esq. (kg)', _muscleLeftArmController, Icons.fitness_center_outlined),
+                            _webField('Músculo Braço Dir. (kg)', _muscleRightArmController, Icons.fitness_center_outlined),
+                            _webField('Músculo Perna Esq. (kg)', _muscleLeftLegController, Icons.fitness_center_outlined),
+                            _webField('Músculo Perna Dir. (kg)', _muscleRightLegController, Icons.fitness_center_outlined),
+                          ]),
+                        ),
+
+                        // ── Notas e Imagens ─────────────────────────────
+                        const SizedBox(height: 24),
+                        _webSectionTitle('Notas e Imagens'),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: _webCardDecoration(),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              TextFormField(
+                                controller: _notesController,
+                                style: GoogleFonts.outfit(color: Colors.white),
+                                maxLines: 3,
+                                decoration: _buildDecoration(label: 'Notas / Observações', icon: Icons.note_alt_outlined),
+                              ),
+                              const SizedBox(height: 20),
+                              if (_imagePaths.isNotEmpty) ...[
+                                SizedBox(
+                                  height: 120,
+                                  child: ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: _imagePaths.length,
+                                    separatorBuilder: (_, _) => const SizedBox(width: 12),
+                                    itemBuilder: (context, index) => Stack(
+                                      children: [
+                                        Container(
+                                          width: 120,
+                                          height: 120,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(color: Colors.white.withOpacity(0.08)),
+                                            image: DecorationImage(
+                                              image: ImagePathResolver.resolveToImageProvider(_imagePaths[index]),
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                        ),
+                                        Positioned(
+                                          top: 4, right: 4,
+                                          child: GestureDetector(
+                                            onTap: () => setState(() => _imagePaths.removeAt(index)),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                                              child: const Icon(Icons.close, color: Colors.white, size: 14),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                              ],
+                              OutlinedButton.icon(
+                                onPressed: () async {
+                                  final url = await WebImageService.pickAndUpload(WebImageService.folderMeasurements);
+                                  if (url != null) setState(() => _imagePaths.add(url));
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.primary,
+                                  side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                                ),
+                                icon: const Icon(Icons.add_photo_alternate_outlined),
+                                label: Text('Adicionar Imagem', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _webBodyRow({Widget? center, Widget? left, Widget? right}) {
+    if (center != null) {
+      return Row(children: [
+        const Expanded(child: SizedBox()),
+        Expanded(flex: 2, child: center),
+        const Expanded(child: SizedBox()),
+      ]);
+    }
+    return Row(children: [
+      Expanded(child: left!),
+      const SizedBox(width: 12),
+      Expanded(child: right!),
+    ]);
+  }
+
+  Widget _webSectionTitle(String title) => Text(
+    title.toUpperCase(),
+    style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white38, letterSpacing: 1.2),
+  );
+
+  BoxDecoration _webCardDecoration() => BoxDecoration(
+    color: const Color(0xFF111111),
+    borderRadius: BorderRadius.circular(16),
+    border: Border.all(color: Colors.white.withOpacity(0.06)),
+  );
+
+  Widget _webMeasureGrid(List<Widget> fields) => Wrap(
+    spacing: 16,
+    runSpacing: 16,
+    children: fields.map((f) => SizedBox(width: 260, child: f)).toList(),
+  );
+
+  Widget _webField(String label, TextEditingController controller, IconData icon, {bool centered = false}) => TextFormField(
+    controller: controller,
+    style: GoogleFonts.outfit(color: Colors.white, fontSize: 14),
+    textAlign: centered ? TextAlign.center : TextAlign.start,
+    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    decoration: _buildDecoration(label: label, icon: icon),
+  );
+
+  // ── Mobile Layout ──────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) return _buildWebLayout(context);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(

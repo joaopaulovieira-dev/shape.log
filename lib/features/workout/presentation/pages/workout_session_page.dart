@@ -596,20 +596,10 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                               BlendMode.multiply,
                                             ),
                                       child: exercise.imagePaths.isNotEmpty
-                                          ? (ImagePathResolver.isRemote(exercise.imagePaths.first)
-                                              ? Image.network(exercise.imagePaths.first, fit: BoxFit.contain)
-                                              : Image.file(
-                                                  ImagePathResolver.resolveToFile(
-                                                    exercise.imagePaths.first,
-                                                  ),
-                                                  fit: BoxFit.contain,
-                                                  errorBuilder: (_, _, _) =>
-                                                      const Icon(
-                                                        Icons.broken_image,
-                                                        color: Colors.white,
-                                                        size: 50,
-                                                      ),
-                                                ))
+                                          ? AppCachedImage(
+                                              path: exercise.imagePaths.first,
+                                              fit: BoxFit.contain,
+                                            )
                                           : const Center(
                                               child: Icon(
                                                 Icons.fitness_center,

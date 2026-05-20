@@ -114,20 +114,7 @@ class ExerciseDetailsPage extends ConsumerWidget {
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(24),
-                                    child: ImagePathResolver.isRemote(path)
-                                        ? Image.network(path, fit: BoxFit.contain)
-                                        : Image.file(
-                                            ImagePathResolver.resolveToFile(path),
-                                            fit: BoxFit.contain,
-                                            errorBuilder: (ctx, err, stack) =>
-                                                const Center(
-                                                  child: Icon(
-                                                    Icons.broken_image,
-                                                    color: Colors.white24,
-                                                    size: 50,
-                                                  ),
-                                                ),
-                                          ),
+                                    child: AppCachedImage(path: path, fit: BoxFit.contain),
                                   ),
                                 );
                               },
@@ -499,19 +486,7 @@ class ExerciseDetailsPage extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(12),
                               child: AspectRatio(
                                 aspectRatio: 16 / 9,
-                                child: ImagePathResolver.isRemote(path)
-                                    ? Image.network(path, fit: BoxFit.cover,
-                                        errorBuilder: (c, e, s) => Container(
-                                            color: const Color(0xFF1E1E1E),
-                                            child: const Icon(Icons.broken_image,
-                                                color: Colors.white38)))
-                                    : Image.file(
-                                        ImagePathResolver.resolveToFile(path),
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (c, e, s) => Container(
-                                            color: const Color(0xFF1E1E1E),
-                                            child: const Icon(Icons.broken_image,
-                                                color: Colors.white38))),
+                                child: AppCachedImage(path: path, fit: BoxFit.cover),
                               ),
                             );
                           },

@@ -462,7 +462,7 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
       ),
     );
 
-    Widget card(String title, Widget child) => Container(
+    Widget card(String title, Widget child, {String? hint}) => Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xFF111111),
@@ -472,13 +472,67 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: GoogleFonts.outfit(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
+          Row(
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              if (hint != null) ...[
+                const SizedBox(width: 6),
+                GestureDetector(
+                  onTap: () => showDialog(
+                    context: context,
+                    builder: (dialogContext) => Dialog(
+                      backgroundColor: const Color(0xFF1A1A1A),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: SizedBox(
+                        width: 420,
+                        child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.info_outline, color: AppColors.primary, size: 20),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    title,
+                                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              hint,
+                              style: GoogleFonts.outfit(fontSize: 14, color: Colors.white70, height: 1.6),
+                            ),
+                            const SizedBox(height: 20),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () => Navigator.pop(dialogContext),
+                                child: Text('Fechar', style: GoogleFonts.outfit(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                  child: Icon(Icons.help_outline_rounded, size: 15, color: Colors.white24),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 16),
           child,
@@ -541,6 +595,7 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
                     history: history,
                     isAllTime: _filterMode == 'all',
                   ),
+                  hint: 'Mostra a carga total movida por semana (kg × repetições × séries). Picos indicam semanas de alta intensidade; quedas podem sinalizar deload ou ausências. Use para identificar tendências de progressão ao longo do tempo.',
                 ),
               ),
               const SizedBox(width: 16),
@@ -549,6 +604,7 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
                 child: card(
                   'Consistência Semanal',
                   ConsistencyHeatmap(history: history),
+                  hint: 'Mapa de calor com a frequência de treinos por dia da semana. Quanto mais intensa a cor, mais sessões foram realizadas naquele dia. Ajuda a identificar seus dias mais produtivos e eventuais lacunas de consistência.',
                 ),
               ),
             ],
@@ -564,6 +620,7 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
                 child: card(
                   'Balanço Muscular',
                   BalancePieChart(history: history),
+                  hint: 'Distribuição dos treinos por grupo muscular principal. Um gráfico equilibrado indica uma rotina completa. Fatias muito grandes em um grupo podem indicar sobretreinamento; fatias pequenas revelam grupos negligenciados.',
                 ),
               ),
               const SizedBox(width: 16),
@@ -572,6 +629,7 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
                 child: card(
                   'Duração das Sessões',
                   _SessionDurationChart(history: history),
+                  hint: 'Duração de cada sessão de treino em minutos, ordenada do mais recente para o mais antigo. A linha de referência indica sua média. Sessões muito curtas podem indicar treinos incompletos; muito longas podem sinalizar baixa intensidade.',
                 ),
               ),
             ],
@@ -582,6 +640,7 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
           card(
             'Top Exercícios por Frequência',
             _TopExercisesChart(history: history),
+            hint: 'Os exercícios mais realizados no período selecionado, ordenados por número de aparições nos treinos. Revela seus movimentos base e pode indicar excessiva repetição ou, pelo contrário, exercícios importantes pouco praticados.',
           ),
         ],
       ),
@@ -944,7 +1003,7 @@ class _HistoryTab extends ConsumerWidget {
                 _HCol('Treino', flex: 3),
                 _HCol('Duração', flex: 1),
                 _HCol('Conclusão', flex: 2),
-                _HCol('Esforço', flex: 1),
+                _HCol('RPE', flex: 2),
                 _HCol('', flex: 1),
               ],
             ),
@@ -1100,10 +1159,23 @@ class _HistoryTab extends ConsumerWidget {
                           ),
                         ),
                         Expanded(
-                          flex: 1,
-                          child: Text(
-                            _getRpeEmoji(h.rpe),
-                            style: const TextStyle(fontSize: 18),
+                          flex: 2,
+                          child: Row(
+                            children: [
+                              Text(
+                                _getRpeEmoji(h.rpe),
+                                style: const TextStyle(fontSize: 15),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                h.rpe != null ? '${h.rpe}/5' : '—',
+                                style: GoogleFonts.outfit(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         Expanded(

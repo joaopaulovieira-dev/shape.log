@@ -122,17 +122,13 @@ class _WebLoginPageState extends ConsumerState<WebLoginPage> {
                         // Logo
                         Row(
                           children: [
-                            Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: AppColors.primary,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.fitness_center,
-                                color: Colors.black,
-                                size: 20,
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.asset(
+                                'assets/icon/logo_fundopreto.png',
+                                width: 36,
+                                height: 36,
+                                fit: BoxFit.cover,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -256,17 +252,13 @@ class _WebLoginPageState extends ConsumerState<WebLoginPage> {
                       if (isNarrow) ...[
                         Row(
                           children: [
-                            Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: AppColors.primary,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.fitness_center,
-                                color: Colors.black,
-                                size: 18,
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.asset(
+                                'assets/icon/logo_fundopreto.png',
+                                width: 32,
+                                height: 32,
+                                fit: BoxFit.cover,
                               ),
                             ),
                             const SizedBox(width: 10),
