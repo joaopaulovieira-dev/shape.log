@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/painting.dart';
+import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
@@ -61,9 +62,14 @@ class ImagePathResolver {
         pathString.startsWith('gs://');
   }
 
-  /// Retorna o ImageProvider correto: NetworkImage para URLs, FileImage para locais.
+  /// Retorna o ImageProvider correto.
+  /// Para URLs remotas usa CachedNetworkImageProvider (persiste offline).
+  /// Para paths locais usa FileImage.
   static ImageProvider resolveToImageProvider(String pathString) {
-    if (isRemote(pathString)) return NetworkImage(pathString);
+    if (isRemote(pathString)) {
+      if (kIsWeb) return NetworkImage(pathString);
+      return CachedNetworkImageProvider(pathString);
+    }
     if (kIsWeb) {
       // Retorna uma imagem GIF de 1x1 pixel transparente em memória para evitar erros na Web
       return MemoryImage(
@@ -116,4 +122,78 @@ class ImagePathResolver {
     }
     return FileImage(resolveToFile(pathString));
   }
+}
+
+/// Widget unificado para carregar imagens locais e remotas.
+/// URLs remotas usam cache persistente (disponível offline após 1ª carga).
+class AppCachedImage extends StatelessWidget {
+  final String path;
+  final BoxFit fit;
+  final Widget? errorWidget;
+
+  const AppCachedImage({
+    super.key,
+    required this.path,
+    this.fit = BoxFit.cover,
+    this.errorWidget,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (!ImagePathResolver.isRemote(path)) {
+      // Imagem local — FileImage padrão
+      return Image.file(
+        ImagePathResolver.resolveToFile(path),
+        fit: fit,
+        errorBuilder: (ctx, e, s) =>
+            errorWidget ?? const _ImageFallback(),
+      );
+    }
+
+    if (kIsWeb) {
+      return Image.network(
+        path,
+        fit: fit,
+        errorBuilder: (ctx, e, s) =>
+            errorWidget ?? const _ImageFallback(),
+      );
+    }
+
+    // Imagem remota no mobile — cache persistente
+    return CachedNetworkImage(
+      imageUrl: path,
+      fit: fit,
+      placeholder: (ctx, url) => const _ImagePlaceholder(),
+      errorWidget: (ctx, url, e) =>
+          errorWidget ?? const _ImageFallback(),
+    );
+  }
+}
+
+class _ImagePlaceholder extends StatelessWidget {
+  const _ImagePlaceholder();
+  @override
+  Widget build(BuildContext context) => Container(
+        color: const Color(0xFF1A1A1A),
+        child: const Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Color(0xFFCCFF00),
+            ),
+          ),
+        ),
+      );
+}
+
+class _ImageFallback extends StatelessWidget {
+  const _ImageFallback();
+  @override
+  Widget build(BuildContext context) => Container(
+        color: const Color(0xFF1A1A1A),
+        child: const Icon(Icons.fitness_center,
+            color: Color(0xFFCCFF00), size: 24),
+      );
 }

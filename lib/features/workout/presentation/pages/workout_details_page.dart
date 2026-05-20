@@ -86,7 +86,14 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
 
         return Scaffold(
           backgroundColor: Colors.black,
-          body: CustomScrollView(
+          body: RefreshIndicator(
+            color: AppColors.primary,
+            backgroundColor: const Color(0xFF1E1E1E),
+            onRefresh: () async {
+              ref.invalidate(routineListProvider);
+              await ref.read(routineListProvider.future);
+            },
+            child: CustomScrollView(
             slivers: [
               SliverAppBar(
                 expandedHeight: 120.0,
@@ -513,6 +520,7 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                 ),
               ),
             ],
+          ),
           ),
         );
       },
