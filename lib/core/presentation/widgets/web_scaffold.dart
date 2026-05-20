@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../constants/app_colors.dart';
 import '../../services/auth_service.dart';
+import '../../providers/app_version_provider.dart';
 import '../../../features/profile/presentation/providers/user_profile_provider.dart';
 
 class WebScaffold extends ConsumerStatefulWidget {
@@ -471,7 +472,7 @@ class _UserTile extends StatelessWidget {
 
 // ── Top bar ─────────────────────────────────────────────────────────────────
 
-class _WebTopBar extends StatelessWidget {
+class _WebTopBar extends ConsumerWidget {
   final String title;
   final String subtitle;
 
@@ -481,7 +482,8 @@ class _WebTopBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appVersion = ref.watch(appVersionProvider).asData?.value ?? '…';
     return Container(
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -521,7 +523,7 @@ class _WebTopBar extends StatelessWidget {
               border: Border.all(color: AppColors.primary.withOpacity(0.3)),
             ),
             child: Text(
-              'v1.2.0 · Web',
+              'v$appVersion · Web',
               style: GoogleFonts.outfit(
                 fontSize: 11,
                 color: AppColors.primary,

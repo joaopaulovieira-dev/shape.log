@@ -13,6 +13,7 @@ import '../data/repositories/settings_repository.dart';
 import '../../image_library/presentation/image_library_settings_page.dart';
 import '../../../../core/utils/snackbar_utils.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/providers/app_version_provider.dart';
 import 'widgets/settings_widgets.dart';
 import '../../../../core/presentation/widgets/app_dialogs.dart';
 import '../../../../core/services/sync_service.dart';
@@ -29,6 +30,7 @@ class SettingsPage extends ConsumerWidget {
     final authState = ref.watch(authStateProvider);
     final isLoggedIn = authState.asData?.value != null;
 
+    final appVersion = ref.watch(appVersionProvider).asData?.value ?? '…';
     final routinesAsync = ref.watch(routineListProvider);
     final historyAsync = ref.watch(historyListProvider);
     final measurements = ref.watch(bodyTrackerProvider);
@@ -47,6 +49,7 @@ class SettingsPage extends ConsumerWidget {
         workoutCount: workoutCount,
         historyCount: historyCount,
         measurementCount: measurementCount,
+        appVersion: appVersion,
       );
     }
 
@@ -135,9 +138,9 @@ class SettingsPage extends ConsumerWidget {
                   SettingsMenuItem(
                     icon: Icons.info_outline,
                     title: 'Sobre',
-                    subtitle: 'Vers\u00e3o 1.0.0 \u2022 Shape.log',
+                    subtitle: 'v$appVersion \u00b7 Shape.log',
                     iconColor: Colors.tealAccent,
-                    onTap: () => _showAboutDialog(context),
+                    onTap: () => _showAboutDialog(context, appVersion),
                   ),
 
                   // Logout (visível apenas quando autenticado com Google)
@@ -419,18 +422,18 @@ class SettingsPage extends ConsumerWidget {
     }
   }
 
-  void _showAboutDialog(BuildContext context) {
+  void _showAboutDialog(BuildContext context, String version) {
     AppDialogs.showInfoDialog(
       context: context,
       title: "Shape.log",
-      content: const Column(
+      content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Seu companheiro de treinos e medidas."),
-          SizedBox(height: 8),
-          Text("Vers\u00e3o: 1.0.0"),
-          Text("Desenvolvido com Flutter & Riverpod."),
+          const Text("Seu companheiro de treinos e medidas."),
+          const SizedBox(height: 8),
+          Text("Vers\u00e3o: $version"),
+          const Text("Desenvolvido com Flutter & Riverpod."),
         ],
       ),
       buttonText: "OK",
@@ -503,6 +506,7 @@ class SettingsPage extends ConsumerWidget {
     required int workoutCount,
     required int historyCount,
     required int measurementCount,
+    required String appVersion,
   }) {
     final name = userProfile?.name ?? '—';
     final pic = userProfile?.profilePicturePath;
@@ -616,9 +620,9 @@ class SettingsPage extends ConsumerWidget {
                   _WebMenuItem(
                     icon: Icons.info_outline,
                     title: 'Sobre',
-                    subtitle: 'Versão 1.2.0 · Shape.log',
+                    subtitle: 'v$appVersion · Shape.log',
                     iconColor: Colors.tealAccent,
-                    onTap: () => _showAboutDialog(context),
+                    onTap: () => _showAboutDialog(context, appVersion),
                   ),
                   if (isLoggedIn) ...[
                     Divider(
