@@ -12,6 +12,7 @@ import 'package:shape_log/features/workout/presentation/providers/workout_provid
 import 'package:shape_log/features/reports/presentation/widgets/advanced_analytics_widgets.dart';
 import 'package:shape_log/features/workout/domain/services/workout_report_service.dart';
 import 'package:shape_log/features/workout/domain/entities/workout_history.dart';
+import 'package:shape_log/features/workout/domain/entities/exercise.dart';
 import 'package:shape_log/features/reports/presentation/pages/workout_history_details_page.dart';
 
 // Hive imports
@@ -315,91 +316,234 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
       );
     }
 
+    // ── Filtro comum ──────────────────────────────────────────────────────────
+    final filterWidget = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: PopupMenuButton<String>(
+        initialValue: _filterMode,
+        onSelected: (value) => setState(() => _filterMode = value),
+        offset: const Offset(0, 40),
+        color: const Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.filter_list, color: Colors.grey, size: 16),
+            const SizedBox(width: 8),
+            Text(
+              _filterMode == 'all'
+                  ? 'Tudo'
+                  : _filterMode == '30_days'
+                      ? '30 Dias'
+                      : _filterMode == '90_days'
+                          ? '90 Dias'
+                          : '7 Dias',
+              style: GoogleFonts.outfit(
+                  color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.arrow_drop_down, color: Colors.grey, size: 16),
+          ],
+        ),
+        itemBuilder: (context) => [
+          _buildPopupItem('all', 'Tudo'),
+          _buildPopupItem('90_days', 'Últimos 90 dias'),
+          _buildPopupItem('30_days', 'Últimos 30 dias'),
+          _buildPopupItem('7_days', 'Últimos 7 dias'),
+        ],
+      ),
+    );
+
+    if (kIsWeb) {
+      return _buildWebAnalytics(filteredHistory, filterWidget);
+    }
+
+    // ── Mobile layout ─────────────────────────────────────────────────────────
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Filter Toggle
-          // Filter - Mirrored from Body Tracker
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.1),
-                  ),
-                ),
-                child: PopupMenuButton<String>(
-                  initialValue: _filterMode,
-                  onSelected: (value) => setState(() => _filterMode = value),
-                  offset: const Offset(0, 40),
-                  color: const Color(0xFF1E1E1E),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.1),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.filter_list,
-                        color: Colors.grey,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _filterMode == 'all'
-                            ? "Tudo"
-                            : (_filterMode == '30_days'
-                                  ? "30 Dias"
-                                  : (_filterMode == '90_days'
-                                        ? "90 Dias"
-                                        : "7 Dias")),
-                        style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.arrow_drop_down,
-                        color: Colors.grey,
-                        size: 16,
-                      ),
-                    ],
-                  ),
-                  itemBuilder: (context) => [
-                    _buildPopupItem('all', 'Tudo'),
-                    _buildPopupItem('90_days', 'Últimos 90 dias'),
-                    _buildPopupItem('30_days', 'Últimos 30 dias'),
-                    _buildPopupItem('7_days', 'Últimos 7 dias'),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          Row(mainAxisAlignment: MainAxisAlignment.end, children: [filterWidget]),
           const SizedBox(height: 24),
-
-          VolumeLoadChart(
-            history: filteredHistory,
-            isAllTime: _filterMode == 'all',
-          ),
+          VolumeLoadChart(history: filteredHistory, isAllTime: _filterMode == 'all'),
           const SizedBox(height: 24),
           ConsistencyHeatmap(history: filteredHistory),
           const SizedBox(height: 24),
           BalancePieChart(history: filteredHistory),
           const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  // ── Web analytics layout — grid 2 colunas ──────────────────────────────────
+  Widget _buildWebAnalytics(
+      List<WorkoutHistory> history, Widget filterWidget) {
+    // Métricas de resumo
+    final totalSessions = history.length;
+    final avgDuration = totalSessions == 0
+        ? 0
+        : (history.fold(0, (s, h) => s + h.durationMinutes) / totalSessions)
+            .round();
+    final avgCompletion = totalSessions == 0
+        ? 0.0
+        : history.fold(0.0, (s, h) => s + h.completionPercentage) /
+            totalSessions;
+    final totalVolume = history.fold(0.0, (sum, h) {
+      for (final ex in h.exercises) {
+        if (ex.type == ExerciseTypeEntity.weight) {
+          if (ex.setsHistory != null && ex.setsHistory!.isNotEmpty) {
+            for (final s in ex.setsHistory!) {
+              sum += s.weight * s.reps;
+            }
+          } else {
+            sum += ex.weight * ex.reps * ex.sets;
+          }
+        }
+      }
+      return sum;
+    });
+
+    Widget kpi(String label, String value, IconData icon, Color c) =>
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF111111),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withOpacity(0.07)),
+            ),
+            child: Row(children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: c.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: c, size: 16),
+              ),
+              const SizedBox(width: 12),
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(value,
+                    style: GoogleFonts.outfit(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white)),
+                Text(label,
+                    style: GoogleFonts.outfit(
+                        fontSize: 11, color: Colors.white38)),
+              ]),
+            ]),
+          ),
+        );
+
+    Widget card(String title, Widget child) => Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF111111),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white.withOpacity(0.07)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white)),
+              const SizedBox(height: 16),
+              child,
+            ],
+          ),
+        );
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Filtro + KPIs
+          Row(
+            children: [
+              kpi('Sessões', '$totalSessions', Icons.fitness_center,
+                  AppColors.primary),
+              const SizedBox(width: 12),
+              kpi('Duração média', '${avgDuration}min', Icons.timer_outlined,
+                  Colors.blueAccent),
+              const SizedBox(width: 12),
+              kpi('Conclusão média',
+                  '${avgCompletion.toStringAsFixed(0)}%',
+                  Icons.check_circle_outline, Colors.tealAccent),
+              const SizedBox(width: 12),
+              kpi(
+                  'Volume total',
+                  totalVolume >= 1000
+                      ? '${(totalVolume / 1000).toStringAsFixed(1)}t'
+                      : '${totalVolume.toStringAsFixed(0)}kg',
+                  Icons.bar_chart,
+                  Colors.purpleAccent),
+              const SizedBox(width: 16),
+              filterWidget,
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Linha 1: Volume + Consistência
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 6,
+                child: card('Volume de Treino',
+                    VolumeLoadChart(
+                      history: history,
+                      isAllTime: _filterMode == 'all',
+                    )),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 4,
+                child: card('Consistência Semanal',
+                    ConsistencyHeatmap(history: history)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Linha 2: Balanço muscular + Duração das sessões
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 4,
+                child: card('Balanço Muscular',
+                    BalancePieChart(history: history)),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 6,
+                child: card(
+                  'Duração das Sessões',
+                  _SessionDurationChart(history: history),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Linha 3: Top exercícios (largura total)
+          card('Top Exercícios por Frequência',
+              _TopExercisesChart(history: history)),
         ],
       ),
     );
@@ -423,13 +567,15 @@ class _HistoryTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (kIsWeb) return _buildWebHistory(context, ref);
+
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: SizedBox(
             width: double.infinity,
-            height: 56, // Standard height
+            height: 56,
             child: FilledButton.icon(
               onPressed: () async {
                 try {
@@ -674,13 +820,233 @@ class _HistoryTab extends ConsumerWidget {
 
   String _getRpeEmoji(int? rpe) {
     if (rpe == null) return '❓';
-    if (rpe == 1) return '😁'; // Muito Leve
-    if (rpe == 2) return '🙂'; // Leve
-    if (rpe == 3) return '😐'; // Moderado
-    if (rpe == 4) return '😫'; // Difícil
-    if (rpe == 5) return '🥵'; // Exaustão
+    if (rpe == 1) return '😁';
+    if (rpe == 2) return '🙂';
+    if (rpe == 3) return '😐';
+    if (rpe == 4) return '😫';
+    if (rpe == 5) return '🥵';
     return '❓';
   }
+
+  // ── Layout web da aba Histórico ───────────────────────────────────────────
+  Widget _buildWebHistory(BuildContext context, WidgetRef ref) {
+    return Column(
+      children: [
+        // Barra de ações
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+          child: Row(
+            children: [
+              Text(
+                '${history.length} sessão${history.length != 1 ? 'ões' : ''} registrada${history.length != 1 ? 's' : ''}',
+                style: GoogleFonts.outfit(color: Colors.white38, fontSize: 13),
+              ),
+              const Spacer(),
+              FilledButton.icon(
+                onPressed: () async {
+                  try {
+                    final measurements = ref.read(bodyTrackerProvider);
+                    final user = await ref.read(userProfileProvider.future);
+                    final report = WorkoutReportService().generateGeneralReport(
+                        history, measurements, user);
+                    await Clipboard.setData(ClipboardData(text: report));
+                    if (context.mounted) {
+                      SnackbarUtils.showSuccess(
+                          context, 'Dossiê copiado para IA!');
+                    }
+                  } catch (e) {
+                    debugPrint('Report error: $e');
+                  }
+                },
+                icon: const Icon(Icons.auto_awesome, size: 16),
+                label: Text('Exportar Dossiê IA',
+                    style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Cabeçalho da tabela
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0D0D0D),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white.withOpacity(0.07)),
+            ),
+            child: Row(children: [
+              _HCol('Data/Hora', flex: 2),
+              _HCol('Treino', flex: 3),
+              _HCol('Duração', flex: 1),
+              _HCol('Conclusão', flex: 2),
+              _HCol('Esforço', flex: 1),
+              _HCol('', flex: 1),
+            ]),
+          ),
+        ),
+        const SizedBox(height: 6),
+        // Linhas
+        if (history.isEmpty)
+          const Expanded(
+            child: AppEmptyState(
+              icon: Icons.history_rounded,
+              title: 'Nenhum treino realizado',
+              subtitle: 'Seu histórico aparecerá aqui.',
+            ),
+          )
+        else
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.fromLTRB(28, 0, 28, 24),
+              itemCount: history.length,
+              separatorBuilder: (_, i) => const SizedBox(height: 5),
+              itemBuilder: (context, index) {
+                final h = history[index];
+                final isFirst = index == 0;
+                final d = h.completedDate;
+                final dateStr =
+                    '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')} ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+                final pct = h.completionPercentage;
+                final pctColor = pct >= 80
+                    ? AppColors.primary
+                    : pct >= 50
+                        ? Colors.orangeAccent
+                        : Colors.redAccent;
+
+                return InkWell(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => WorkoutHistoryDetailsPage(history: h)),
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  hoverColor: Colors.white.withOpacity(0.03),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: isFirst
+                          ? AppColors.primary.withOpacity(0.05)
+                          : const Color(0xFF111111),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isFirst
+                            ? AppColors.primary.withOpacity(0.2)
+                            : Colors.white.withOpacity(0.06),
+                      ),
+                    ),
+                    child: Row(children: [
+                      Expanded(
+                        flex: 2,
+                        child: Text(dateStr,
+                            style: GoogleFonts.outfit(
+                                color: Colors.white54, fontSize: 12)),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: Row(children: [
+                          Text(h.workoutName,
+                              style: GoogleFonts.outfit(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: isFirst
+                                      ? FontWeight.w600
+                                      : FontWeight.w400),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis),
+                          if (isFirst) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text('RECENTE',
+                                  style: GoogleFonts.outfit(
+                                      fontSize: 8,
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.5)),
+                            ),
+                          ],
+                        ]),
+                      ),
+                      Expanded(
+                        flex: 1,
+                        child: Text('${h.durationMinutes}min',
+                            style: GoogleFonts.outfit(
+                                color: Colors.white70, fontSize: 13)),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Row(children: [
+                          SizedBox(
+                            width: 80,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(3),
+                              child: LinearProgressIndicator(
+                                value: (pct / 100).clamp(0.0, 1.0),
+                                backgroundColor:
+                                    Colors.white.withOpacity(0.08),
+                                valueColor:
+                                    AlwaysStoppedAnimation(pctColor),
+                                minHeight: 6,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text('${pct.toStringAsFixed(0)}%',
+                              style: GoogleFonts.outfit(
+                                  color: pctColor,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600)),
+                        ]),
+                      ),
+                      Expanded(
+                        flex: 1,
+                        child: Text(_getRpeEmoji(h.rpe),
+                            style: const TextStyle(fontSize: 18)),
+                      ),
+                      Expanded(
+                        flex: 1,
+                        child: const Icon(Icons.chevron_right,
+                            color: Colors.white24, size: 16),
+                      ),
+                    ]),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _HCol extends StatelessWidget {
+  final String label;
+  final int flex;
+  const _HCol(this.label, {required this.flex});
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+        flex: flex,
+        child: Text(label,
+            style: GoogleFonts.outfit(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.white38,
+                letterSpacing: 0.4)),
+      );
 }
 
 class _PhotoManagerDialog extends StatefulWidget {
@@ -943,6 +1309,169 @@ class _WebTabButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── Gráfico: Duração das sessões (barras) ─────────────────────────────────────
+
+class _SessionDurationChart extends StatelessWidget {
+  final List<WorkoutHistory> history;
+  const _SessionDurationChart({required this.history});
+
+  @override
+  Widget build(BuildContext context) {
+    final data = history.take(12).toList().reversed.toList();
+    if (data.isEmpty) {
+      return const Center(
+          child: Text('Sem dados',
+              style: TextStyle(color: Colors.white24, fontSize: 13)));
+    }
+
+    final maxDur =
+        data.map((h) => h.durationMinutes).reduce((a, b) => a > b ? a : b);
+
+    return SizedBox(
+      height: 160,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: data.asMap().entries.map((entry) {
+          final h = entry.value;
+          final isLast = entry.key == data.length - 1;
+          final frac = maxDur == 0 ? 0.0 : h.durationMinutes / maxDur;
+          final d = h.completedDate;
+          final label =
+              '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}';
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text('${h.durationMinutes}',
+                      style: GoogleFonts.outfit(
+                          fontSize: 9,
+                          color: isLast ? AppColors.primary : Colors.white38,
+                          fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Container(
+                    height: (130 * frac).clamp(6.0, 130.0),
+                    decoration: BoxDecoration(
+                      color: isLast
+                          ? AppColors.primary
+                          : AppColors.primary.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(label,
+                      style: GoogleFonts.outfit(
+                          fontSize: 8,
+                          color:
+                              isLast ? Colors.white54 : Colors.white24)),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// ── Gráfico: Top exercícios por frequência (barras horizontais) ───────────────
+
+class _TopExercisesChart extends StatelessWidget {
+  final List<WorkoutHistory> history;
+  const _TopExercisesChart({required this.history});
+
+  @override
+  Widget build(BuildContext context) {
+    // Conta frequência de cada exercício
+    final freq = <String, int>{};
+    for (final h in history) {
+      for (final ex in h.exercises) {
+        freq[ex.name] = (freq[ex.name] ?? 0) + 1;
+      }
+    }
+
+    if (freq.isEmpty) {
+      return const Center(
+          child: Text('Sem dados',
+              style: TextStyle(color: Colors.white24, fontSize: 13)));
+    }
+
+    final sorted = freq.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final top = sorted.take(8).toList();
+    final maxVal = top.first.value;
+
+    return Column(
+      children: top.asMap().entries.map((entry) {
+        final i = entry.key;
+        final name = entry.value.key;
+        final count = entry.value.value;
+        final frac = maxVal == 0 ? 0.0 : count / maxVal;
+        final colors = [
+          AppColors.primary,
+          const Color(0xFF00CFFF),
+          const Color(0xFFAA80FF),
+          Colors.orangeAccent,
+          Colors.tealAccent,
+          Colors.pinkAccent,
+          Colors.blueAccent,
+          Colors.deepOrangeAccent,
+        ];
+        final c = colors[i % colors.length];
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Row(children: [
+            SizedBox(
+              width: 160,
+              child: Text(
+                name,
+                style: GoogleFonts.outfit(
+                    fontSize: 12, color: Colors.white70),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Stack(children: [
+                Container(
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                FractionallySizedBox(
+                  widthFactor: frac.clamp(0.0, 1.0),
+                  child: Container(
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: c,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+              ]),
+            ),
+            const SizedBox(width: 10),
+            SizedBox(
+              width: 32,
+              child: Text('$count×',
+                  style: GoogleFonts.outfit(
+                      fontSize: 11,
+                      color: c,
+                      fontWeight: FontWeight.w700),
+                  textAlign: TextAlign.right),
+            ),
+          ]),
+        );
+      }).toList(),
     );
   }
 }
