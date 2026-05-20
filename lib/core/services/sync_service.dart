@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -9,6 +10,7 @@ import 'package:path/path.dart' as p;
 import '../utils/image_path_resolver.dart';
 
 import '../../features/workout/data/models/workout_hive_model.dart';
+import '../../features/workout/data/models/exercise_model.dart';
 import '../../features/workout/data/models/workout_history_hive_model.dart';
 import '../../features/body_tracker/data/models/body_measurement_hive_model.dart';
 import '../../features/profile/data/models/user_profile_hive_model.dart';
@@ -80,12 +82,13 @@ class SyncService {
       var batch = _firestore.batch();
       int count = 0;
       for (var workout in routinesBox.values) {
+        final updatedWorkout = await _uploadWorkoutImages(workout);
         final doc = _firestore
             .collection('users')
             .doc(userId)
             .collection('workouts')
-            .doc(workout.id);
-        batch.set(doc, workout.toMap(), SetOptions(merge: true));
+            .doc(updatedWorkout.id);
+        batch.set(doc, updatedWorkout.toMap(), SetOptions(merge: true));
         count++;
         batch = await _commitAndRenew(batch, count);
       }
@@ -246,12 +249,13 @@ class SyncService {
   Future<void> saveWorkout(WorkoutHiveModel workout) async {
     final userId = _userId;
     if (userId == null) return;
+    final updatedWorkout = await _uploadWorkoutImages(workout);
     await _firestore
         .collection('users')
         .doc(userId)
         .collection('workouts')
-        .doc(workout.id)
-        .set(workout.toMap(), SetOptions(merge: true));
+        .doc(updatedWorkout.id)
+        .set(updatedWorkout.toMap(), SetOptions(merge: true));
   }
 
   Future<void> deleteWorkout(String id) async {
@@ -355,8 +359,10 @@ class SyncService {
 
       ListResult listResult;
       try {
-        listResult =
-            await _storage.ref().child('users/$userId/library').listAll();
+        listResult = await _storage
+            .ref()
+            .child('users/$userId/library')
+            .listAll();
       } on FirebaseException catch (e) {
         // Path não existe ainda (usuário novo ou biblioteca vazia no Storage)
         if (e.code == 'object-not-found') return;
@@ -384,8 +390,61 @@ class SyncService {
     }
   }
 
+  Future<WorkoutHiveModel> _uploadWorkoutImages(
+    WorkoutHiveModel workout,
+  ) async {
+    if (kIsWeb) return workout;
+    final userId = _userId;
+    if (userId == null) return workout;
+
+    List<ExerciseModel> updatedExercises = [];
+    bool hasChanges = false;
+
+    for (var exercise in workout.exercises) {
+      List<String> remoteImagePaths = [];
+      bool exerciseChanged = false;
+
+      for (var i = 0; i < exercise.imagePaths.length; i++) {
+        final path = exercise.imagePaths[i];
+        if (ImagePathResolver.isRemote(path)) {
+          remoteImagePaths.add(path);
+        } else {
+          // Nome seguro do arquivo para evitar caracteres incompatíveis no path de Storage
+          final safeExerciseName = exercise.name
+              .replaceAll(RegExp(r'[^\w\s\-]'), '')
+              .trim();
+          final filename = 'workouts/${workout.id}/${safeExerciseName}_$i.png';
+          final url = await uploadFile(path, filename);
+          if (url != null) {
+            remoteImagePaths.add(url);
+            exerciseChanged = true;
+          } else {
+            remoteImagePaths.add(path);
+          }
+        }
+      }
+
+      if (exerciseChanged) {
+        updatedExercises.add(exercise.copyWith(imagePaths: remoteImagePaths));
+        hasChanges = true;
+      } else {
+        updatedExercises.add(exercise);
+      }
+    }
+
+    if (hasChanges) {
+      final updatedWorkout = workout.copyWith(exercises: updatedExercises);
+      final routinesBox = Hive.box<WorkoutHiveModel>('routines');
+      await routinesBox.put(updatedWorkout.id, updatedWorkout);
+      return updatedWorkout;
+    }
+
+    return workout;
+  }
+
   // Upload genérico de arquivo local para o Firebase Storage
   Future<String?> uploadFile(String localPath, String storagePath) async {
+    if (kIsWeb) return null;
     final file = ImagePathResolver.resolveToFile(localPath);
     if (!file.existsSync()) return null;
 

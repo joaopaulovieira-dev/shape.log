@@ -715,9 +715,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
   Future<void> _pickProfilePhoto() async {
     if (kIsWeb) {
-      final url = await WebImageService.pickAndUpload(
-        WebImageService.profilePicturePath(),
-      );
+      final url = await WebImageService.pickAndUpload('profile');
       if (url != null) setState(() => _profilePicturePath = url);
       return;
     }

@@ -791,10 +791,7 @@ class _PhotoManagerDialogState extends State<_PhotoManagerDialog> {
               onPressed: () async {
                 if (kIsWeb) {
                   final url = await WebImageService.pickAndUpload(
-                    WebImageService.historyPath(
-                      widget.history.id,
-                      _currentImages.length,
-                    ),
+                    WebImageService.folderHistory,
                   );
                   if (url != null) setState(() => _currentImages.add(url));
                 } else {

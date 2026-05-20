@@ -27,14 +27,19 @@ class AuthService {
     _isInitialized = true;
   }
 
-  // Login com Google — usa signInWithPopup na web, fluxo nativo no mobile
   Future<UserCredential?> signInWithGoogle() async {
     if (kIsWeb) {
       // Na web o Firebase abre o popup de OAuth diretamente
       final provider = GoogleAuthProvider();
       provider.addScope('email');
       provider.addScope('profile');
-      return await _auth.signInWithPopup(provider);
+      try {
+        return await _auth.signInWithPopup(provider);
+      } catch (e) {
+        print('signInWithPopup falhou, tentando fallback com signInWithRedirect: $e');
+        await _auth.signInWithRedirect(provider);
+        return null;
+      }
     }
 
     try {

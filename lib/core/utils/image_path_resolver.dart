@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/painting.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -8,6 +10,7 @@ class ImagePathResolver {
 
   /// Inicializa o diretório de documentos para que a resolução seja síncrona.
   static Future<void> init() async {
+    if (kIsWeb) return;
     final dir = await getApplicationDocumentsDirectory();
     _documentsDirectoryPath = dir.path;
   }
@@ -61,6 +64,56 @@ class ImagePathResolver {
   /// Retorna o ImageProvider correto: NetworkImage para URLs, FileImage para locais.
   static ImageProvider resolveToImageProvider(String pathString) {
     if (isRemote(pathString)) return NetworkImage(pathString);
+    if (kIsWeb) {
+      // Retorna uma imagem GIF de 1x1 pixel transparente em memória para evitar erros na Web
+      return MemoryImage(
+        Uint8List.fromList(const [
+          0x47,
+          0x49,
+          0x46,
+          0x38,
+          0x39,
+          0x61,
+          0x01,
+          0x00,
+          0x01,
+          0x00,
+          0x80,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0xff,
+          0xff,
+          0xff,
+          0x21,
+          0xf9,
+          0x04,
+          0x01,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x2c,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x01,
+          0x00,
+          0x01,
+          0x00,
+          0x00,
+          0x02,
+          0x02,
+          0x44,
+          0x01,
+          0x00,
+          0x3b,
+        ]),
+      );
+    }
     return FileImage(resolveToFile(pathString));
   }
 }

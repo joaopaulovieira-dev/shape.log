@@ -42,6 +42,29 @@ class WorkoutHiveModel extends HiveObject {
     this.expiryDate,
   });
 
+  WorkoutHiveModel copyWith({
+    String? id,
+    String? name,
+    List<int>? scheduledDays,
+    int? targetDurationMinutes,
+    String? notes,
+    List<ExerciseModel>? exercises,
+    DateTime? activeStartTime,
+    DateTime? expiryDate,
+  }) {
+    return WorkoutHiveModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      scheduledDays: scheduledDays ?? this.scheduledDays,
+      targetDurationMinutes:
+          targetDurationMinutes ?? this.targetDurationMinutes,
+      notes: notes ?? this.notes,
+      exercises: exercises ?? this.exercises,
+      activeStartTime: activeStartTime ?? this.activeStartTime,
+      expiryDate: expiryDate ?? this.expiryDate,
+    );
+  }
+
   factory WorkoutHiveModel.fromEntity(Workout workout) {
     return WorkoutHiveModel(
       id: workout.id,

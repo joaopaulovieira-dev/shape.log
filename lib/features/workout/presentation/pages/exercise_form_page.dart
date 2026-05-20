@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
+import 'package:shape_log/features/common/services/image_storage_service.dart';
 import '../../../../core/utils/image_path_resolver.dart';
 import '../../../../core/services/web_image_service.dart';
 import '../../../image_library/presentation/image_source_sheet.dart';
@@ -74,15 +75,16 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
     final LostDataResponse response = await ImageSourceSheet.picker
         .retrieveLostData();
     if (response.isEmpty) return;
+    final storageService = ImageStorageService();
     if (response.file != null) {
+      final savedPath = await storageService.saveImage(response.file!);
       setState(() {
-        _imagePaths.add(response.file!.path);
+        _imagePaths.add(savedPath);
       });
     } else if (response.files != null) {
+      final savedPaths = await storageService.saveImages(response.files!);
       setState(() {
-        for (final file in response.files!) {
-          _imagePaths.add(file.path);
-        }
+        _imagePaths.addAll(savedPaths);
       });
     }
   }
@@ -502,10 +504,7 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
                       onPressed: () async {
                         if (kIsWeb) {
                           final url = await WebImageService.pickAndUpload(
-                            WebImageService.exercisePath(
-                              widget.initialExercise?.name ?? 'new',
-                              _imagePaths.length,
-                            ),
+                            WebImageService.folderExercises,
                           );
                           if (url != null) setState(() => _imagePaths.add(url));
                         } else {
@@ -513,12 +512,15 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
                             context: context,
                             title: 'Selecionar Imagem',
                             child: const ImageSourceSheet(),
-                          ).then((files) {
+                          ).then((files) async {
                             if (files != null && files is List<File>) {
-                              setState(
-                                () => _imagePaths
-                                    .addAll(files.map((e) => e.path)),
+                              final storageService = ImageStorageService();
+                              final savedPaths = await storageService.saveImages(
+                                files.map((file) => XFile(file.path)).toList(),
                               );
+                              setState(() {
+                                _imagePaths.addAll(savedPaths);
+                              });
                             }
                           });
                         }

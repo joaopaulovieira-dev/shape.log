@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
+import 'package:shape_log/features/common/services/image_storage_service.dart';
 import '../../../../core/utils/image_path_resolver.dart';
 import '../../../../core/services/web_image_service.dart';
 import '../../../image_library/presentation/image_source_sheet.dart';
@@ -525,10 +527,7 @@ class _ExerciseEditPageState extends ConsumerState<ExerciseEditPage> {
                       onPressed: () async {
                         if (kIsWeb) {
                           final url = await WebImageService.pickAndUpload(
-                            WebImageService.exercisePath(
-                              widget.workoutId,
-                              _imagePaths.length,
-                            ),
+                            WebImageService.folderExercises,
                           );
                           if (url != null) setState(() => _imagePaths.add(url));
                         } else {
@@ -536,12 +535,15 @@ class _ExerciseEditPageState extends ConsumerState<ExerciseEditPage> {
                             context: context,
                             title: 'Selecionar Imagem',
                             child: const ImageSourceSheet(),
-                          ).then((files) {
+                          ).then((files) async {
                             if (files != null && files is List<File>) {
-                              setState(
-                                () => _imagePaths
-                                    .addAll(files.map((e) => e.path)),
+                              final storageService = ImageStorageService();
+                              final savedPaths = await storageService.saveImages(
+                                files.map((file) => XFile(file.path)).toList(),
                               );
+                              setState(() {
+                                _imagePaths.addAll(savedPaths);
+                              });
                             }
                           });
                         }

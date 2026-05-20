@@ -162,4 +162,38 @@ class ExerciseModel extends HiveObject {
       cardioIntensity: map['cardioIntensity'],
     );
   }
+
+  ExerciseModel copyWith({
+    String? name,
+    int? sets,
+    int? reps,
+    double? weight,
+    String? youtubeUrl,
+    List<String>? imagePaths,
+    String? equipmentNumber,
+    String? technique,
+    bool? isCompleted,
+    int? restTimeSeconds,
+    List<ExerciseSetHistoryHiveModel>? setsHistory,
+    ExerciseType? type,
+    double? cardioDurationMinutes,
+    String? cardioIntensity,
+  }) {
+    return ExerciseModel(
+      name: name ?? this.name,
+      sets: sets ?? this.sets,
+      reps: reps ?? this.reps,
+      weight: weight ?? this.weight,
+      youtubeUrl: youtubeUrl ?? this.youtubeUrl,
+      imagePaths: imagePaths ?? this.imagePaths,
+      equipmentNumber: equipmentNumber ?? this.equipmentNumber,
+      technique: technique ?? this.technique,
+      isCompleted: isCompleted ?? this.isCompleted,
+      restTimeSeconds: restTimeSeconds ?? this.restTimeSeconds,
+      setsHistory: setsHistory ?? this.setsHistory,
+      type: type ?? this.type,
+      cardioDurationMinutes: cardioDurationMinutes ?? this.cardioDurationMinutes,
+      cardioIntensity: cardioIntensity ?? this.cardioIntensity,
+    );
+  }
 }

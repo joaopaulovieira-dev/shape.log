@@ -223,10 +223,58 @@ lib/
    dart run build_runner build --delete-conflicting-outputs
    ```
 4. **Configurar Firebase**: Adicione os arquivos `google-services.json` (Android) e `GoogleService-Info.plist` (iOS) gerados no Firebase Console.
-5. **Executar**:
+5. **Executar no iOS/Android**:
    ```bash
    flutter run
    ```
+6. **Executar no Chrome (web)**:
+   ```bash
+   flutter run -d chrome
+   ```
+
+---
+
+## 🌐 Build Web + Deploy Firebase Hosting
+
+### Pré-requisitos
+- [Firebase CLI](https://firebase.google.com/docs/cli) instalado: `npm install -g firebase-tools`
+- Autenticado: `firebase login`
+
+### 1. Aplicar CORS no Firebase Storage (primeira vez)
+Necessário para que imagens do Storage carreguem no browser:
+```bash
+# Instalar Google Cloud SDK (se não tiver)
+brew install --cask google-cloud-sdk
+
+# Autenticar
+gcloud auth login
+
+# Aplicar regras CORS
+gsutil cors set cors.json gs://shape-log-app.firebasestorage.app
+
+# Verificar
+gsutil cors get gs://shape-log-app.firebasestorage.app
+```
+
+### 2. Build Web
+```bash
+flutter build web --release
+```
+O output é gerado em `build/web/`.
+
+### 3. Deploy no Firebase Hosting
+```bash
+firebase deploy --only hosting --project shape-log-app
+```
+Após o deploy, o app estará disponível em:
+- **https://shape-log-app.web.app**
+- **https://shape-log-app.firebaseapp.com**
+
+### Script único (build + deploy)
+```bash
+./apply_cors.sh
+```
+O script `apply_cors.sh` na raiz do projeto executa CORS + build + deploy em sequência.
 
 ---
 

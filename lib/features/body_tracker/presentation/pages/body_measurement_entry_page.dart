@@ -1036,11 +1036,7 @@ class _BodyMeasurementEntryPageState
                           onPressed: () async {
                             if (kIsWeb) {
                               final url = await WebImageService.pickAndUpload(
-                                WebImageService.measurementPath(
-                                  widget.measurementToEdit?.id ??
-                                      const Uuid().v4(),
-                                  _imagePaths.length,
-                                ),
+                                WebImageService.folderMeasurements,
                               );
                               if (url != null) {
                                 setState(() => _imagePaths.add(url));
