@@ -226,6 +226,8 @@ class _WebLoginPageState extends ConsumerState<WebLoginPage> {
                               _divider(),
                               _Stat(value: 'iOS', label: 'App nativo'),
                               _divider(),
+                              _Stat(value: 'Android', label: 'App nativo'),
+                              _divider(),
                               _Stat(value: 'AI', label: 'Import JSON'),
                             ],
                           ),
@@ -239,13 +241,13 @@ class _WebLoginPageState extends ConsumerState<WebLoginPage> {
 
           // ── Painel direito — formulário de login ───────────────────────
           Container(
-            width: isNarrow ? size.width : 420,
+            width: isNarrow ? size.width : 520,
             color: const Color(0xFF0D0D0D),
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(48),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 360),
+                  constraints: const BoxConstraints(maxWidth: 440),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
@@ -369,7 +371,7 @@ class _WebLoginPageState extends ConsumerState<WebLoginPage> {
                             Expanded(
                               child: Text(
                                 'O painel web é voltado para gestão. '
-                                'Para treinar, use o app iOS.',
+                                'Para treinar, use o app iOS ou Android.',
                                 style: GoogleFonts.outfit(
                                   fontSize: 13,
                                   color: Colors.white60,

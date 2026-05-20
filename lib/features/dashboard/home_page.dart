@@ -286,113 +286,396 @@ class _HomePageState extends ConsumerState<HomePage> {
     List<Workout> allWorkouts,
   ) {
     final now = DateTime.now();
-    final thisMonthCount = history
+
+    // ── Métricas calculadas ─────────────────────────────────────────
+    final thisMonthSessions = history
+        .where((h) =>
+            h.completedDate.month == now.month &&
+            h.completedDate.year == now.year)
+        .toList();
+
+    final avgDuration = history.isEmpty
+        ? 0
+        : (history.fold(0, (s, h) => s + h.durationMinutes) / history.length)
+            .round();
+
+    final avgCompletion = history.isEmpty
+        ? 0.0
+        : history.fold(0.0, (s, h) => s + h.completionPercentage) /
+            history.length;
+
+    // Streak: semanas consecutivas com pelo menos 1 treino
+    int streak = 0;
+    for (int w = 0; w < 52; w++) {
+      final weekStart =
+          now.subtract(Duration(days: now.weekday - 1 + w * 7));
+      final weekEnd = weekStart.add(const Duration(days: 6));
+      final had = history.any((h) =>
+          !h.completedDate.isBefore(weekStart) &&
+          !h.completedDate.isAfter(weekEnd));
+      if (!had) break;
+      streak++;
+    }
+
+    // Frequência por semana (últimas 8 semanas)
+    final weekCounts = List.generate(8, (i) {
+      final start = now
+          .subtract(Duration(days: now.weekday - 1 + (7 - i) * 7));
+      final end = start.add(const Duration(days: 6));
+      return history
+          .where((h) =>
+              !h.completedDate.isBefore(start) &&
+              !h.completedDate.isAfter(end))
+          .length;
+    });
+
+    // Distribuição por dia da semana (Seg=1..Dom=7)
+    final dayDist = List.generate(7, (i) {
+      final day = i + 1;
+      return history.where((h) => h.completedDate.weekday == day).length;
+    });
+
+    final todayScheduled = allWorkouts
+        .where((w) => w.scheduledDays.contains(now.weekday))
+        .toList();
+
+    // ── UI ──────────────────────────────────────────────────────────
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(32, 28, 32, 40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Dashboard',
+                    style: GoogleFonts.outfit(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  Text(
+                    '${_weekdayLabel(now.weekday)}, ${now.day} de ${_monthLabel(now.month)} · Visão geral do seu progresso',
+                    style: GoogleFonts.outfit(
+                        fontSize: 13, color: Colors.white38),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              FilledButton.icon(
+                onPressed: () => context.go('/workouts'),
+                icon: const Icon(Icons.fitness_center, size: 16),
+                label: Text('Ver Treinos',
+                    style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 28),
+
+          // ── KPI Cards ─────────────────────────────────────────────
+          Row(
+            children: [
+              _KpiCard(
+                label: 'Treinos este mês',
+                value: '${thisMonthSessions.length}',
+                sub: history.isEmpty ? 'Sem histórico' : 'de ${history.length} no total',
+                icon: Icons.fitness_center_rounded,
+                color: AppColors.primary,
+                trend: _trendLabel(history, now),
+              ),
+              const SizedBox(width: 16),
+              _KpiCard(
+                label: 'Duração média',
+                value: avgDuration == 0 ? '—' : '${avgDuration}min',
+                sub: 'por sessão',
+                icon: Icons.timer_outlined,
+                color: Colors.blueAccent,
+              ),
+              const SizedBox(width: 16),
+              _KpiCard(
+                label: 'Taxa de conclusão',
+                value: history.isEmpty
+                    ? '—'
+                    : '${avgCompletion.toStringAsFixed(0)}%',
+                sub: 'média por sessão',
+                icon: Icons.check_circle_outline,
+                color: Colors.tealAccent,
+              ),
+              const SizedBox(width: 16),
+              _KpiCard(
+                label: 'Streak atual',
+                value: streak == 0 ? '—' : '${streak}sem',
+                sub: streak == 0
+                    ? 'Comece esta semana!'
+                    : streak == 1
+                        ? 'semana consecutiva'
+                        : 'semanas consecutivas',
+                icon: Icons.local_fire_department_rounded,
+                color: Colors.orangeAccent,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // ── Gráfico de frequência + Atividade recente ─────────────
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Gráfico de barras — frequência semanal
+              Expanded(
+                flex: 6,
+                child: _DashCard(
+                  title: 'Frequência Semanal',
+                  subtitle: 'Últimas 8 semanas',
+                  child: SizedBox(
+                    height: 180,
+                    child: history.isEmpty
+                        ? _emptyChart()
+                        : _WeeklyBarChart(data: weekCounts),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 20),
+              // Atividade recente
+              Expanded(
+                flex: 4,
+                child: _DashCard(
+                  title: 'Atividade Recente',
+                  subtitle: 'Últimas sessões',
+                  child: history.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text('Nenhuma sessão registrada.',
+                              style: GoogleFonts.outfit(
+                                  color: Colors.white38, fontSize: 13)),
+                        )
+                      : Column(
+                          children: history.take(5).map((h) {
+                            final d = h.completedDate;
+                            final dateStr =
+                                '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}';
+                            final pct = h.completionPercentage;
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 4),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      color: pct >= 80
+                                          ? AppColors.primary
+                                          : pct >= 50
+                                              ? Colors.orangeAccent
+                                              : Colors.redAccent,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      h.workoutName,
+                                      style: GoogleFonts.outfit(
+                                          fontSize: 13,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w500),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  Text(
+                                    dateStr,
+                                    style: GoogleFonts.outfit(
+                                        fontSize: 11, color: Colors.white38),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    '${h.durationMinutes}m',
+                                    style: GoogleFonts.outfit(
+                                        fontSize: 11, color: Colors.white38),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // ── Distribuição por dia da semana + Rotinas ──────────────
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Heatmap dias da semana
+              Expanded(
+                flex: 4,
+                child: _DashCard(
+                  title: 'Preferência por Dia',
+                  subtitle: 'Baseado no histórico',
+                  child: history.isEmpty
+                      ? _emptyChart()
+                      : _DayDistributionChart(data: dayDist),
+                ),
+              ),
+              const SizedBox(width: 20),
+              // Rotinas de hoje / próximas
+              Expanded(
+                flex: 6,
+                child: _DashCard(
+                  title: todayScheduled.isEmpty
+                      ? 'Rotinas Cadastradas'
+                      : 'Treinos de Hoje',
+                  subtitle: todayScheduled.isEmpty
+                      ? '${allWorkouts.length} rotina${allWorkouts.length != 1 ? 's' : ''}'
+                      : '${todayScheduled.length} agendado${todayScheduled.length != 1 ? 's' : ''}',
+                  action: allWorkouts.isEmpty
+                      ? null
+                      : TextButton(
+                          onPressed: () => context.go('/workouts'),
+                          child: Text('Ver todos',
+                              style: GoogleFonts.outfit(
+                                  fontSize: 12, color: AppColors.primary)),
+                        ),
+                  child: allWorkouts.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text('Nenhuma rotina cadastrada.',
+                              style: GoogleFonts.outfit(
+                                  color: Colors.white38, fontSize: 13)),
+                        )
+                      : Column(
+                          children:
+                              (todayScheduled.isNotEmpty ? todayScheduled : allWorkouts)
+                                  .take(4)
+                                  .map((w) {
+                            final days = const [
+                              '', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'
+                            ];
+                            final dayStr = w.scheduledDays
+                                .map((d) => days[d.clamp(1, 7)])
+                                .join(' · ');
+                            return InkWell(
+                              onTap: () =>
+                                  context.go('/workouts/${w.id}'),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 4),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary
+                                            .withOpacity(0.1),
+                                        borderRadius:
+                                            BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(
+                                        Icons.fitness_center,
+                                        color: AppColors.primary,
+                                        size: 18,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(w.name,
+                                              style: GoogleFonts.outfit(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white),
+                                              maxLines: 1,
+                                              overflow:
+                                                  TextOverflow.ellipsis),
+                                          if (dayStr.isNotEmpty)
+                                            Text(dayStr,
+                                                style: GoogleFonts.outfit(
+                                                    fontSize: 11,
+                                                    color: Colors.white38)),
+                                        ],
+                                      ),
+                                    ),
+                                    Text(
+                                      '${w.exercises.length} ex',
+                                      style: GoogleFonts.outfit(
+                                          fontSize: 11, color: Colors.white38),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Icon(Icons.chevron_right,
+                                        color: Colors.white24, size: 16),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptyChart() => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: Text('Sem dados suficientes',
+              style: GoogleFonts.outfit(color: Colors.white24, fontSize: 13)),
+        ),
+      );
+
+  String _weekdayLabel(int wd) {
+    const l = ['', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+    return l[wd.clamp(1, 7)];
+  }
+
+  String _monthLabel(int m) {
+    const l = ['', 'jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+    return l[m.clamp(1, 12)];
+  }
+
+  String _trendLabel(List<WorkoutHistoryHiveModel> history, DateTime now) {
+    final prev = history
+        .where((h) =>
+            h.completedDate.month == (now.month == 1 ? 12 : now.month - 1) &&
+            h.completedDate.year == (now.month == 1 ? now.year - 1 : now.year))
+        .length;
+    final curr = history
         .where((h) =>
             h.completedDate.month == now.month &&
             h.completedDate.year == now.year)
         .length;
-    final lastSession = history.isNotEmpty ? history.first : null;
-    final daysSinceLast = lastSession == null
-        ? null
-        : now.difference(lastSession.completedDate).inDays;
-
-    final todayWorkouts = allWorkouts
-        .where((w) => w.scheduledDays.contains(now.weekday))
-        .toList();
-    final weekWorkouts = allWorkouts.where((w) => w.scheduledDays.isNotEmpty).toList();
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Stat cards row
-          Row(
-            children: [
-              _WebStatCard(
-                icon: Icons.fitness_center,
-                label: 'Treinos este mês',
-                value: '$thisMonthCount',
-                color: AppColors.primary,
-              ),
-              const SizedBox(width: 16),
-              _WebStatCard(
-                icon: Icons.history,
-                label: 'Último treino',
-                value: daysSinceLast == null
-                    ? '—'
-                    : daysSinceLast == 0
-                        ? 'Hoje'
-                        : '${daysSinceLast}d atrás',
-                color: Colors.blueAccent,
-              ),
-              const SizedBox(width: 16),
-              _WebStatCard(
-                icon: Icons.calendar_today,
-                label: 'Total de treinos',
-                value: '${history.length}',
-                color: Colors.purpleAccent,
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-
-          // Treinos de hoje
-          if (todayWorkouts.isNotEmpty) ...[
-            Text(
-              'TREINOS DE HOJE',
-              style: GoogleFonts.outfit(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: Colors.white38,
-                letterSpacing: 1.2,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ...todayWorkouts.map((w) => _WebWorkoutRow(workout: w)),
-            const SizedBox(height: 32),
-          ],
-
-          // Todos os treinos
-          Text(
-            'ROTINAS CADASTRADAS',
-            style: GoogleFonts.outfit(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: Colors.white38,
-              letterSpacing: 1.2,
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (weekWorkouts.isEmpty)
-            Center(
-              child: Text(
-                'Nenhum treino cadastrado ainda.',
-                style: GoogleFonts.outfit(color: Colors.white38),
-              ),
-            )
-          else
-            ...weekWorkouts.map((w) => _WebWorkoutRow(workout: w)),
-
-          const SizedBox(height: 32),
-
-          // Últimas sessões
-          if (history.isNotEmpty) ...[
-            Text(
-              'ÚLTIMAS SESSÕES',
-              style: GoogleFonts.outfit(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: Colors.white38,
-                letterSpacing: 1.2,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ...history.take(5).map((h) => _WebHistoryRow(history: h)),
-          ],
-        ],
-      ),
-    );
+    if (prev == 0) return 'primeiro mês';
+    final diff = curr - prev;
+    if (diff > 0) return '+$diff em relação ao mês anterior';
+    if (diff < 0) return '$diff em relação ao mês anterior';
+    return 'igual ao mês anterior';
   }
 
   Widget _buildResumeCard() {
@@ -466,19 +749,23 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 }
 
-// ── Web-only dashboard widgets ───────────────────────────────────────────────
+// ── Dashboard SaaS widgets ────────────────────────────────────────────────────
 
-class _WebStatCard extends StatelessWidget {
-  final IconData icon;
+class _KpiCard extends StatelessWidget {
   final String label;
   final String value;
+  final String sub;
+  final IconData icon;
   final Color color;
+  final String? trend;
 
-  const _WebStatCard({
-    required this.icon,
+  const _KpiCard({
     required this.label,
     required this.value,
+    required this.sub,
+    required this.icon,
     required this.color,
+    this.trend,
   });
 
   @override
@@ -491,37 +778,52 @@ class _WebStatCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white.withOpacity(0.07)),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Row(
               children: [
-                Text(
-                  value,
-                  style: GoogleFonts.outfit(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
+                  child: Icon(icon, color: color, size: 16),
                 ),
-                Text(
-                  label,
-                  style: GoogleFonts.outfit(
-                    fontSize: 12,
-                    color: Colors.white38,
+                const Spacer(),
+                if (trend != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      trend!,
+                      style: GoogleFonts.outfit(fontSize: 9, color: Colors.white38),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
               ],
             ),
+            const SizedBox(height: 16),
+            Text(
+              value,
+              style: GoogleFonts.outfit(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(label,
+                style: GoogleFonts.outfit(
+                    fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white70)),
+            Text(sub,
+                style: GoogleFonts.outfit(fontSize: 11, color: Colors.white38)),
           ],
         ),
       ),
@@ -529,59 +831,55 @@ class _WebStatCard extends StatelessWidget {
   }
 }
 
-class _WebWorkoutRow extends StatelessWidget {
-  final dynamic workout;
-  const _WebWorkoutRow({required this.workout});
+class _DashCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final Widget child;
+  final Widget? action;
+
+  const _DashCard({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+    this.action,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final days = ['', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-    final dayStr = (workout.scheduledDays as List)
-        .map((d) => d < days.length ? days[d] : '')
-        .join(', ');
-
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
         color: const Color(0xFF111111),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.07)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.fitness_center, color: AppColors.primary, size: 16),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 16, 0),
+            child: Row(
               children: [
-                Text(
-                  workout.name as String,
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: GoogleFonts.outfit(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white)),
+                    Text(subtitle,
+                        style: GoogleFonts.outfit(
+                            fontSize: 11, color: Colors.white38)),
+                  ],
                 ),
-                if (dayStr.isNotEmpty)
-                  Text(
-                    dayStr,
-                    style: GoogleFonts.outfit(fontSize: 12, color: Colors.white38),
-                  ),
+                const Spacer(),
+                ?action,
               ],
             ),
           ),
-          Text(
-            '${(workout.exercises as List).length} exercícios',
-            style: GoogleFonts.outfit(fontSize: 12, color: Colors.white38),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            child: child,
           ),
         ],
       ),
@@ -589,47 +887,154 @@ class _WebWorkoutRow extends StatelessWidget {
   }
 }
 
-class _WebHistoryRow extends StatelessWidget {
-  final dynamic history;
-  const _WebHistoryRow({required this.history});
+// ── Gráfico de barras semanal ─────────────────────────────────────────────────
+
+class _WeeklyBarChart extends StatelessWidget {
+  final List<int> data; // 8 semanas, mais antiga primeiro
+
+  const _WeeklyBarChart({required this.data});
 
   @override
   Widget build(BuildContext context) {
-    final date = history.completedDate as DateTime;
-    final dateStr =
-        '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+    final maxVal = data.isEmpty ? 1 : data.reduce((a, b) => a > b ? a : b);
+    final labels = List.generate(8, (i) {
+      final weeksAgo = 7 - i;
+      if (weeksAgo == 0) return 'Esta\nsem.';
+      if (weeksAgo == 1) return 'Sem\npassada';
+      return '-${weeksAgo}s';
+    });
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF111111),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              history.workoutName as String,
-              style: GoogleFonts.outfit(
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-                fontSize: 14,
-              ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: List.generate(8, (i) {
+        final val = data[i];
+        final frac = maxVal == 0 ? 0.0 : val / maxVal;
+        final isLast = i == 7;
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (val > 0)
+                  Text(
+                    '$val',
+                    style: GoogleFonts.outfit(
+                      fontSize: 10,
+                      color: isLast ? AppColors.primary : Colors.white38,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                const SizedBox(height: 4),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeOut,
+                  height: frac == 0 ? 4 : (130 * frac).clamp(8, 130),
+                  decoration: BoxDecoration(
+                    color: isLast
+                        ? AppColors.primary
+                        : val == 0
+                            ? Colors.white.withOpacity(0.06)
+                            : AppColors.primary.withOpacity(0.35),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  labels[i],
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.outfit(
+                    fontSize: 9,
+                    color: isLast ? Colors.white60 : Colors.white24,
+                  ),
+                ),
+              ],
             ),
           ),
-          Text(
-            dateStr,
-            style: GoogleFonts.outfit(fontSize: 12, color: Colors.white38),
+        );
+      }),
+    );
+  }
+}
+
+// ── Gráfico de distribuição por dia da semana ─────────────────────────────────
+
+class _DayDistributionChart extends StatelessWidget {
+  final List<int> data; // [Seg, Ter, Qua, Qui, Sex, Sáb, Dom]
+
+  const _DayDistributionChart({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    const labels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+    final maxVal = data.isEmpty ? 1 : data.reduce((a, b) => a > b ? a : b);
+    final total = data.fold(0, (s, v) => s + v);
+    final today = DateTime.now().weekday - 1; // 0=Seg..6=Dom
+
+    return Column(
+      children: List.generate(7, (i) {
+        final val = data[i];
+        final frac = maxVal == 0 ? 0.0 : val / maxVal;
+        final pct = total == 0 ? 0 : ((val / total) * 100).round();
+        final isToday = i == today;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 28,
+                child: Text(
+                  labels[i],
+                  style: GoogleFonts.outfit(
+                    fontSize: 11,
+                    color: isToday ? AppColors.primary : Colors.white38,
+                    fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Stack(
+                  children: [
+                    Container(
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    FractionallySizedBox(
+                      widthFactor: frac.clamp(0.0, 1.0),
+                      child: Container(
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: isToday
+                              ? AppColors.primary
+                              : AppColors.primary.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 32,
+                child: Text(
+                  pct == 0 ? '' : '$pct%',
+                  style: GoogleFonts.outfit(
+                    fontSize: 10,
+                    color: Colors.white38,
+                  ),
+                  textAlign: TextAlign.right,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 16),
-          Text(
-            '${history.durationMinutes} min',
-            style: GoogleFonts.outfit(fontSize: 12, color: Colors.white38),
-          ),
-        ],
-      ),
+        );
+      }),
     );
   }
 }
