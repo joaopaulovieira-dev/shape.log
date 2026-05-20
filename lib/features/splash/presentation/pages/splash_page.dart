@@ -79,8 +79,15 @@ class _SplashPageState extends ConsumerState<SplashPage>
         final auth = ref.read(authServiceProvider);
         if (auth.currentUser != null) {
           final syncService = ref.read(syncServiceProvider);
-          // Tenta baixar dados mais recentes da nuvem em background
-          await syncService.downloadDataFromFirestore();
+          // 1. Sobe registros locais pendentes (timeout 6s — ignora se offline)
+          try {
+            await syncService.uploadLocalDataToFirestore()
+                .timeout(const Duration(seconds: 6));
+          } catch (_) {}
+          // 2. Baixa nuvem por merge (timeout interno por operação — ignora se offline)
+          try {
+            await syncService.downloadDataFromFirestore();
+          } catch (_) {}
         }
       } catch (e) {
         print('Erro ao sincronizar na splash: $e');
@@ -175,6 +182,21 @@ class _SplashPageState extends ConsumerState<SplashPage>
                                 style: TextStyle(color: AppColors.primary),
                               ),
                             ],
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        // Loading bar
+                        SizedBox(
+                          width: 160,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              backgroundColor: Colors.white.withOpacity(0.1),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.primary,
+                              ),
+                              minHeight: 3,
+                            ),
                           ),
                         ),
                       ],

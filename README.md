@@ -4,7 +4,7 @@ Uma aplicação Flutter robusta que atua como o elo definitivo entre o seu plane
 
 A I.A. planeja. Você executa. O Shape.log conecta.
 
-**Versão atual:** `1.3.0`
+**Versão atual:** `1.4.0`
 
 ---
 
@@ -279,6 +279,16 @@ O script `apply_cors.sh` na raiz do projeto executa CORS + build + deploy em seq
 ---
 
 ## 📋 Changelog
+
+### v1.4.0
+- **Offline-first para treinos**: treino salvo no Hive antes de tentar Firebase; sessão sempre limpa mesmo sem internet
+- Firebase vira fire-and-forget no repositório — erros de rede não interrompem o fluxo de save
+- Startup com upload de registros offline antes do download (preserva treinos salvos sem conexão)
+- Download do Firebase por merge: não apaga registros locais pendentes de sync
+- Pull-to-refresh na aba "Logs e IA" sincroniza bidirecional com Firebase (inclusive exclusões feitas na web)
+- Barra de carregamento verde na splash page
+- Cardio com duração < 1 minuto exibe segundos corretamente (ex: 30s, 1min 30s)
+- Correção: app não ficava preso na splash sem internet (timeout de 6s no upload)
 
 ### v1.3.0
 - Dashboard web SaaS com KPIs, gráfico de frequência semanal, atividade recente e preferência por dia

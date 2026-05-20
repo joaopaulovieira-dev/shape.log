@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show debugPrint;
 import '../../../../core/services/sync_service.dart';
 import '../models/workout_hive_model.dart';
 import '../models/workout_history_hive_model.dart';
@@ -17,11 +18,15 @@ class WorkoutRepositoryImpl implements WorkoutRepository {
     return localDataSource.getRoutines();
   }
 
+  void _fireAndForget(Future<void> future) {
+    future.catchError((e) => debugPrint('[sync] pending: $e'));
+  }
+
   @override
   Future<void> saveRoutine(Workout workout) async {
     await localDataSource.saveRoutine(workout);
     if (syncService != null) {
-      await syncService!.saveWorkout(WorkoutHiveModel.fromEntity(workout));
+      _fireAndForget(syncService!.saveWorkout(WorkoutHiveModel.fromEntity(workout)));
     }
   }
 
@@ -29,7 +34,7 @@ class WorkoutRepositoryImpl implements WorkoutRepository {
   Future<void> deleteRoutine(String id) async {
     await localDataSource.deleteRoutine(id);
     if (syncService != null) {
-      await syncService!.deleteWorkout(id);
+      _fireAndForget(syncService!.deleteWorkout(id));
     }
   }
 
@@ -42,9 +47,7 @@ class WorkoutRepositoryImpl implements WorkoutRepository {
   Future<void> saveHistory(WorkoutHistory history) async {
     await localDataSource.saveHistory(history);
     if (syncService != null) {
-      await syncService!.saveHistory(
-        WorkoutHistoryHiveModel.fromEntity(history),
-      );
+      _fireAndForget(syncService!.saveHistory(WorkoutHistoryHiveModel.fromEntity(history)));
     }
   }
 
@@ -52,7 +55,7 @@ class WorkoutRepositoryImpl implements WorkoutRepository {
   Future<void> deleteHistory(String id) async {
     await localDataSource.deleteHistory(id);
     if (syncService != null) {
-      await syncService!.deleteHistory(id);
+      _fireAndForget(syncService!.deleteHistory(id));
     }
   }
 }

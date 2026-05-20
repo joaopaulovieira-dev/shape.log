@@ -19,6 +19,7 @@ import '../../../profile/presentation/providers/user_profile_provider.dart';
 
 import 'package:shape_log/core/constants/app_colors.dart';
 import '../../../../core/utils/snackbar_utils.dart';
+import '../../../../core/utils/duration_format.dart';
 import '../../../../core/presentation/widgets/app_dialogs.dart';
 import '../../../../core/presentation/widgets/app_modals.dart';
 
@@ -502,7 +503,7 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
                               ex.type == ExerciseTypeEntity.cardio
-                                  ? '${ex.cardioDurationMinutes?.toInt() ?? 0} min • ${ex.cardioIntensity ?? "Normal"} • ${ex.restTimeSeconds}s desc'
+                                  ? '${formatCardioDuration(ex.cardioDurationMinutes)} • ${ex.cardioIntensity ?? "Normal"} • ${ex.restTimeSeconds}s desc'
                                   : '${ex.sets} séries x ${ex.reps} reps • ${ex.weight}kg',
                               style: TextStyle(
                                 color: Colors.grey[400],
@@ -887,7 +888,7 @@ class _WorkoutDetailsPageState extends ConsumerState<WorkoutDetailsPage> {
                                                   color: Colors.white, fontSize: 14)),
                                           Text(
                                             ex.type.name == 'cardio'
-                                                ? '${ex.cardioDurationMinutes?.toInt() ?? 0} min · ${ex.cardioIntensity ?? ''}'
+                                                ? '${formatCardioDuration(ex.cardioDurationMinutes)} · ${ex.cardioIntensity ?? ''}'
                                                 : '${ex.sets} séries × ${ex.reps} reps · ${ex.weight} kg',
                                             style: GoogleFonts.outfit(
                                                 fontSize: 12, color: Colors.white38),

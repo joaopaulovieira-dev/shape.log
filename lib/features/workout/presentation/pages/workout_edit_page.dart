@@ -11,6 +11,7 @@ import '../providers/workout_provider.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
 
 import '../../../../core/presentation/widgets/app_dialogs.dart';
+import '../../../../core/utils/duration_format.dart';
 import 'exercise_form_page.dart';
 
 class WorkoutEditPage extends ConsumerStatefulWidget {
@@ -514,7 +515,7 @@ class _WorkoutEditPageState extends ConsumerState<WorkoutEditPage> {
                                                     const SizedBox(height: 4),
                                                     Text(
                                                       ex.type == ExerciseTypeEntity.cardio
-                                                          ? '${ex.cardioDurationMinutes?.toInt() ?? 0} min · ${ex.cardioIntensity ?? "Médio"}'
+                                                          ? '${formatCardioDuration(ex.cardioDurationMinutes)} · ${ex.cardioIntensity ?? "Médio"}'
                                                           : '${ex.sets} séries × ${ex.reps} reps · ${ex.weight} kg',
                                                       style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12),
                                                     ),
@@ -932,7 +933,7 @@ class _WorkoutEditPageState extends ConsumerState<WorkoutEditPage> {
                                   Expanded(
                                     child: Text(
                                       ex.type == ExerciseTypeEntity.cardio
-                                          ? '${ex.cardioDurationMinutes?.toInt() ?? 0} min • ${ex.cardioIntensity ?? "Médio"}'
+                                          ? '${formatCardioDuration(ex.cardioDurationMinutes)} • ${ex.cardioIntensity ?? "Médio"}'
                                           : '${ex.sets} séries x ${ex.reps} reps',
                                       style: TextStyle(color: Colors.grey[400]),
                                       overflow: TextOverflow.ellipsis,

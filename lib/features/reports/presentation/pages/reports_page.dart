@@ -27,6 +27,7 @@ import '../../../common/services/image_storage_service.dart';
 import '../../../../core/services/web_image_service.dart';
 import '../../../../core/presentation/widgets/app_modals.dart';
 import '../../../../core/presentation/widgets/app_empty_state.dart';
+import '../../../../core/services/sync_service.dart';
 
 enum HubMode { analytics, logs }
 
@@ -658,13 +659,28 @@ class _AnalyticsTabState extends State<_AnalyticsTab> {
   }
 }
 
-class _HistoryTab extends ConsumerWidget {
+class _HistoryTab extends ConsumerStatefulWidget {
   final List<WorkoutHistory> history;
 
   const _HistoryTab({super.key, required this.history});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_HistoryTab> createState() => _HistoryTabState();
+}
+
+class _HistoryTabState extends ConsumerState<_HistoryTab> {
+  List<WorkoutHistory> get history => widget.history;
+
+  Future<void> _refresh() async {
+    try {
+      await ref.read(syncServiceProvider).syncHistoryFromFirestore();
+    } catch (e) {
+      debugPrint('[refresh] $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     if (kIsWeb) return _buildWebHistory(context, ref);
 
     return Column(
@@ -715,14 +731,25 @@ class _HistoryTab extends ConsumerWidget {
           ),
         ),
         Expanded(
-          child: history.isEmpty
-              ? const AppEmptyState(
-                  icon: Icons.history_rounded,
-                  title: 'Nenhum treino realizado',
-                  subtitle:
-                      'Seu histórico de treinos concluídos aparecerá aqui. Inicie um treino hoje mesmo!',
+          child: RefreshIndicator(
+            onRefresh: _refresh,
+            color: AppColors.primary,
+            backgroundColor: const Color(0xFF1A1A1A),
+            child: history.isEmpty
+              ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: const [
+                    SizedBox(height: 80),
+                    AppEmptyState(
+                      icon: Icons.history_rounded,
+                      title: 'Nenhum treino realizado',
+                      subtitle:
+                          'Seu histórico de treinos concluídos aparecerá aqui. Inicie um treino hoje mesmo!',
+                    ),
+                  ],
                 )
               : ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 8,
@@ -921,6 +948,7 @@ class _HistoryTab extends ConsumerWidget {
                     );
                   },
                 ),
+          ),
         ),
       ],
     );

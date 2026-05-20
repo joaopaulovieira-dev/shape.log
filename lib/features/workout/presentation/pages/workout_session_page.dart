@@ -322,7 +322,10 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
           } catch (e, stack) {
             debugPrint("Error saving session: $e\n$stack");
             if (mounted) {
-              SnackbarUtils.showError(context, 'Erro ao salvar: $e');
+              SnackbarUtils.showInfo(
+                context,
+                'Treino salvo localmente · Sincronizará quando houver internet',
+              );
             }
           } finally {
             // Close things

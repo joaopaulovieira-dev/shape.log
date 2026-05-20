@@ -11,6 +11,7 @@ import '../providers/workout_provider.dart';
 import '../../domain/entities/exercise.dart';
 import 'package:shape_log/core/constants/app_colors.dart';
 import '../../../../core/utils/snackbar_utils.dart';
+import '../../../../core/utils/duration_format.dart';
 
 class ExerciseDetailsPage extends ConsumerWidget {
   final String workoutId;
@@ -245,7 +246,7 @@ class ExerciseDetailsPage extends ConsumerWidget {
         children: [
           _buildStatItem(
             'Duração',
-            '${exercise.cardioDurationMinutes?.toInt() ?? 0}m',
+            formatCardioDuration(exercise.cardioDurationMinutes),
             Icons.timer_outlined,
           ),
           _buildDivider(),
@@ -505,7 +506,7 @@ class ExerciseDetailsPage extends ConsumerWidget {
                         const SizedBox(height: 12),
                         if (exercise.type == ExerciseTypeEntity.cardio) ...[
                           _webStat('Duração',
-                              '${exercise.cardioDurationMinutes?.toInt() ?? 0} min'),
+                              formatCardioDuration(exercise.cardioDurationMinutes)),
                           const SizedBox(height: 8),
                           if (exercise.cardioIntensity?.isNotEmpty == true)
                             _webStat('Intensidade', exercise.cardioIntensity!),

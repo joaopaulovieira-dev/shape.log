@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import '../../../../core/utils/duration_format.dart';
 import 'package:shape_log/features/body_tracker/domain/entities/body_measurement.dart';
 import '../../../../features/profile/domain/entities/user_profile.dart';
 import 'package:shape_log/features/workout/domain/entities/exercise.dart';
@@ -180,7 +181,7 @@ class WorkoutReportService {
 
       if (exercise.type == ExerciseTypeEntity.cardio) {
         // Cardio Formatting
-        buffer.writeln('   Tempo: ${exercise.cardioDurationMinutes ?? 0} min');
+        buffer.writeln('   Tempo: ${formatCardioDuration(exercise.cardioDurationMinutes)}');
         if (exercise.cardioIntensity != null &&
             exercise.cardioIntensity!.isNotEmpty) {
           buffer.writeln('   Intensidade: ${exercise.cardioIntensity}');

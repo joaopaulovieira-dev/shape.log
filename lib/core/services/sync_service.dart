@@ -206,42 +206,68 @@ class SyncService {
         .collection('workouts')
         .get()
         .timeout(timeoutDuration);
-    if (workoutsSnap.docs.isNotEmpty) {
-      await routinesBox.clear();
-      for (var doc in workoutsSnap.docs) {
-        final model = WorkoutHiveModel.fromMap(doc.data());
-        await routinesBox.put(model.id, model);
-      }
+    // Merge: adiciona/atualiza registros da nuvem sem apagar registros locais
+    // que ainda não chegaram ao Firebase (salvo offline).
+    for (var doc in workoutsSnap.docs) {
+      final model = WorkoutHiveModel.fromMap(doc.data());
+      await routinesBox.put(model.id, model);
     }
 
-    // 3. Baixar Histórico
+    // 3. Baixar Histórico (merge)
     final historySnap = await _firestore
         .collection('users')
         .doc(userId)
         .collection('history')
         .get()
         .timeout(timeoutDuration);
-    if (historySnap.docs.isNotEmpty) {
-      await historyBox.clear();
-      for (var doc in historySnap.docs) {
-        final model = WorkoutHistoryHiveModel.fromMap(doc.data());
-        await historyBox.put(model.id, model);
-      }
+    for (var doc in historySnap.docs) {
+      final model = WorkoutHistoryHiveModel.fromMap(doc.data());
+      await historyBox.put(model.id, model);
     }
 
-    // 4. Baixar Medidas
+    // 4. Baixar Medidas (merge)
     final measurementsSnap = await _firestore
         .collection('users')
         .doc(userId)
         .collection('measurements')
         .get()
         .timeout(timeoutDuration);
-    if (measurementsSnap.docs.isNotEmpty) {
-      await measurementsBox.clear();
-      for (var doc in measurementsSnap.docs) {
-        final model = BodyMeasurementHiveModel.fromMap(doc.data());
-        await measurementsBox.put(model.id, model);
-      }
+    for (var doc in measurementsSnap.docs) {
+      final model = BodyMeasurementHiveModel.fromMap(doc.data());
+      await measurementsBox.put(model.id, model);
+    }
+  }
+
+  /// Sincronização completa do histórico: substitui o Hive pelo estado atual
+  /// do Firebase (inclusive remove registros apagados remotamente).
+  /// Usado no pull-to-refresh da tela de logs.
+  Future<void> syncHistoryFromFirestore() async {
+    final userId = _userId;
+    if (userId == null) return;
+
+    final historyBox = Hive.box<WorkoutHistoryHiveModel>('history_log');
+    const timeout = Duration(seconds: 10);
+
+    final snap = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('history')
+        .get()
+        .timeout(timeout);
+
+    // IDs que existem no Firebase
+    final remoteIds = snap.docs.map((d) => d.id).toSet();
+
+    // Remove do Hive registros que não existem mais no Firebase
+    final localIds = historyBox.keys.cast<String>().toSet();
+    for (final id in localIds.difference(remoteIds)) {
+      await historyBox.delete(id);
+    }
+
+    // Adiciona/atualiza com dados do Firebase
+    for (final doc in snap.docs) {
+      final model = WorkoutHistoryHiveModel.fromMap(doc.data());
+      await historyBox.put(model.id, model);
     }
   }
 
