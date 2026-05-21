@@ -27,42 +27,31 @@ class _SplashPageState extends ConsumerState<SplashPage>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3500), // Total 3.5s
+      duration: const Duration(milliseconds: 1200),
     );
 
-    // Layer 1: Background "Breathing" (Slow Zoom)
-    // 0ms -> 3500ms: Scale 1.0 -> 1.08
-    _bgScaleAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.linear, // Constant slow movement
-      ),
+    // Fundo: zoom suave durante toda a animação
+    _bgScaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
     );
 
-    // Layer 3: Brand Entrance (Fade In + Slide Up)
-    // Starts at 500ms, ends at 2000ms (1.5s duration)
-    // 500ms / 3500ms ~= 0.14
-    // 2000ms / 3500ms ~= 0.57
+    // Logo e nome: fade in + slide up nos primeiros 700ms
     _contentOpacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.14, 0.57, curve: Curves.easeOut),
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
       ),
     );
 
-    _contentSlideAnimation =
-        Tween<Offset>(
-          begin: const Offset(
-            0,
-            0.1,
-          ), // Start slightly below (approx 30px relative)
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(
-            parent: _controller,
-            curve: const Interval(0.14, 0.57, curve: Curves.easeOutCubic),
-          ),
-        );
+    _contentSlideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.08),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOutCubic),
+      ),
+    );
 
     _controller.forward();
 
@@ -71,38 +60,35 @@ class _SplashPageState extends ConsumerState<SplashPage>
   }
 
   Future<void> _checkProfileAndNavigate() async {
-    // Wait for animation to complete roughly
-    await Future.delayed(const Duration(milliseconds: 3500));
+    // Aguarda animação
+    await Future.delayed(const Duration(milliseconds: 1200));
+    if (!mounted) return;
 
-    if (mounted) {
-      try {
-        final auth = ref.read(authServiceProvider);
-        if (auth.currentUser != null) {
-          final syncService = ref.read(syncServiceProvider);
-          // 1. Sobe registros locais pendentes (timeout 6s — ignora se offline)
-          try {
-            await syncService.uploadLocalDataToFirestore()
-                .timeout(const Duration(seconds: 6));
-          } catch (_) {}
-          // 2. Baixa nuvem por merge (timeout interno por operação — ignora se offline)
-          try {
-            await syncService.downloadDataFromFirestore();
-          } catch (_) {}
-        }
-      } catch (e) {
-        print('Erro ao sincronizar na splash: $e');
-      }
+    final repo = ref.read(userProfileRepositoryProvider);
+    final profile = await repo.getProfile();
 
-      final repo = ref.read(userProfileRepositoryProvider);
-      final profile = await repo.getProfile();
+    if (!mounted) return;
 
-      if (mounted) {
-        if (profile == null) {
-          context.go('/welcome');
-        } else {
-          context.go('/');
-        }
-      }
+    // Navega imediatamente — sync roda em background
+    if (profile == null) {
+      context.go('/welcome');
+    } else {
+      context.go('/');
+    }
+
+    // Sync em background sem bloquear navegação
+    final auth = ref.read(authServiceProvider);
+    if (auth.currentUser != null) {
+      final syncService = ref.read(syncServiceProvider);
+      Future(() async {
+        try {
+          await syncService.uploadLocalDataToFirestore()
+              .timeout(const Duration(seconds: 10));
+        } catch (_) {}
+        try {
+          await syncService.downloadDataFromFirestore();
+        } catch (_) {}
+      });
     }
   }
 
