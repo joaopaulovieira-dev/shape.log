@@ -9,6 +9,7 @@ class Workout {
   final List<Exercise> exercises;
   final DateTime? activeStartTime;
   final DateTime? expiryDate;
+  final DateTime? updatedAt;
 
   const Workout({
     required this.id,
@@ -19,6 +20,7 @@ class Workout {
     required this.exercises,
     this.activeStartTime,
     this.expiryDate,
+    this.updatedAt,
   });
 
   Workout copyWith({
@@ -30,6 +32,7 @@ class Workout {
     List<Exercise>? exercises,
     DateTime? activeStartTime,
     DateTime? expiryDate,
+    DateTime? updatedAt,
   }) {
     return Workout(
       id: id ?? this.id,
@@ -41,6 +44,7 @@ class Workout {
       exercises: exercises ?? this.exercises,
       activeStartTime: activeStartTime ?? this.activeStartTime,
       expiryDate: expiryDate ?? this.expiryDate,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

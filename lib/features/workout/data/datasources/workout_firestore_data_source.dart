@@ -35,7 +35,8 @@ class WorkoutFirestoreDataSource implements WorkoutRepository {
   @override
   Future<void> saveRoutine(Workout workout) async {
     if (_userId == null) return;
-    final model = WorkoutHiveModel.fromEntity(workout);
+    final stamped = workout.copyWith(updatedAt: DateTime.now().toUtc());
+    final model = WorkoutHiveModel.fromEntity(stamped);
     await _workoutsRef.doc(workout.id).set(model.toMap(), SetOptions(merge: true));
   }
 

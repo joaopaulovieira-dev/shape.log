@@ -25,13 +25,14 @@ class WorkoutHiveModelAdapter extends TypeAdapter<WorkoutHiveModel> {
       exercises: (fields[5] as List).cast<ExerciseModel>(),
       activeStartTime: fields[6] as DateTime?,
       expiryDate: fields[7] as DateTime?,
+      updatedAt: fields[8] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, WorkoutHiveModel obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -47,7 +48,9 @@ class WorkoutHiveModelAdapter extends TypeAdapter<WorkoutHiveModel> {
       ..writeByte(6)
       ..write(obj.activeStartTime)
       ..writeByte(7)
-      ..write(obj.expiryDate);
+      ..write(obj.expiryDate)
+      ..writeByte(8)
+      ..write(obj.updatedAt);
   }
 
   @override

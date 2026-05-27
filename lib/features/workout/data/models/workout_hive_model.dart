@@ -31,6 +31,9 @@ class WorkoutHiveModel extends HiveObject {
   @HiveField(7)
   final DateTime? expiryDate;
 
+  @HiveField(8)
+  final DateTime? updatedAt;
+
   WorkoutHiveModel({
     required this.id,
     required this.name,
@@ -40,6 +43,7 @@ class WorkoutHiveModel extends HiveObject {
     required this.exercises,
     this.activeStartTime,
     this.expiryDate,
+    this.updatedAt,
   });
 
   WorkoutHiveModel copyWith({
@@ -51,6 +55,7 @@ class WorkoutHiveModel extends HiveObject {
     List<ExerciseModel>? exercises,
     DateTime? activeStartTime,
     DateTime? expiryDate,
+    DateTime? updatedAt,
   }) {
     return WorkoutHiveModel(
       id: id ?? this.id,
@@ -62,6 +67,7 @@ class WorkoutHiveModel extends HiveObject {
       exercises: exercises ?? this.exercises,
       activeStartTime: activeStartTime ?? this.activeStartTime,
       expiryDate: expiryDate ?? this.expiryDate,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -77,6 +83,7 @@ class WorkoutHiveModel extends HiveObject {
           .toList(),
       activeStartTime: workout.activeStartTime,
       expiryDate: workout.expiryDate,
+      updatedAt: workout.updatedAt,
     );
   }
 
@@ -90,6 +97,7 @@ class WorkoutHiveModel extends HiveObject {
       exercises: exercises.map((e) => e.toEntity()).toList(),
       activeStartTime: activeStartTime,
       expiryDate: expiryDate,
+      updatedAt: updatedAt,
     );
   }
 
@@ -103,6 +111,7 @@ class WorkoutHiveModel extends HiveObject {
       'exercises': exercises.map((e) => e.toMap()).toList(),
       'activeStartTime': activeStartTime?.toIso8601String(),
       'expiryDate': expiryDate?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
     };
   }
 
@@ -121,6 +130,9 @@ class WorkoutHiveModel extends HiveObject {
           : null,
       expiryDate: map['expiryDate'] != null
           ? DateTime.parse(map['expiryDate'])
+          : null,
+      updatedAt: map['updatedAt'] != null
+          ? DateTime.parse(map['updatedAt'])
           : null,
     );
   }

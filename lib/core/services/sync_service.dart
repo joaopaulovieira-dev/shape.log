@@ -77,23 +77,47 @@ class SyncService {
       }
     }
 
-    // 2. Treinos (cada batch independente para não misturar com outros dados)
+    // 2. Treinos — só sobe se o dado local for mais novo que o remoto
     try {
       var batch = _firestore.batch();
       int count = 0;
       for (var workout in routinesBox.values) {
-        final updatedWorkout = await _uploadWorkoutImages(workout);
         final doc = _firestore
             .collection('users')
             .doc(userId)
             .collection('workouts')
-            .doc(updatedWorkout.id);
+            .doc(workout.id);
+
+        // Verifica se a versão remota é mais recente; se for, pula este treino
+        // para não sobrescrever edições feitas na web ou em outro dispositivo.
+        if (workout.updatedAt != null) {
+          try {
+            final remoteSnap =
+                await doc.get().timeout(const Duration(seconds: 5));
+            if (remoteSnap.exists) {
+              final remoteUpdatedAt = remoteSnap.data()?['updatedAt'];
+              if (remoteUpdatedAt != null) {
+                final remoteTime = DateTime.parse(remoteUpdatedAt as String);
+                if (remoteTime.isAfter(workout.updatedAt!)) {
+                  // Remoto é mais recente — atualiza Hive com dado do servidor
+                  final newer = WorkoutHiveModel.fromMap(remoteSnap.data()!);
+                  await routinesBox.put(newer.id, newer);
+                  continue;
+                }
+              }
+            }
+          } catch (_) {
+            // Se falhar a verificação, sobe o local para não perder dados
+          }
+        }
+
+        final updatedWorkout = await _uploadWorkoutImages(workout);
         batch.set(doc, updatedWorkout.toMap(), SetOptions(merge: true));
         count++;
         batch = await _commitAndRenew(batch, count);
       }
       if (count % _batchLimit != 0) await batch.commit();
-      print('Sync: ${routinesBox.length} treinos salvos no Firestore.');
+      print('Sync: ${routinesBox.length} treinos processados.');
     } catch (e) {
       print('Sync: erro ao salvar treinos: $e');
     }

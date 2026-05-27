@@ -448,10 +448,6 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
         _showRestTimerOverlay(context);
       }
 
-      // Show completion feedback when requested
-      if (!prev.showCompletionFeedback && next.showCompletionFeedback) {
-        _showFeedbackDialog();
-      }
     });
 
     final totalExercises = widget.workout.exercises.length;
@@ -546,12 +542,10 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                   final lastHistory =
                       sessionState.lastHistoryMap[exercise.name];
 
-                  // Set logic (handled in bottom button)
-                  // final setsRecords = sessionState.setsRecords[exercise.name] ?? [];
-                  // final currentSetNumber = setsRecords.length + 1;
-                  // final totalSets = exercise.sets;
-
-                  // unused: final isLastSet = currentSetNumber >= totalSets;
+                  final setsRecords =
+                      sessionState.setsRecords[exercise.name] ?? [];
+                  final currentSetNumber = setsRecords.length + 1;
+                  final totalSets = exercise.sets;
 
                   return SingleChildScrollView(
                     child: Column(
@@ -801,8 +795,9 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                   ],
                                 ),
                                 const SizedBox(height: 16),
-                                // Row 2: Intensity (Full Width)
+                                // Row 2: Intensity | Série atual
                                 Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Expanded(
                                       child: _buildInputCard(
@@ -811,8 +806,52 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                         controller: _cardioIntensityController,
                                         focusNode: _cardioIntensityFocus,
                                         onChanged: _onFieldChanged,
-                                        isNumber: false, // Text input
+                                        isNumber: false,
                                         showSavedFeedback: _showSavedFeedback,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "SÉRIE",
+                                            style: GoogleFonts.outfit(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.grey[500],
+                                              fontSize: 12,
+                                              letterSpacing: 1.2,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 10,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF1E1E1E),
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              border: Border.all(
+                                                color: Colors.white
+                                                    .withOpacity(0.05),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              "$currentSetNumber/$totalSets",
+                                              textAlign: TextAlign.center,
+                                              style: GoogleFonts.outfit(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.primary,
+                                                height: 1.2,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
@@ -858,13 +897,46 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
                                 Row(
                                   children: [
                                     Expanded(
-                                      child: _buildInputCard(
-                                        context,
-                                        label: "SÉRIES ALVO",
-                                        controller: _setsController,
-                                        focusNode: _setsFocus,
-                                        onChanged: _onFieldChanged,
-                                        showSavedFeedback: _showSavedFeedback,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "SÉRIE",
+                                            style: GoogleFonts.outfit(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.grey[500],
+                                              fontSize: 12,
+                                              letterSpacing: 1.2,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 10,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF1E1E1E),
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              border: Border.all(
+                                                color: Colors.white
+                                                    .withOpacity(0.05),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              "$currentSetNumber/$totalSets",
+                                              textAlign: TextAlign.center,
+                                              style: GoogleFonts.outfit(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.primary,
+                                                height: 1.2,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -1015,8 +1087,9 @@ class _WorkoutSessionPageState extends ConsumerState<WorkoutSessionPage> {
 
                 String buttonLabel =
                     "CONCLUIR SÉRIE $currentSetNumber de $totalSets";
-                if (isLastSet) buttonLabel = "FINALIZAR EXERCÍCIO";
-                if (isCardio) buttonLabel = "FINALIZAR CARDIO";
+                if (isLastSet)
+                  buttonLabel =
+                      isCardio ? "FINALIZAR CARDIO" : "FINALIZAR EXERCÍCIO";
 
                 return Padding(
                   padding: const EdgeInsets.all(16.0),

@@ -81,12 +81,14 @@ class _SplashPageState extends ConsumerState<SplashPage>
     if (auth.currentUser != null) {
       final syncService = ref.read(syncServiceProvider);
       Future(() async {
+        // Baixa primeiro para ter os timestamps remotos disponíveis antes
+        // de decidir o que subir — evita sobrescrever edições da web.
+        try {
+          await syncService.downloadDataFromFirestore();
+        } catch (_) {}
         try {
           await syncService.uploadLocalDataToFirestore()
               .timeout(const Duration(seconds: 10));
-        } catch (_) {}
-        try {
-          await syncService.downloadDataFromFirestore();
         } catch (_) {}
       });
     }

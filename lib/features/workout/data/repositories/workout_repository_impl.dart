@@ -24,9 +24,10 @@ class WorkoutRepositoryImpl implements WorkoutRepository {
 
   @override
   Future<void> saveRoutine(Workout workout) async {
-    await localDataSource.saveRoutine(workout);
+    final stamped = workout.copyWith(updatedAt: DateTime.now().toUtc());
+    await localDataSource.saveRoutine(stamped);
     if (syncService != null) {
-      _fireAndForget(syncService!.saveWorkout(WorkoutHiveModel.fromEntity(workout)));
+      _fireAndForget(syncService!.saveWorkout(WorkoutHiveModel.fromEntity(stamped)));
     }
   }
 
